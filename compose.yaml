@@ -1,9 +1,37 @@
+version: '3.9'
+
 services:
   postgres:
-    image: 'postgres:18'
+    image: postgres:18
+    container_name: postgres
     environment:
-      - 'POSTGRES_DB=Security'
-      - 'POSTGRES_PASSWORD=123'
-      - 'POSTGRES_USER=Senghour123'
+      POSTGRES_DB: postgres
+      POSTGRES_USER: senghour
+      POSTGRES_PASSWORD: senghour369
     ports:
-      - '5432'
+      - "5432:5432"   # host:container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Fixed: added /data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U senghour -d postgres"]
+      interval: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: senghour-app
+    ports:
+      - "8083:8083"   # Fixed: match application.properties port
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: senghour
+      SPRING_DATASOURCE_PASSWORD: senghour369
+      SERVER_PORT: 8083  # Added to ensure correct port
+    restart: always
+
+volumes:
+  postgres_data:
