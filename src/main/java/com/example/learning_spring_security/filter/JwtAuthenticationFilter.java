@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
     }
 
     @Override
-    protected void successfulAuthentication(
+    public void successfulAuthentication(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain chain,

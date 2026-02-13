@@ -6,5 +6,5 @@ import com.example.learning_spring_security.dto.UserRequest;
 public interface AuthService {
      ResponseErrorTemplate create(UserRequest userRequest);
      ResponseErrorTemplate findById(Long id);
-     ResponseErrorTemplate findByUsername(String username);
+     ResponseErrorTemplate logIn(String username);
 }

@@ -25,7 +25,7 @@ public class LearningSpringSecurityApplication {
                 if (roleRepository.findByName(roleName).isEmpty()) {
                     Role role = new Role();
                     role.setName(roleName);
-                    roleRepository.save(role); // Save new role
+                    roleRepository.save(role);
                     System.out.println("Role created: " + roleName);
                 } else {
                     System.out.println("Role already exists: " + roleName);

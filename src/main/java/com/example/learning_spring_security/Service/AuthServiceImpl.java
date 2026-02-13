@@ -60,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ResponseErrorTemplate findByUsername(String username) {
+    public ResponseErrorTemplate logIn(String username) {
         Optional<User> user = userRepository.findFirstByUsernameAndStatus(username, Constant.ACT);
 
         var msg = String.format(Constant.USER_NAME_NOT_FOUND, user);

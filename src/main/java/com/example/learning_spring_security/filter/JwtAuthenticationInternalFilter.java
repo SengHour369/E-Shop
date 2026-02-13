@@ -39,14 +39,12 @@ public class JwtAuthenticationInternalFilter extends OncePerRequestFilter {
         if(accessToken !=null && !accessToken.isBlank() && accessToken.startsWith(jwtConfig.getPrefix())) {
 
             accessToken = accessToken.substring((jwtConfig.getPrefix()).length());
-            System.out.println("ssssssssss"+accessToken);
 
 
             try {
                 if(jwtService.isValidToken(accessToken)){
                     Claims claims = jwtService.extractClaims(accessToken);
                     var username = claims.getSubject();
-                    System.out.println("username= "+username);
 
                     List<String> authorities = claims.get("authorities", List.class);
                     if(username != null) {

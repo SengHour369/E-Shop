@@ -1,11 +1,14 @@
 package com.example.learning_spring_security.Model;
 
+import com.example.learning_spring_security.Model.BaseEtity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Collection;
+
 @Getter
 @Setter
 @Builder
@@ -14,10 +17,8 @@ import java.util.Collection;
 @NoArgsConstructor
 @Entity
 @Table(name = "tbl_user")
-public class User implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class User extends BaseEntity implements Serializable {
+
     @Column(name = "username", unique = true, nullable = false)
     private String username;
     @Column(name = "email", unique = true, nullable = false)
@@ -28,6 +29,8 @@ public class User implements Serializable {
     private String fullName;
     private int attempt;
     private String status;
+   // @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+   // private List<Address> addresses;
     @Column(name = "created", updatable = false)
     private LocalDateTime created;
     @Column(name = "updated", insertable = false)

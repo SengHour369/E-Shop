@@ -57,9 +57,24 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/public/accounts/**").permitAll()
-                        .requestMatchers("/api/v1/user/**").hasAnyAuthority("USER", "ADMIN")
-                        .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/v1/public/accounts/**"
+                                , "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+
+                        ).permitAll()
+                        .requestMatchers(
+                                "/api/v1/public/login"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/api/v1/user/**"
+                        ).hasAnyAuthority(
+                                "USER", "ADMIN"
+                        )
+                        .requestMatchers(
+                                "/api/v1/admin/**"
+                        ).hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
               //  .authenticationProvider(customAuthenticationProvider) // Custom auth provider

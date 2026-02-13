@@ -23,7 +23,7 @@ public class AdminController {
     public ResponseEntity<Object> index(Principal principal) {
         var username = principal.getName();
         log.info("Admin: username {} request get user data", username);
-        return ResponseEntity.ok(userService.findByUsername(username));
+        return ResponseEntity.ok(userService.logIn(username));
     }
 
 }

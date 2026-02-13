@@ -1,5 +1,6 @@
 package com.example.learning_spring_security.Model;
 
+import com.example.learning_spring_security.Model.BaseEtity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,11 +14,9 @@ import java.util.Collection;
 @NoArgsConstructor
 @Entity
 @Table(name = "tbl_role")
-public class Role implements Serializable {
+public class Role extends BaseEntity implements Serializable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
 
     @Column(name = "name", unique = true, nullable = false)
     private String name;
