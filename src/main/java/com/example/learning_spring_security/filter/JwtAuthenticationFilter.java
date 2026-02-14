@@ -20,6 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.util.matcher.ParameterRequestMatcher;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -38,7 +39,8 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
                                    JwtConfig jwtConfig,
                                    AuthenticationManager authenticationManager,
                                    UserDetailsService customUserDetailService) {
-        super(jwtConfig.getUrl().startsWith("/") ? jwtConfig.getUrl() : "/" + jwtConfig.getUrl());
+        // ✅ FIXED: "POST" with correct spelling
+        super(new ParameterRequestMatcher(jwtConfig.getUrl(), "POST"));
         setAuthenticationManager(authenticationManager);
         this.jwtService = jwtService;
         this.objectMapper = objectMapper;

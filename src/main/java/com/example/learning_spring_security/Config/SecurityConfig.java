@@ -57,20 +57,21 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers(
-                                        "/",
-                                        "/health",
-                                        "/swagger-ui/**",
-                                        "/v3/api-docs/**",
-                                        "/swagger-ui.html"
-                                ).permitAll()
-
-                        .requestMatchers("/api/v1/public/**").permitAll()
+                        // ✅ Public paths
+                        .requestMatchers(
+                                "/",
+                                "/health",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/webjars/**",
+                                "/api/v1/public/**"
+                        ).permitAll()
+                        // ✅ Protected paths
                         .requestMatchers("/api/v1/user/**").hasAnyAuthority("USER", "ADMIN")
                         .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
-
 
               //  .authenticationProvider(customAuthenticationProvider) // Custom auth provider
                 .exceptionHandling(ex -> ex

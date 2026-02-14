@@ -18,28 +18,52 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
-// ត្រួតពិនិត្យ Token
 public class JwtAuthenticationInternalFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
     private final JwtConfig jwtConfig;
+
+    // ✅ List of public paths that don't need JWT validation
+    private static final List<String> PUBLIC_PATHS = Arrays.asList(
+            "/swagger-ui",
+            "/v3/api-docs",
+            "/swagger-ui.html",
+            "/webjars",
+            "/api/v1/public",
+            "/health",
+            "/"
+    );
+
+    // ✅ Add this method to skip filter for public paths
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        boolean isPublicPath = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+
+        if (isPublicPath) {
+            log.info("Skipping JWT filter for public path: {}", path);
+        }
+
+        return isPublicPath;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         var accessToken = request.getHeader(jwtConfig.getHeader());
-        log.info("Do filter uri {}", request.getRequestURI());
+        log.info("Processing JWT filter for uri: {}", request.getRequestURI());
 
-        if(accessToken !=null && !accessToken.isBlank() && accessToken.startsWith(jwtConfig.getPrefix())) {
+        if(accessToken != null && !accessToken.isBlank() && accessToken.startsWith(jwtConfig.getPrefix())) {
 
             accessToken = accessToken.substring((jwtConfig.getPrefix()).length());
-
 
             try {
                 if(jwtService.isValidToken(accessToken)){
@@ -55,16 +79,11 @@ public class JwtAuthenticationInternalFilter extends OncePerRequestFilter {
                                                 .collect(Collectors.toList())
                                 );
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                        log.info("Authentication set for user: {}", username);
                     }
                 }
-            }catch (Exception ex){
-                log.error("{}", ex.getLocalizedMessage());
-               /*
-                CustomMessageException messageException = new CustomMessageException();
-                messageException.setMessage("Unauthorized");
-                messageException.setCode(String.valueOf(HttpStatus.UNAUTHORIZED.value()));
-
-                */
+            } catch (Exception ex){
+                log.error("JWT validation failed: {}", ex.getLocalizedMessage());
 
                 var messageException = CustomMessageExceptionUtils.unauthorized();
                 var msgJson = objectMapper.writeValueAsString(messageException);
@@ -73,11 +92,10 @@ public class JwtAuthenticationInternalFilter extends OncePerRequestFilter {
                 response.getWriter().write(msgJson);
                 return;
             }
+        } else {
+            log.info("No JWT token found in request for: {}", request.getRequestURI());
         }
 
-        log.info("Do filter {}", request.getRequestURI());
         filterChain.doFilter(request, response);
-
     }
-
 }
