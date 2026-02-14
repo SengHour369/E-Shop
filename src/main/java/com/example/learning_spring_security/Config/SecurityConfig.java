@@ -60,17 +60,9 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/",
                                         "/health",
-                                        "/ping",
-                                        "/swagger-ui.html",
                                         "/swagger-ui/**",
-                                        "/swagger-resources/**",
-                                        "/webjars/**",
-                                        // IMPORTANT: API docs endpoint
                                         "/v3/api-docs/**",
-                                        "/v3/api-docs.yaml",
-                                        "/v3/api-docs.json",
-                                        "/swagger-resources/**",
-                                        "/webjars/**"
+                                        "/swagger-ui.html"
                                 ).permitAll()
 
                         .requestMatchers("/api/v1/public/**").permitAll()
