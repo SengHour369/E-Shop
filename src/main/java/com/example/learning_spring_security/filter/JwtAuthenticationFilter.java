@@ -39,8 +39,8 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
                                    JwtConfig jwtConfig,
                                    AuthenticationManager authenticationManager,
                                    UserDetailsService customUserDetailService) {
-        // ✅ FIXED: "POST" with correct spelling
-        super(new ParameterRequestMatcher(jwtConfig.getUrl(), "POST"));
+        //  "POST" with correct spelling
+        super(new  ParameterRequestMatcher(jwtConfig.getUrl(), "POST"));
         setAuthenticationManager(authenticationManager);
         this.jwtService = jwtService;
         this.objectMapper = objectMapper;
