@@ -1,13 +1,21 @@
-# Use official OpenJDK
+# ---------- Build Stage ----------
+FROM  maven:4.0.0-rc-5-amazoncorretto AS builder
+
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn clean package -DskipTests
+
+# ---------- Run Stage ----------
 FROM openjdk:27-ea-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy your JAR
-COPY target/Learning_spring_security-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/target/*.jar app.jar
 
-# Expose Spring Boot port (match your application.properties)
+# Expose Spring Boot port
 EXPOSE 8083
 
 # Run the JAR
