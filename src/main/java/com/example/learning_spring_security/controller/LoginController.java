@@ -1,17 +1,13 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.dto.AuthenticationRequest;
-import com.example.learning_spring_security.dto.AuthenticationResponse;
+import com.example.learning_spring_security.dto.Request.AuthenticationRequest;
+import com.example.learning_spring_security.dto.Response.AuthenticationResponse;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import com.example.learning_spring_security.JWT.JwtService;
 import com.example.learning_spring_security.Security.UserDetailsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;

@@ -4,8 +4,8 @@ import com.example.learning_spring_security.JWT.JwtConfig;
 import com.example.learning_spring_security.JWT.JwtService;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import com.example.learning_spring_security.Security.UserDetailsService;
-import com.example.learning_spring_security.dto.AuthenticationRequest;
-import com.example.learning_spring_security.dto.AuthenticationResponse;
+import com.example.learning_spring_security.dto.Request.AuthenticationRequest;
+import com.example.learning_spring_security.dto.Response.AuthenticationResponse;
 import com.example.learning_spring_security.utils.CustomMessageExceptionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

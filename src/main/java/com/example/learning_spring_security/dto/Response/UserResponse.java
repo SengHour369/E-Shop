@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.dto;
+package com.example.learning_spring_security.dto.Response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;

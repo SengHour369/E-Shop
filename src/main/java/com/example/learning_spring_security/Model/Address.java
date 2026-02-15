@@ -1,13 +1,40 @@
 package com.example.learning_spring_security.Model;
 
-import java.time.LocalDateTime;
+import com.example.learning_spring_security.Model.BaseEntity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import java.util.List;
 
-public class Address {
-    private String zipCode;
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "addresses")
+public class Address extends BaseEntity {
+
+    @Column(name = "address_line1", nullable = false)
+    private String addressLine1;
+
+    @Column(name = "address_line2")
+    private String addressLine2;
+
+    @Column(nullable = false)
     private String city;
-    private String street;
+
+    @Column(nullable = false)
+    private String state;
+
+    @Column(name = "zip_code", nullable = false)
+    private String zipCode;
+
+    @Column(nullable = false)
     private String country;
-    private LocalDateTime created;
-    private LocalDateTime updated;
-    private LocalDateTime deleted;
+
+    @Column(name = "is_default")
+    private Boolean isDefault = false;
+
+    @ManyToMany(mappedBy = "addresses")
+    private List<User> users;
 }

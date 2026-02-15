@@ -14,7 +14,6 @@ FROM openjdk:27-ea-slim
 WORKDIR /app
 
 COPY --from=builder /app/target/*.jar app.jar
-
 # Expose Spring Boot port
 EXPOSE 8080
 

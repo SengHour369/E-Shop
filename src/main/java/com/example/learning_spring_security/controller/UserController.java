@@ -2,10 +2,6 @@ package com.example.learning_spring_security.controller;
 
 
 import com.example.learning_spring_security.Service.AuthService;
-import com.example.learning_spring_security.dto.AuthenticationRequest;
-import com.example.learning_spring_security.dto.AuthenticationResponse;
-import com.example.learning_spring_security.dto.ResponseErrorTemplate;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

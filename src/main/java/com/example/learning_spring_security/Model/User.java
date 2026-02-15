@@ -1,6 +1,6 @@
 package com.example.learning_spring_security.Model;
 
-import com.example.learning_spring_security.Model.BaseEtity.BaseEntity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +8,7 @@ import lombok.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 @Getter
 @Setter
@@ -17,7 +18,7 @@ import java.util.Collection;
 @NoArgsConstructor
 @Entity
 @Table(name = "tbl_user")
-public class User extends BaseEntity implements Serializable {
+public class User extends com.example.learning_spring_security.Model.BaseEntity.BaseEntity implements Serializable {
 
     @Column(name = "username", unique = true, nullable = false)
     private String username;
@@ -29,8 +30,8 @@ public class User extends BaseEntity implements Serializable {
     private String fullName;
     private int attempt;
     private String status;
-   // @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-   // private List<Address> addresses;
+
+
     @Column(name = "created", updatable = false)
     private LocalDateTime created;
     @Column(name = "updated", insertable = false)
@@ -44,6 +45,17 @@ public class User extends BaseEntity implements Serializable {
             inverseJoinColumns = @JoinColumn(
                     name = "role_id", referencedColumnName = "id"))
     private Collection<Role> roles;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderDetail> orders;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Cart cart;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_address",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "address_id")
+    )
+    private List<Address> addresses;
 
 
 }

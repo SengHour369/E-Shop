@@ -1,6 +1,6 @@
 package com.example.learning_spring_security.Exception;
 
-import com.example.learning_spring_security.dto.ResponseErrorTemplate;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
