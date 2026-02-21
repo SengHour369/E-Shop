@@ -12,8 +12,8 @@ public class ProductMapper {
         return Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .image(request.getImage())
-                .mainImage(request.getMainImage())
+//                .image(request.getImage())
+//                .mainImage(request.getMainImage())
                 .isActive(request.getIsActive())
                 .subCategory(subCategory)
                 .build();
@@ -25,7 +25,7 @@ public class ProductMapper {
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
-                .image(product.getImage())
+//                .image(product.getImage())
                 .mainImage(product.getMainImage())
                 .isActive(product.getIsActive())
                 .subCategory(SubCategoryMapper.toResponse(product.getSubCategory()))
@@ -39,8 +39,8 @@ public class ProductMapper {
                                     SubCategory subCategory) {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
-        product.setImage(request.getImage());
-        product.setMainImage(request.getMainImage());
+//        product.setImage(request.getImage());
+//        product.setMainImage(request.getMainImage());
         product.setIsActive(request.getIsActive());
         product.setSubCategory(subCategory);
     }
