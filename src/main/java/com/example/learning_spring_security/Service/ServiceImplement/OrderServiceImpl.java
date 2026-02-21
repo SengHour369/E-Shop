@@ -1,10 +1,10 @@
-package com.example.learning_spring_security.Service.implement;
+package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.*;
 import com.example.learning_spring_security.Repository.*;
-import com.example.learning_spring_security.Service.OrderService;
+import com.example.learning_spring_security.Service.ServiceStructure.OrderService;
 
 import com.example.learning_spring_security.ServiceMapper.OrderItemMapper;
 import com.example.learning_spring_security.ServiceMapper.OrderMapper;

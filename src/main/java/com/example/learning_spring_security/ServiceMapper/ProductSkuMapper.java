@@ -12,12 +12,7 @@ public class ProductSkuMapper {
                 .sku(request.getSku())
                 .description(request.getDescription())
                 .price(request.getPrice())
-                .comparePrice(request.getComparePrice())
                 .quantity(request.getQuantity())
-                .color(request.getColor())
-                .size(request.getSize())
-                .material(request.getMaterial())
-                .isDefault(request.getIsDefault())
                 .product(product)
                 .build();
     }
@@ -28,13 +23,8 @@ public class ProductSkuMapper {
                 .sku(sku.getSku())
                 .description(sku.getDescription())
                 .price(sku.getPrice())
-                .comparePrice(sku.getComparePrice())
                 .quantity(sku.getQuantity())
                 .lowStockThreshold(sku.getLowStockThreshold())
-                .color(sku.getColor())
-                .size(sku.getSize())
-                .material(sku.getMaterial())
-                .isDefault(sku.getIsDefault())
                 .productId(sku.getProduct() != null ? sku.getProduct().getId() : null)
                 .build();
     }
@@ -43,11 +33,6 @@ public class ProductSkuMapper {
         sku.setSku(request.getSku());
         sku.setDescription(request.getDescription());
         sku.setPrice(request.getPrice());
-        sku.setComparePrice(request.getComparePrice());
         sku.setQuantity(request.getQuantity());
-        sku.setColor(request.getColor());
-        sku.setSize(request.getSize());
-        sku.setMaterial(request.getMaterial());
-        sku.setIsDefault(request.getIsDefault());
     }
 }

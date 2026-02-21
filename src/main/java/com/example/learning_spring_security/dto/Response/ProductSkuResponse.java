@@ -15,21 +15,12 @@ public class ProductSkuResponse {
     private String description;
     private BigDecimal price;
 
-    @JsonProperty("compare_price")
-    private BigDecimal comparePrice;
 
     private Long quantity;
 
     @JsonProperty("low_stock_threshold")
     private Integer lowStockThreshold;
 
-    private String color;
-    private String size;
-    private String material;
-
-    @JsonProperty("is_default")
-    private Boolean isDefault;
-
     @JsonProperty("product_id")
-    private Long productId;  // បន្ថែម Product ID
+    private Long productId;
 }

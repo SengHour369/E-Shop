@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Service;
+package com.example.learning_spring_security.Service.ServiceStructure;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

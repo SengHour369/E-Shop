@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Service.implement;
+package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.DuplicateResourceException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
@@ -6,7 +6,7 @@ import com.example.learning_spring_security.Model.Category;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.Repository.CategoryRepository;
 import com.example.learning_spring_security.Repository.SubCategoryRepository;
-import com.example.learning_spring_security.Service.SubCategoryService;
+import com.example.learning_spring_security.Service.ServiceStructure.SubCategoryService;
 import com.example.learning_spring_security.ServiceMapper.SubCategoryMapper;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
 import com.example.learning_spring_security.dto.Response.SubCategoryResponse;

@@ -57,6 +57,7 @@ public class User  implements Serializable {
     private String fullName;
     private int attempt;
     private String status;
+    private String  image;
 
 
     @Column(name = "created", updatable = false)

@@ -15,7 +15,7 @@
 //        return User.builder()
 //                .username(request.username())
 //                .email(request.email())
-//                .password(request.password()) // នឹងត្រូវ Encrypt ក្នុង Service
+//                .password(request.password())
 //                .fullName(request.fullName())
 //                .status("ACTIVE")
 //                .attempt(0)

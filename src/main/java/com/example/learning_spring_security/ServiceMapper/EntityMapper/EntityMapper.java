@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.ServiceMapper;
+package com.example.learning_spring_security.ServiceMapper.EntityMapper;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Config;
+package com.example.learning_spring_security.Config.ConfigSecurity;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

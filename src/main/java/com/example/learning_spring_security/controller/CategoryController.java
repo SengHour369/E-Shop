@@ -1,6 +1,6 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.Service.CategoryService;
+import com.example.learning_spring_security.Service.ServiceStructure.CategoryService;
 import com.example.learning_spring_security.dto.Request.CategoryRequest;
 import com.example.learning_spring_security.dto.Response.CategoryResponse;
 import jakarta.validation.Valid;

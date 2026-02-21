@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Service;
+package com.example.learning_spring_security.Service.ServiceStructure;
 
 import com.example.learning_spring_security.dto.Request.CategoryRequest;
 import com.example.learning_spring_security.dto.Response.CategoryResponse;

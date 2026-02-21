@@ -20,6 +20,7 @@ public class ProductMapper {
     }
 
     public static ProductResponse toResponse(Product product) {
+
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -34,7 +35,8 @@ public class ProductMapper {
                 .build();
     }
 
-    public static void updateEntity(Product product, ProductRequest request, SubCategory subCategory) {
+    public static void updateEntity(Product product, ProductRequest request,
+                                    SubCategory subCategory) {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setImage(request.getImage());

@@ -20,15 +20,6 @@ public class CategoryMapper {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
-//                .subCategories(category.getSubCategories().stream()
-//                        .map(subCategory -> SubCategoryResponse.builder()
-//                                .id(subCategory.getId())
-//                                .name(subCategory.getName())
-//                                .description(subCategory.getDescription())
-//                                .categoryId(category.getId())
-//                                .categoryName(category.getName())
-//                                .build())
-//                        .collect(Collectors.toList()))
                 .build();
     }
 

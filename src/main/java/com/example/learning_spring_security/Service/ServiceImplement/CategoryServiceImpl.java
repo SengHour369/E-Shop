@@ -1,10 +1,10 @@
-package com.example.learning_spring_security.Service.implement;
+package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.DuplicateResourceException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.Category;
 import com.example.learning_spring_security.Repository.CategoryRepository;
-import com.example.learning_spring_security.Service.CategoryService;
+import com.example.learning_spring_security.Service.ServiceStructure.CategoryService;
 import com.example.learning_spring_security.ServiceMapper.CategoryMapper;
 import com.example.learning_spring_security.dto.Request.CategoryRequest;
 import com.example.learning_spring_security.dto.Response.CategoryResponse;
@@ -71,8 +71,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
-
-        // Check name uniqueness if changed
+        
         if (request.getName() != null && !request.getName().equals(category.getName())) {
             if (categoryRepository.existsByName(request.getName())) {
                 throw new DuplicateResourceException("Category already exists with name: " + request.getName());

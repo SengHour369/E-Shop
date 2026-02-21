@@ -23,17 +23,8 @@ public class ProductSkuRequest {
     @Positive(message = "Price must be positive")
     private BigDecimal price;
 
-    @JsonProperty("compare_price")
-    private BigDecimal comparePrice;
-
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;
 
-    private String color;
-    private String size;
-    private String material;
-
-    @JsonProperty("is_default")
-    private Boolean isDefault = false;
 }

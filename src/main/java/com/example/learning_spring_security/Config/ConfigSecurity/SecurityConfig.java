@@ -53,7 +53,7 @@
 //                .sessionManagement(session ->
 //                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 //                .authorizeHttpRequests(auth -> auth
-//                        // PUBLIC APIS - មិនត្រូវការ Token
+//                        // PUBLIC APIS not  need Token
 //                        .requestMatchers(
 //                                "/",
 //                                "/health",
@@ -66,25 +66,25 @@
 //                                "/webjars/**"
 //                        ).permitAll()
 //
-//                        //  PRODUCT APIS - អនុញ្ញាត GET ទាំងអស់ (Public)
+//                        //  PRODUCT APIS  GET  Public
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/products/active").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/products/search").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/products/subcategory/**").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/products/category/**").permitAll()
 //
-//                        //  CATEGORY APIS - អនុញ្ញាត GET ទាំងអស់ (Public)
+//                        //  CATEGORY APIS -  GET  Public
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/subcategories/**").permitAll()
 //
-//                        //  USER APIS - ត្រូវការ Token
+//                        //  USER APIS - need Token
 //                        .requestMatchers("/api/v1/user/**").authenticated()
 //                        .requestMatchers("/api/v1/cart/**").authenticated()
 //                        .requestMatchers("/api/v1/orders/**").authenticated()
 //                        .requestMatchers("/api/v1/addresses/**").authenticated()
 //                        .requestMatchers("/api/v1/payments/**").authenticated()
 //
-//                        //  ADMIN APIS - ត្រូវការ ADMIN Role
+//                        //  ADMIN APIS - need  ADMIN Role
 //                        .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
 //                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAuthority("ADMIN")
 //                        .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAuthority("ADMIN")

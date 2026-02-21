@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Service.implement;
+package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Exception.ExceptionService.UnauthorizedException;
@@ -6,7 +6,7 @@ import com.example.learning_spring_security.Model.Address;
 import com.example.learning_spring_security.Model.User;
 import com.example.learning_spring_security.Repository.AddressRepository;
 import com.example.learning_spring_security.Repository.UserRepository;
-import com.example.learning_spring_security.Service.AddressService;
+import com.example.learning_spring_security.Service.ServiceStructure.AddressService;
 import com.example.learning_spring_security.ServiceMapper.AddressMapper;
 import com.example.learning_spring_security.dto.Request.AddressRequest;
 import com.example.learning_spring_security.dto.Response.AddressResponse;

@@ -1,6 +1,6 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.Service.CartService;
+import com.example.learning_spring_security.Service.ServiceStructure.CartService;
 import com.example.learning_spring_security.dto.Request.CartRequest;
 import com.example.learning_spring_security.dto.Response.CartResponse;
 import jakarta.validation.Valid;

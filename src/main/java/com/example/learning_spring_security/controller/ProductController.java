@@ -1,11 +1,11 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.Service.ProductService;
+import com.example.learning_spring_security.Service.ServiceStructure.ProductService;
+
 import com.example.learning_spring_security.dto.Request.ProductRequest;
 import com.example.learning_spring_security.dto.Response.ProductResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -17,9 +17,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 //import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -110,6 +114,26 @@ public class ProductController extends BaseController {
         ProductResponse response = productService.createProduct(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Add image to product", description = "Upload an image to an existing product")
+    public ResponseEntity<ProductResponse> addProductImage(
+            @PathVariable Long id,
+            @RequestPart("file") MultipartFile file) {  // Change to MultipartFile
+
+        ProductResponse response = productService.addImageToProduct(id, file);
+        return ResponseEntity.ok(response);
+    }
+
+//        @PostMapping("/upload")
+//        public ResponseEntity<Map> upload(ImageModel imageModel) {
+//            try {
+//                return imageService.uploadImage(imageModel);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return null;
+//            }
+
+
 
     @PutMapping("/{id}")
   //  @PreAuthorize("hasRole('ADMIN')")

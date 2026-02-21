@@ -13,7 +13,4 @@ public class CategoryResponse {
     private Long id;
     private String name;
     private String description;
-
-    @JsonProperty("sub_categories")
-    private List<SubCategoryResponse> subCategories;
 }

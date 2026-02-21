@@ -49,17 +49,16 @@ public class Product {
     @Column(length = 2000)
     private String description;
 
-    private String image;
+   // private List<String > image;
 
-    @Column(name = "main_image")
     private String mainImage;
 
     @Column(name = "is_active")
     private Boolean isActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sub_category_id") // ប្តូរពី subCategories_id
-    private SubCategory subCategory; // ប្តូរពី subCategories
+    @JoinColumn(name = "sub_category_id")
+    private SubCategory subCategory;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ProductSku> productSkus = new ArrayList<>();

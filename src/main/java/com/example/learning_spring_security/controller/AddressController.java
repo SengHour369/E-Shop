@@ -1,11 +1,10 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.Service.AddressService;
+import com.example.learning_spring_security.Service.ServiceStructure.AddressService;
 import com.example.learning_spring_security.dto.Request.AddressRequest;
 import com.example.learning_spring_security.dto.Response.AddressResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

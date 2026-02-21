@@ -1,6 +1,6 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.Service.PaymentService;
+import com.example.learning_spring_security.Service.ServiceStructure.PaymentService;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
 import jakarta.validation.Valid;

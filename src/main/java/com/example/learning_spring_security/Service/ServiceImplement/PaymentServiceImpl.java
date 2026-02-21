@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Service.implement;
+package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
@@ -6,7 +6,7 @@ import com.example.learning_spring_security.Model.OrderDetail;
 import com.example.learning_spring_security.Model.Payment;
 import com.example.learning_spring_security.Repository.OrderRepository;
 import com.example.learning_spring_security.Repository.PaymentRepository;
-import com.example.learning_spring_security.Service.PaymentService;
+import com.example.learning_spring_security.Service.ServiceStructure.PaymentService;
 import com.example.learning_spring_security.ServiceMapper.PaymentMapper;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;

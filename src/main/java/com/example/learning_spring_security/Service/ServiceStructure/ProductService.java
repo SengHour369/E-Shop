@@ -1,11 +1,10 @@
-package com.example.learning_spring_security.Service;
+package com.example.learning_spring_security.Service.ServiceStructure;
 
 import com.example.learning_spring_security.dto.Request.ProductRequest;
 import com.example.learning_spring_security.dto.Response.ProductResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface ProductService {
     ProductResponse createProduct(ProductRequest request);
@@ -19,4 +18,5 @@ public interface ProductService {
     ProductResponse updateProduct(Long id, ProductRequest request);
     void deleteProduct(Long id);
     ProductResponse updateProductStatus(Long id, Boolean isActive);
+    ProductResponse addImageToProduct(Long productId, MultipartFile file);
 }
