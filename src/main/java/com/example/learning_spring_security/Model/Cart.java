@@ -52,6 +52,7 @@ public class Cart  {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<CartItem> cartItems = new ArrayList<>();
 
+
     @Column(name = "total_price")
     private BigDecimal totalPrice = BigDecimal.ZERO;
 

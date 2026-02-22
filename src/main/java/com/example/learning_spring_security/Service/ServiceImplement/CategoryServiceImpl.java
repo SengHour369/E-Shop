@@ -9,6 +9,7 @@ import com.example.learning_spring_security.ServiceMapper.CategoryMapper;
 import com.example.learning_spring_security.dto.Request.CategoryRequest;
 import com.example.learning_spring_security.dto.Response.CategoryResponse;
 
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public CategoryResponse createCategory(CategoryRequest request) {
+    public ResponseErrorTemplate createCategory(CategoryRequest request) {
         if (categoryRepository.existsByName(request.getName())) {
             throw new DuplicateResourceException("Category already exists with name: " + request.getName());
         }
@@ -38,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public CategoryResponse getCategoryById(Long id) {
+    public ResponseErrorTemplate getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         return CategoryMapper.toResponse(category);
@@ -46,7 +47,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public CategoryResponse getCategoryByName(String name) {
+    public ResponseErrorTemplate getCategoryByName(String name) {
         Category category = categoryRepository.findByName(name)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with name: " + name));
         return CategoryMapper.toResponse(category);
@@ -54,21 +55,21 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CategoryResponse> getAllCategories(Pageable pageable) {
+    public Page<ResponseErrorTemplate> getAllCategories(Pageable pageable) {
         return categoryRepository.findAll(pageable)
                 .map(CategoryMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getAllCategories() {
+    public List<ResponseErrorTemplate> getAllCategories() {
         return categoryRepository.findAll().stream()
                 .map(CategoryMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public CategoryResponse updateCategory(Long id, CategoryRequest request) {
+    public ResponseErrorTemplate updateCategory(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         
@@ -93,7 +94,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public CategoryResponse getCategoryWithSubCategories(Long id) {
+    public ResponseErrorTemplate getCategoryWithSubCategories(Long id) {
         Category category = categoryRepository.findByIdWithSubCategories(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         return CategoryMapper.toResponse(category);
@@ -101,7 +102,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getAllCategoriesWithSubCategories() {
+    public List<ResponseErrorTemplate> getAllCategoriesWithSubCategories() {
         return categoryRepository.findAllWithSubCategories().stream()
                 .map(CategoryMapper::toResponse)
                 .collect(Collectors.toList());

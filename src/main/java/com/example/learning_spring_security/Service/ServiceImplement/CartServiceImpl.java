@@ -15,11 +15,13 @@ import com.example.learning_spring_security.ServiceMapper.CartMapper;
 import com.example.learning_spring_security.dto.Request.CartRequest;
 import com.example.learning_spring_security.dto.Response.CartResponse;
 
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Optional;
 
 @Service
@@ -34,16 +36,18 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional(readOnly = true)
-    public CartResponse getCartByUserId(Long userId) {
+    public ResponseErrorTemplate getCartByUserId(Long userId) {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user id: " + userId));
         return CartMapper.toResponse(cart);
     }
 
     @Override
-    public CartResponse addItemToCart(Long userId, CartRequest request) {
+    public ResponseErrorTemplate addItemToCart(Long userId, CartRequest request) {
         Cart cart = getOrCreateCartEntity(userId);
-
+        if (cart.getCartItems() == null) {
+            cart.setCartItems(new ArrayList<>());
+        }
         ProductSku productSku = productSkuRepository.findById(request.getProductSkuId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product SKU not found with id: " + request.getProductSkuId()));
 
@@ -70,7 +74,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse updateCartItem(Long userId, Long cartItemId, CartRequest request) {
+    public ResponseErrorTemplate updateCartItem(Long userId, Long cartItemId, CartRequest request) {
         Cart cart = getOrCreateCartEntity(userId);
 
         CartItem cartItem = cart.getCartItems().stream()
@@ -95,7 +99,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse removeItemFromCart(Long userId, Long cartItemId) {
+    public ResponseErrorTemplate removeItemFromCart(Long userId, Long cartItemId) {
         Cart cart = getOrCreateCartEntity(userId);
 
         CartItem cartItem = cart.getCartItems().stream()
@@ -112,7 +116,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse clearCart(Long userId) {
+    public ResponseErrorTemplate clearCart(Long userId) {
         Cart cart = getOrCreateCartEntity(userId);
 
         cartItemRepository.deleteAllByCartId(cart.getId());
@@ -126,7 +130,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse getOrCreateCart(Long userId) {
+    public ResponseErrorTemplate getOrCreateCart(Long userId) {
         Cart cart = getOrCreateCartEntity(userId);
         return CartMapper.toResponse(cart);
     }
@@ -141,7 +145,9 @@ public class CartServiceImpl implements CartService {
                             .user(user)
                             .totalPrice(BigDecimal.ZERO)
                             .totalItems(0)
+
                             .build();
+
                     return cartRepository.save(newCart);
                 });
     }

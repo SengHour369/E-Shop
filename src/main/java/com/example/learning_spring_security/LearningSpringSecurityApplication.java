@@ -16,21 +16,21 @@ public class LearningSpringSecurityApplication {
         SpringApplication.run(LearningSpringSecurityApplication.class, args);
     }
 
-    @Bean
-    CommandLineRunner commandLineRunner(RoleRepository roleRepository) {
-        return args -> {
-            List<String> roles = List.of("ADMIN", "USER");
-
-            for (String roleName : roles) {
-                if (roleRepository.findByName(roleName).isEmpty()) {
-                    Role role = new Role();
-                    role.setName(roleName);
-                    roleRepository.save(role);
-                    System.out.println("Role created: " + roleName);
-                } else {
-                    System.out.println("Role already exists: " + roleName);
-                }
-            }
-        };
-    }
+//    @Bean
+//    CommandLineRunner commandLineRunner(RoleRepository roleRepository) {
+//        return args -> {
+//            List<String> roles = List.of("ADMIN", "USER");
+//
+//            for (String roleName : roles) {
+//                if (roleRepository.findByName(roleName).isEmpty()) {
+//                    Role role = new Role();
+//                    role.setName(roleName);
+//                    roleRepository.save(role);
+//                    System.out.println("Role created: " + roleName);
+//                } else {
+//                    System.out.println("Role already exists: " + roleName);
+//                }
+//            }
+//        };
+//    }
 }

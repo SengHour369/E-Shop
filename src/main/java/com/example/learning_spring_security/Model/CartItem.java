@@ -53,5 +53,5 @@ public class CartItem  {
     private Long quantity;
 
     @Column(name = "total_price")
-    private BigDecimal totalPrice; // អាចគណនាដោយស្វ័យប្រវត្តិ
+    private BigDecimal totalPrice;
 }

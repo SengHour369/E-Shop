@@ -9,6 +9,7 @@ import com.example.learning_spring_security.Repository.SubCategoryRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.SubCategoryService;
 import com.example.learning_spring_security.ServiceMapper.SubCategoryMapper;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import com.example.learning_spring_security.dto.Response.SubCategoryResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public SubCategoryResponse createSubCategory(SubCategoryRequest request) {
+    public ResponseErrorTemplate createSubCategory(SubCategoryRequest request) {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
 
@@ -46,7 +47,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public SubCategoryResponse getSubCategoryById(Long id) {
+    public ResponseErrorTemplate getSubCategoryById(Long id) {
         SubCategory subCategory = subCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + id));
         return SubCategoryMapper.toResponse(subCategory);
@@ -54,7 +55,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<SubCategoryResponse> getSubCategoriesByCategory(Long categoryId, Pageable pageable) {
+    public Page<ResponseErrorTemplate> getSubCategoriesByCategory(Long categoryId, Pageable pageable) {
         if (!categoryRepository.existsById(categoryId)) {
             throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
@@ -64,7 +65,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SubCategoryResponse> getSubCategoriesByCategoryAsList(Long categoryId) {
+    public List<ResponseErrorTemplate> getSubCategoriesByCategoryAsList(Long categoryId) {
         if (!categoryRepository.existsById(categoryId)) {
             throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
@@ -74,7 +75,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
     }
 
     @Override
-    public SubCategoryResponse updateSubCategory(Long id, SubCategoryRequest request) {
+    public ResponseErrorTemplate updateSubCategory(Long id, SubCategoryRequest request) {
         SubCategory subCategory = subCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + id));
 
@@ -106,7 +107,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public SubCategoryResponse getSubCategoryWithProducts(Long id) {
+    public ResponseErrorTemplate getSubCategoryWithProducts(Long id) {
         SubCategory subCategory = subCategoryRepository.findByIdWithProducts(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + id));
         return SubCategoryMapper.toResponse(subCategory);

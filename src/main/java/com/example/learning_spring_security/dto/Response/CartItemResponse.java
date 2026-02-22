@@ -16,10 +16,10 @@ public class CartItemResponse {
     private Long productSkuId;
 
     @JsonProperty("product_sku")
-    private ProductSkuResponse productSku;  // បន្ថែមព័ត៌មានលម្អិតរបស់ SKU
+    private ProductSkuResponse productSku;
 
     private Long quantity;
 
     @JsonProperty("total_price")
-    private BigDecimal totalPrice;  // បន្ថែមតម្លៃសរុប
+    private BigDecimal totalPrice;  
 }

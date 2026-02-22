@@ -18,5 +18,5 @@ public class CartRequest {
 
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
-    private Long quantity;  // ប្តូរពី BigDecimal -> Long
+    private Long quantity;
 }

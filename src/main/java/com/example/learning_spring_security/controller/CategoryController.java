@@ -3,6 +3,7 @@ package com.example.learning_spring_security.controller;
 import com.example.learning_spring_security.Service.ServiceStructure.CategoryService;
 import com.example.learning_spring_security.dto.Request.CategoryRequest;
 import com.example.learning_spring_security.dto.Response.CategoryResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,53 +24,53 @@ public class CategoryController extends BaseController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<Page<CategoryResponse>> getAllCategories(
+    public ResponseEntity<Page<ResponseErrorTemplate>> getAllCategories(
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<CategoryResponse> categories = categoryService.getAllCategories(pageable);
+        Page<ResponseErrorTemplate> categories = categoryService.getAllCategories(pageable);
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
-        List<CategoryResponse> categories = categoryService.getAllCategories();
+    public ResponseEntity<List<ResponseErrorTemplate>> getAllCategories() {
+        List<ResponseErrorTemplate> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/with-subcategories")
-    public ResponseEntity<List<CategoryResponse>> getAllCategoriesWithSubCategories() {
-        List<CategoryResponse> categories = categoryService.getAllCategoriesWithSubCategories();
+    public ResponseEntity<List<ResponseErrorTemplate>> getAllCategoriesWithSubCategories() {
+        List<ResponseErrorTemplate> categories = categoryService.getAllCategoriesWithSubCategories();
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id) {
-        CategoryResponse category = categoryService.getCategoryById(id);
+    public ResponseEntity<ResponseErrorTemplate> getCategoryById(@PathVariable Long id) {
+        ResponseErrorTemplate category = categoryService.getCategoryById(id);
         return ResponseEntity.ok(category);
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<CategoryResponse> getCategoryByName(@PathVariable String name) {
-        CategoryResponse category = categoryService.getCategoryByName(name);
+    public ResponseEntity<ResponseErrorTemplate> getCategoryByName(@PathVariable String name) {
+        ResponseErrorTemplate category = categoryService.getCategoryByName(name);
         return ResponseEntity.ok(category);
     }
 
     @GetMapping("/{id}/with-subcategories")
-    public ResponseEntity<CategoryResponse> getCategoryWithSubCategories(@PathVariable Long id) {
-        CategoryResponse category = categoryService.getCategoryWithSubCategories(id);
+    public ResponseEntity<ResponseErrorTemplate> getCategoryWithSubCategories(@PathVariable Long id) {
+        ResponseErrorTemplate category = categoryService.getCategoryWithSubCategories(id);
         return ResponseEntity.ok(category);
     }
 
     @PostMapping
-    public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
-        CategoryResponse response = categoryService.createCategory(request);
+    public ResponseEntity<ResponseErrorTemplate> createCategory(@Valid @RequestBody CategoryRequest request) {
+        ResponseErrorTemplate response = categoryService.createCategory(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponse> updateCategory(
+    public ResponseEntity<ResponseErrorTemplate> updateCategory(
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest request) {
-        CategoryResponse response = categoryService.updateCategory(id, request);
+        ResponseErrorTemplate response = categoryService.updateCategory(id, request);
         return ResponseEntity.ok(response);
     }
 

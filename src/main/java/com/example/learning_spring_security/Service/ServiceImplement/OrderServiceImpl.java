@@ -11,6 +11,7 @@ import com.example.learning_spring_security.ServiceMapper.OrderMapper;
 import com.example.learning_spring_security.dto.Request.OrderRequest;
 import com.example.learning_spring_security.dto.Response.OrderResponse;
 
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +38,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentRepository paymentRepository;
 
     @Override
-    public OrderResponse createOrderFromCart(Long userId, OrderRequest request) {
+    public ResponseErrorTemplate createOrderFromCart(Long userId, OrderRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -63,7 +64,7 @@ public class OrderServiceImpl implements OrderService {
                 .orderDate(LocalDateTime.now())
                 .status("PENDING")
                 .subtotal(cart.getTotalPrice())
-                .totalAmount(cart.getTotalPrice()) // Add shipping/tax calculation if needed
+                .totalAmount(cart.getTotalPrice())
                 .shippingAddress(shippingAddress)
                 .build();
 
@@ -109,7 +110,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderResponse getOrderById(Long id) {
+    public ResponseErrorTemplate getOrderById(Long id) {
         OrderDetail order = orderRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         return OrderMapper.toResponse(order);
@@ -117,7 +118,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderResponse getOrderByNumber(String orderNumber) {
+    public ResponseErrorTemplate getOrderByNumber(String orderNumber) {
         OrderDetail order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with number: " + orderNumber));
         return OrderMapper.toResponse(order);
@@ -125,7 +126,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderResponse> getUserOrders(Long userId, Pageable pageable) {
+    public Page<ResponseErrorTemplate> getUserOrders(Long userId, Pageable pageable) {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
@@ -135,13 +136,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderResponse> getAllOrders(Pageable pageable) {
+    public Page<ResponseErrorTemplate> getAllOrders(Pageable pageable) {
         return orderRepository.findAll(pageable)
                 .map(OrderMapper::toResponse);
     }
 
     @Override
-    public OrderResponse updateOrderStatus(Long id, String status) {
+    public ResponseErrorTemplate updateOrderStatus(Long id, String status) {
         OrderDetail order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
@@ -163,7 +164,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse cancelOrder(Long id, Long userId) {
+    public ResponseErrorTemplate cancelOrder(Long id, Long userId) {
         OrderDetail order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 

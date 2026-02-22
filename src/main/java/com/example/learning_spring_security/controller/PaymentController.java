@@ -3,6 +3,7 @@ package com.example.learning_spring_security.controller;
 import com.example.learning_spring_security.Service.ServiceStructure.PaymentService;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

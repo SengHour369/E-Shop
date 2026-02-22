@@ -11,6 +11,7 @@ import com.example.learning_spring_security.ServiceMapper.AddressMapper;
 import com.example.learning_spring_security.dto.Request.AddressRequest;
 import com.example.learning_spring_security.dto.Response.AddressResponse;
 
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +30,7 @@ public class AddressServiceImpl implements AddressService {
     private final UserRepository userRepository;
 
     @Override
-    public AddressResponse createAddress(AddressRequest request, Long userId) {
+    public ResponseErrorTemplate createAddress(AddressRequest request, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -51,7 +52,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public AddressResponse getAddressById(Long id) {
+    public ResponseErrorTemplate getAddressById(Long id) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
         return AddressMapper.toResponse(address);
@@ -59,7 +60,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AddressResponse> getUserAddresses(Long userId, Pageable pageable) {
+    public Page<ResponseErrorTemplate> getUserAddresses(Long userId, Pageable pageable) {
         // Verify user exists
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
@@ -74,7 +75,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AddressResponse> getUserAddresses(Long userId) {
+    public List<ResponseErrorTemplate> getUserAddresses(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
@@ -85,7 +86,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressResponse updateAddress(Long id, AddressRequest request, Long userId) {
+    public ResponseErrorTemplate updateAddress(Long id, AddressRequest request, Long userId) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
 
@@ -123,7 +124,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressResponse setDefaultAddress(Long addressId, Long userId) {
+    public ResponseErrorTemplate setDefaultAddress(Long addressId, Long userId) {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + addressId));
 
@@ -140,7 +141,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public AddressResponse getDefaultAddress(Long userId) {
+    public ResponseErrorTemplate getDefaultAddress(Long userId) {
         Address address = addressRepository.findDefaultAddressByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("No default address found for user"));
         return AddressMapper.toResponse(address);

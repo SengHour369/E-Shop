@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 @Builder
 public record UserResponse(
+        Long id,
         String username,
         String password,
         String email,

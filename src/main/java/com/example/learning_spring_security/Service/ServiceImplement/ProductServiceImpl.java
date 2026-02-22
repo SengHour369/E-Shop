@@ -13,6 +13,7 @@ import com.example.learning_spring_security.ServiceMapper.ProductMapper;
 import com.example.learning_spring_security.ServiceMapper.ProductSkuMapper;
 import com.example.learning_spring_security.dto.Request.ProductRequest;
 import com.example.learning_spring_security.dto.Response.ProductResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +35,7 @@ public class ProductServiceImpl implements ProductService {
     private final ImageService imageService;
 
     @Override
-    public ProductResponse createProduct(ProductRequest request) {
+    public ResponseErrorTemplate createProduct(ProductRequest request) {
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
 
@@ -60,7 +61,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductResponse getProductById(Long id) {
+    public ResponseErrorTemplate getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         return ProductMapper.toResponse(product);
@@ -68,7 +69,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductResponse getProductWithSkus(Long id) {
+    public ResponseErrorTemplate getProductWithSkus(Long id) {
         Product product = productRepository.findByIdWithSkus(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         return ProductMapper.toResponse(product);
@@ -76,19 +77,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+    public Page<ResponseErrorTemplate> getAllProducts(Pageable pageable) {
         return productRepository.findAll(pageable)
                 .map(ProductMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getActiveProducts(Pageable pageable) {
+    public Page<ResponseErrorTemplate> getActiveProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable)
                 .map(ProductMapper::toResponse);
     }
     @Override
-    public ProductResponse addImageToProduct(Long productId, MultipartFile file) {
+    public ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
@@ -103,7 +104,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getProductsBySubCategory(Long subCategoryId, Pageable pageable) {
+    public Page<ResponseErrorTemplate> getProductsBySubCategory(Long subCategoryId, Pageable pageable) {
         if (!subCategoryRepository.existsById(subCategoryId)) {
             throw new ResourceNotFoundException("SubCategory not found with id: " + subCategoryId);
         }
@@ -113,20 +114,20 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getProductsByCategory(Long categoryId, Pageable pageable) {
+    public Page<ResponseErrorTemplate> getProductsByCategory(Long categoryId, Pageable pageable) {
         return productRepository.findByCategoryId(categoryId, pageable)
                 .map(ProductMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> searchProducts(String keyword, Pageable pageable) {
+    public Page<ResponseErrorTemplate> searchProducts(String keyword, Pageable pageable) {
         return productRepository.searchProducts(keyword, pageable)
                 .map(ProductMapper::toResponse);
     }
 
     @Override
-    public ProductResponse updateProduct(Long id, ProductRequest request) {
+    public ResponseErrorTemplate updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
@@ -150,7 +151,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse updateProductStatus(Long id, Boolean isActive) {
+    public ResponseErrorTemplate updateProductStatus(Long id, Boolean isActive) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         product.setIsActive(isActive);

@@ -2,12 +2,13 @@ package com.example.learning_spring_security.Service.ServiceStructure;
 
 import com.example.learning_spring_security.dto.Request.CartRequest;
 import com.example.learning_spring_security.dto.Response.CartResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
 public interface CartService {
-    CartResponse getCartByUserId(Long userId);
-    CartResponse addItemToCart(Long userId, CartRequest request);
-    CartResponse updateCartItem(Long userId, Long cartItemId, CartRequest request);
-    CartResponse removeItemFromCart(Long userId, Long cartItemId);
-    CartResponse clearCart(Long userId);
-    CartResponse getOrCreateCart(Long userId);
+    ResponseErrorTemplate getCartByUserId(Long userId);
+    ResponseErrorTemplate addItemToCart(Long userId, CartRequest request);
+    ResponseErrorTemplate updateCartItem(Long userId, Long cartItemId, CartRequest request);
+    ResponseErrorTemplate removeItemFromCart(Long userId, Long cartItemId);
+    ResponseErrorTemplate clearCart(Long userId);
+    ResponseErrorTemplate getOrCreateCart(Long userId);
 }

@@ -1,9 +1,12 @@
 package com.example.learning_spring_security.ServiceMapper;
 
+import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.dto.Request.ProductRequest;
 import com.example.learning_spring_security.dto.Response.ProductResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
+
 import java.util.stream.Collectors;
 
 public class ProductMapper {
@@ -19,9 +22,8 @@ public class ProductMapper {
                 .build();
     }
 
-    public static ProductResponse toResponse(Product product) {
-
-        return ProductResponse.builder()
+    public static ResponseErrorTemplate toResponse(Product product) {
+        ProductResponse productResponse  = ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
@@ -33,6 +35,7 @@ public class ProductMapper {
                         .map(ProductSkuMapper::toResponse)
                         .collect(Collectors.toList()))
                 .build();
+        return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, productResponse);
     }
 
     public static void updateEntity(Product product, ProductRequest request,

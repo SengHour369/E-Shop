@@ -2,6 +2,7 @@ package com.example.learning_spring_security.Service.ServiceStructure;
 
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
 public interface PaymentService {
     PaymentResponse processPayment(Long orderId, PaymentRequest request);

@@ -23,7 +23,7 @@ public class ProductResponse {
     private Boolean isActive;
 
     @JsonProperty("sub_category")
-    private SubCategoryResponse subCategory;
+    private ResponseErrorTemplate subCategory;
 
     private List<ProductSkuResponse> skus;
 }

@@ -4,6 +4,7 @@ import com.example.learning_spring_security.Service.ServiceStructure.ProductServ
 
 import com.example.learning_spring_security.dto.Request.ProductRequest;
 import com.example.learning_spring_security.dto.Response.ProductResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,11 +20,10 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -36,47 +36,47 @@ public class ProductController extends BaseController {
 
     @GetMapping
     @Operation(summary = "Get all products", description = "Retrieve all products with pagination")
-    public ResponseEntity<Page<ProductResponse>> getAllProducts(
+    public ResponseEntity<Page<ResponseErrorTemplate>> getAllProducts(
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<ProductResponse> products = productService.getAllProducts(pageable);
+        Page<ResponseErrorTemplate> products = productService.getAllProducts(pageable);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/active")
     @Operation(summary = "Get active products", description = "Retrieve only active products")
-    public ResponseEntity<Page<ProductResponse>> getActiveProducts(
+    public ResponseEntity<Page<ResponseErrorTemplate>> getActiveProducts(
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<ProductResponse> products = productService.getActiveProducts(pageable);
+        Page<ResponseErrorTemplate> products = productService.getActiveProducts(pageable);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/search")
     @Operation(summary = "Search products", description = "Search products by keyword")
-    public ResponseEntity<Page<ProductResponse>> searchProducts(
+    public ResponseEntity<Page<ResponseErrorTemplate>> searchProducts(
             @Parameter(description = "Search keyword", example = "phone")
             @RequestParam String keyword,
             @PageableDefault(size = 10) Pageable pageable) {
-        Page<ProductResponse> products = productService.searchProducts(keyword, pageable);
+        Page<ResponseErrorTemplate> products = productService.searchProducts(keyword, pageable);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/subcategory/{subCategoryId}")
     @Operation(summary = "Get products by subcategory", description = "Get products by subcategory ID")
-    public ResponseEntity<Page<ProductResponse>> getProductsBySubCategory(
+    public ResponseEntity<Page<ResponseErrorTemplate>> getProductsBySubCategory(
             @Parameter(description = "SubCategory ID", example = "1")
             @PathVariable Long subCategoryId,
             @PageableDefault(size = 10) Pageable pageable) {
-        Page<ProductResponse> products = productService.getProductsBySubCategory(subCategoryId, pageable);
+        Page<ResponseErrorTemplate> products = productService.getProductsBySubCategory(subCategoryId, pageable);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/category/{categoryId}")
     @Operation(summary = "Get products by category", description = "Get products by category ID")
-    public ResponseEntity<Page<ProductResponse>> getProductsByCategory(
+    public ResponseEntity<Page<ResponseErrorTemplate>> getProductsByCategory(
             @Parameter(description = "Category ID", example = "1")
             @PathVariable Long categoryId,
             @PageableDefault(size = 10) Pageable pageable) {
-        Page<ProductResponse> products = productService.getProductsByCategory(categoryId, pageable);
+        Page<ResponseErrorTemplate> products = productService.getProductsByCategory(categoryId, pageable);
         return ResponseEntity.ok(products);
     }
 
@@ -86,77 +86,69 @@ public class ProductController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Product found"),
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
-    public ResponseEntity<ProductResponse> getProductById(
+    public ResponseEntity<ResponseErrorTemplate> getProductById(
             @Parameter(description = "Product ID", example = "1")
             @PathVariable Long id) {
-        ProductResponse product = productService.getProductById(id);
+        ResponseErrorTemplate product = productService.getProductById(id);
         return ResponseEntity.ok(product);
     }
 
     @GetMapping("/{id}/with-skus")
     @Operation(summary = "Get product with SKUs", description = "Get product details with all SKU variants")
-    public ResponseEntity<ProductResponse> getProductWithSkus(
+    public ResponseEntity<ResponseErrorTemplate> getProductWithSkus(
             @Parameter(description = "Product ID", example = "1")
             @PathVariable Long id) {
-        ProductResponse product = productService.getProductWithSkus(id);
+        ResponseErrorTemplate product = productService.getProductWithSkus(id);
         return ResponseEntity.ok(product);
     }
 
     @PostMapping
-   // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create product", description = "Create a new product (Admin only)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Product created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input"),
             @ApiResponse(responseCode = "403", description = "Access denied - Admin only")
     })
-    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        ProductResponse response = productService.createProduct(request);
+    public ResponseEntity<ResponseErrorTemplate> createProduct(@Valid @RequestBody ProductRequest request) {
+        ResponseErrorTemplate response = productService.createProduct(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Add image to product", description = "Upload an image to an existing product")
-    public ResponseEntity<ProductResponse> addProductImage(
+    public ResponseEntity<ResponseErrorTemplate> addProductImage(
             @PathVariable Long id,
             @RequestPart("file") MultipartFile file) {  // Change to MultipartFile
 
-        ProductResponse response = productService.addImageToProduct(id, file);
+        ResponseErrorTemplate response = productService.addImageToProduct(id, file);
         return ResponseEntity.ok(response);
     }
 
-//        @PostMapping("/upload")
-//        public ResponseEntity<Map> upload(ImageModel imageModel) {
-//            try {
-//                return imageService.uploadImage(imageModel);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                return null;
-//            }
 
 
 
     @PutMapping("/{id}")
-  //  @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update product", description = "Update an existing product (Admin only)")
-    public ResponseEntity<ProductResponse> updateProduct(
+    public ResponseEntity<ResponseErrorTemplate> updateProduct(
             @Parameter(description = "Product ID", example = "1") @PathVariable Long id,
             @Valid @RequestBody ProductRequest request) {
-        ProductResponse response = productService.updateProduct(id, request);
+        ResponseErrorTemplate response = productService.updateProduct(id, request);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/status")
-   // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update product status", description = "Activate or deactivate a product (Admin only)")
-    public ResponseEntity<ProductResponse> updateProductStatus(
+    public ResponseEntity<ResponseErrorTemplate> updateProductStatus(
             @Parameter(description = "Product ID", example = "1") @PathVariable Long id,
             @Parameter(description = "Active status", example = "true") @RequestParam Boolean isActive) {
-        ProductResponse response = productService.updateProductStatus(id, isActive);
+        ResponseErrorTemplate response = productService.updateProductStatus(id, isActive);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-   // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete product", description = "Delete a product by ID (Admin only)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Product deleted successfully"),

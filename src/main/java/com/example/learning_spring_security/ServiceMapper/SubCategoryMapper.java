@@ -1,7 +1,9 @@
 package com.example.learning_spring_security.ServiceMapper;
 
+import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import com.example.learning_spring_security.dto.Response.SubCategoryResponse;
 
 public class SubCategoryMapper {
@@ -17,7 +19,7 @@ public class SubCategoryMapper {
                 .build();
     }
 
-    public static SubCategoryResponse toResponse(SubCategory subCategory) {
+    public static ResponseErrorTemplate toResponse(SubCategory subCategory) {
         if (subCategory == null) {
             return null;
         }
@@ -33,7 +35,7 @@ public class SubCategoryMapper {
             response.setCategoryName(subCategory.getCategory().getName());
         }
 
-        return response;
+        return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, response);
     }
 
     public static void updateEntity(SubCategory subCategory, SubCategoryRequest request) {

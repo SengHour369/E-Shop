@@ -1,8 +1,10 @@
 package com.example.learning_spring_security.ServiceMapper;
 
+import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.Address;
 import com.example.learning_spring_security.dto.Request.AddressRequest;
 import com.example.learning_spring_security.dto.Response.AddressResponse;
+import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
 public class AddressMapper {
 
@@ -18,8 +20,8 @@ public class AddressMapper {
                 .build();
     }
 
-    public static AddressResponse toResponse(Address address) {
-        return AddressResponse.builder()
+    public static ResponseErrorTemplate toResponse(Address address) {
+        AddressResponse addressResponse  = AddressResponse.builder()
                 .id(address.getId())
                 .addressLine1(address.getAddressLine1())
                 .addressLine2(address.getAddressLine2())
@@ -29,6 +31,7 @@ public class AddressMapper {
                 .country(address.getCountry())
                 .isDefault(address.getIsDefault())
                 .build();
+        return  new  ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, addressResponse);
     }
 
     public static void updateEntity(Address address, AddressRequest request) {
