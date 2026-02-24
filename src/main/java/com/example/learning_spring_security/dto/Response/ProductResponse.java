@@ -22,8 +22,5 @@ public class ProductResponse {
     @JsonProperty("is_active")
     private Boolean isActive;
 
-    @JsonProperty("sub_category")
-    private ResponseErrorTemplate subCategory;
-
     private List<ProductSkuResponse> skus;
 }

@@ -4,7 +4,7 @@ import com.example.learning_spring_security.JWT.JwtConfig;
 import com.example.learning_spring_security.JWT.JwtService;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import com.example.learning_spring_security.Security.UserDetailsService;
-import com.example.learning_spring_security.dto.Request.AuthenticationRequest;
+import com.example.learning_spring_security.dto.Request.Login;
 import com.example.learning_spring_security.dto.Response.AuthenticationResponse;
 import com.example.learning_spring_security.utils.CustomMessageExceptionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +20,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
-import org.springframework.security.web.util.matcher.ParameterRequestMatcher;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,8 +49,8 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
             throws AuthenticationException, IOException, ServletException {
 
         log.info("Start attempt to authentication");
-        AuthenticationRequest authenticationRequest = objectMapper.readValue(request.getInputStream(),
-                AuthenticationRequest.class);
+        Login authenticationRequest = objectMapper.readValue(request.getInputStream(),
+                Login.class);
 
         customUserDetailService.saveUserAttemptAuthentication(authenticationRequest.username());
         log.info("End attempt to authentication");

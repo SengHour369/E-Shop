@@ -13,9 +13,7 @@ public class SubCategoryResponse {
     private String name;
     private String description;
 
-    @JsonProperty("category_id")
-    private Long categoryId;
 
     @JsonProperty("category_name")
-    private String categoryName;  // បន្ថែមឈ្មោះ Category
+    private String categoryName;
 }

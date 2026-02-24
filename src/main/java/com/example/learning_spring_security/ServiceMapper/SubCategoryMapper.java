@@ -31,7 +31,6 @@ public class SubCategoryMapper {
                 .build();
 
         if (subCategory.getCategory() != null) {
-            response.setCategoryId(subCategory.getCategory().getId());
             response.setCategoryName(subCategory.getCategory().getName());
         }
 

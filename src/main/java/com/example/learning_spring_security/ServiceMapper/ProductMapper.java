@@ -30,7 +30,6 @@ public class ProductMapper {
 //                .image(product.getImage())
                 .mainImage(product.getMainImage())
                 .isActive(product.getIsActive())
-                .subCategory(SubCategoryMapper.toResponse(product.getSubCategory()))
                 .skus(product.getProductSkus().stream()
                         .map(ProductSkuMapper::toResponse)
                         .collect(Collectors.toList()))

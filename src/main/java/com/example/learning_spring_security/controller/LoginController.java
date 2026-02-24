@@ -1,6 +1,6 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.dto.Request.AuthenticationRequest;
+import com.example.learning_spring_security.dto.Request.Login;
 import com.example.learning_spring_security.dto.Response.AuthenticationResponse;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import com.example.learning_spring_security.JWT.JwtService;
@@ -31,7 +31,7 @@ public class LoginController {
     private final ObjectMapper objectMapper;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest authenticationRequest) {
+    public ResponseEntity<AuthenticationResponse> login(@RequestBody Login authenticationRequest) {
         log.info("Login attempt for user: {}", authenticationRequest.username());
 
         try {

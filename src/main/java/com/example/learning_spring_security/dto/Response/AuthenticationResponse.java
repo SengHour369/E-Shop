@@ -7,3 +7,4 @@ public record AuthenticationResponse(
         @JsonProperty("refresh_token") String refreshToken
 ){
 }
+

@@ -9,8 +9,8 @@ import com.example.learning_spring_security.Repository.UserRepository;
 
 import com.example.learning_spring_security.Service.ServiceStructure.AuthService;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
-import com.example.learning_spring_security.dto.Request.UserRequest;
-import com.example.learning_spring_security.dto.Response.UserResponse;
+import com.example.learning_spring_security.dto.Request.Register;
+import com.example.learning_spring_security.dto.Response.RegisterResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -32,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public ResponseErrorTemplate create(UserRequest userRequest) {
+    public ResponseErrorTemplate create(Register userRequest) {
         // TODO: 3/4/23 validation request data before processing save user
         this.userRequestValidation(userRequest);
          List<String> role = List.of("USER");
@@ -71,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public ResponseErrorTemplate userMapper(User user) {
-        UserResponse userResponse = new UserResponse(
+        RegisterResponse userResponse = new RegisterResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
@@ -82,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
         );
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, userResponse);
     }
-    private void userRequestValidation(UserRequest userRequest) {
+    private void userRequestValidation(Register userRequest) {
 
         // TODO: 3/4/23 password must be not null or blank
         if(ObjectUtils.isEmpty(userRequest.password())) {

@@ -15,7 +15,6 @@ public class ProductSkuResponse {
     private String description;
     private BigDecimal price;
 
-
     private Long quantity;
 
     @JsonProperty("low_stock_threshold")

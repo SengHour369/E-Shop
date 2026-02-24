@@ -2,7 +2,7 @@ package com.example.learning_spring_security.controller;
 
 
 import com.example.learning_spring_security.Service.ServiceStructure.AuthService;
-import com.example.learning_spring_security.dto.Request.UserRequest;
+import com.example.learning_spring_security.dto.Request.Register;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,7 @@ public class RegisterController {
 
 
     @PostMapping("/accounts/register")
-    public ResponseEntity<Object> register(@RequestBody UserRequest userRequest) {
+    public ResponseEntity<Object> register(@RequestBody Register userRequest) {
         log.info("Intercept registration new user with req: {}", userRequest);
         return ResponseEntity.ok(userService.create(userRequest));
     }
