@@ -12,8 +12,7 @@ public class SubCategoryResponse {
     private Long id;
     private String name;
     private String description;
-
-
+    private String image;
     @JsonProperty("category_name")
     private String categoryName;
 }

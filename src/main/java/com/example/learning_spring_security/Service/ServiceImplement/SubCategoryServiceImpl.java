@@ -5,7 +5,9 @@ import com.example.learning_spring_security.Exception.ExceptionService.ResourceN
 import com.example.learning_spring_security.Model.Category;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.Repository.CategoryRepository;
+import com.example.learning_spring_security.Repository.ImageRepository;
 import com.example.learning_spring_security.Repository.SubCategoryRepository;
+import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
 import com.example.learning_spring_security.Service.ServiceStructure.SubCategoryService;
 import com.example.learning_spring_security.ServiceMapper.SubCategoryMapper;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +31,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     private final SubCategoryRepository subCategoryRepository;
     private final CategoryRepository categoryRepository;
+    private final ImageService imageService;
 
     @Override
     public ResponseErrorTemplate createSubCategory(SubCategoryRequest request) {
@@ -111,5 +115,18 @@ public class SubCategoryServiceImpl implements SubCategoryService {
         SubCategory subCategory = subCategoryRepository.findByIdWithProducts(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + id));
         return SubCategoryMapper.toResponse(subCategory);
+    }
+
+    @Override
+    public ResponseErrorTemplate addImageToProduct(Long id, MultipartFile image) {
+        SubCategory subCategory = this.subCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + id));
+        if(image != null ){
+            String  imageUrl = this.imageService.uploadImage(image);
+            subCategory.setImage(imageUrl);
+            this.subCategoryRepository.save(subCategory);
+        }
+
+        return null;
     }
 }

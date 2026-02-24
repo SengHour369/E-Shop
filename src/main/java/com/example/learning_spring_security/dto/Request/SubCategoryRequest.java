@@ -14,9 +14,8 @@ public class SubCategoryRequest {
 
     @NotBlank(message = "Subcategory name is required")
     private String name;
-
     private String description;
-
+    private String image;
     @NotNull(message = "Category ID is required")
     @JsonProperty("category_id")
     private Long categoryId;

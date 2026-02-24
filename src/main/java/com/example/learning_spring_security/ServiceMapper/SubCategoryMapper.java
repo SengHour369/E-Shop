@@ -33,6 +33,10 @@ public class SubCategoryMapper {
         if (subCategory.getCategory() != null) {
             response.setCategoryName(subCategory.getCategory().getName());
         }
+        if (subCategory.getImage() != null) {
+            response.setImage(subCategory.getImage());
+        }
+
 
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, response);
     }

@@ -48,11 +48,13 @@ public class SubCategory {
     private String name;
 
     private String description;
+    @Column(nullable = false,name = "")
+    private String image;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @OneToMany(mappedBy = "subCategory", fetch = FetchType.LAZY) // ប្តូរពី subCategories
+    @OneToMany(mappedBy = "subCategory", fetch = FetchType.LAZY)
     private List<Product> products = new ArrayList<>();
 }
