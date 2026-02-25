@@ -12,13 +12,8 @@ import java.util.List;
 public interface SubCategoryService {
     ResponseErrorTemplate createSubCategory(SubCategoryRequest request);
     ResponseErrorTemplate getSubCategoryById(Long id);
-
-
-    Page<ResponseErrorTemplate> getSubCategoriesByCategory(Long categoryId, Pageable pageable);
-
-
+    Page<ResponseErrorTemplate> getSubCategoryAll( Pageable pageable);
     List<ResponseErrorTemplate> getSubCategoriesByCategoryAsList(Long categoryId);
-
     ResponseErrorTemplate updateSubCategory(Long id, SubCategoryRequest request);
     void deleteSubCategory(Long id);
     ResponseErrorTemplate getSubCategoryWithProducts(Long id);

@@ -118,14 +118,11 @@ public class ProductController extends BaseController {
     @Operation(summary = "Add image to product", description = "Upload an image to an existing product")
     public ResponseEntity<ResponseErrorTemplate> addProductImage(
             @PathVariable Long id,
-            @RequestPart("file") MultipartFile file) {  // Change to MultipartFile
+            @RequestPart("file") MultipartFile file) {
 
         ResponseErrorTemplate response = productService.addImageToProduct(id, file);
         return ResponseEntity.ok(response);
     }
-
-
-
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

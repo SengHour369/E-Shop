@@ -3,16 +3,18 @@ package com.example.learning_spring_security.controller;
 import com.example.learning_spring_security.Service.ServiceStructure.SubCategoryService;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
-import com.example.learning_spring_security.dto.Response.SubCategoryResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,11 +25,10 @@ public class SubCategoryController extends BaseController {
 
     private final SubCategoryService subCategoryService;
 
-    @GetMapping("/category/{categoryId}")
+    @GetMapping("/All")
     public ResponseEntity<Page<ResponseErrorTemplate>> getSubCategoriesByCategory(
-            @PathVariable Long categoryId,
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<ResponseErrorTemplate> subCategories = subCategoryService.getSubCategoriesByCategory(categoryId, pageable);
+        Page<ResponseErrorTemplate> subCategories = subCategoryService.getSubCategoryAll( pageable);
         return ResponseEntity.ok(subCategories);
     }
 
@@ -67,5 +68,14 @@ public class SubCategoryController extends BaseController {
     public ResponseEntity<Void> deleteSubCategory(@PathVariable Long id) {
         subCategoryService.deleteSubCategory(id);
         return ResponseEntity.noContent().build();
+    }
+    @PostMapping(value = "/{id}/image",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Add image to SubCategory", description = "Upload an image to an existing SubCategory")
+    public  ResponseEntity<ResponseErrorTemplate> addSubCategoryImage(
+            @PathVariable Long id,
+            @RequestPart("file")MultipartFile file){
+        ResponseErrorTemplate response = this.subCategoryService.addImageToProduct(id, file);
+        return  ResponseEntity.ok(response);
+
     }
 }

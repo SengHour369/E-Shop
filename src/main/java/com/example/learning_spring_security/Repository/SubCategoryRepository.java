@@ -13,17 +13,15 @@ import java.util.Optional;
 @Repository
 public interface SubCategoryRepository extends JpaRepository<SubCategory, Long> {
 
-    // វិធីទី 1: សម្រាប់ Pagination - ត្រូវមាន Pageable parameter
-    Page<SubCategory> findByCategoryId(Long categoryId, Pageable pageable);
 
-    // វិធីទី 2: សម្រាប់យកជា List ធម្មតា - គ្មាន Pageable
+    Page<SubCategory> findAll(Pageable pageable);
+
     List<SubCategory> findByCategoryId(Long categoryId);
 
     @Query("SELECT s FROM SubCategory s LEFT JOIN FETCH s.products WHERE s.id = :id")
     Optional<SubCategory> findByIdWithProducts(@Param("id") Long id);
 
     boolean existsByNameAndCategoryId(String name, Long categoryId);
-
     @Query("SELECT s FROM SubCategory s JOIN FETCH s.category WHERE s.category.id = :categoryId")
     List<SubCategory> findByCategoryIdWithCategory(@Param("categoryId") Long categoryId);
 }

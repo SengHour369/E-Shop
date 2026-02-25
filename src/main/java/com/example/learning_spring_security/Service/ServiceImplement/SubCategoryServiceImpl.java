@@ -5,14 +5,12 @@ import com.example.learning_spring_security.Exception.ExceptionService.ResourceN
 import com.example.learning_spring_security.Model.Category;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.Repository.CategoryRepository;
-import com.example.learning_spring_security.Repository.ImageRepository;
 import com.example.learning_spring_security.Repository.SubCategoryRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
 import com.example.learning_spring_security.Service.ServiceStructure.SubCategoryService;
 import com.example.learning_spring_security.ServiceMapper.SubCategoryMapper;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
-import com.example.learning_spring_security.dto.Response.SubCategoryResponse;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -59,11 +57,9 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ResponseErrorTemplate> getSubCategoriesByCategory(Long categoryId, Pageable pageable) {
-        if (!categoryRepository.existsById(categoryId)) {
-            throw new ResourceNotFoundException("Category not found with id: " + categoryId);
-        }
-        return subCategoryRepository.findByCategoryId(categoryId, pageable)
+    public Page<ResponseErrorTemplate> getSubCategoryAll(Pageable pageable) {
+
+        return subCategoryRepository.findAll(pageable)
                 .map(SubCategoryMapper::toResponse);
     }
 
@@ -126,7 +122,6 @@ public class SubCategoryServiceImpl implements SubCategoryService {
             subCategory.setImage(imageUrl);
             this.subCategoryRepository.save(subCategory);
         }
-
-        return null;
+        return SubCategoryMapper.toResponse(subCategory);
     }
 }

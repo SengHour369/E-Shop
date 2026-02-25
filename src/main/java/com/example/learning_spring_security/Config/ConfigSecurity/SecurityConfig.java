@@ -60,7 +60,6 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // PUBLIC APIS not  need Token
                         .requestMatchers(
                                 "/api/v1/public/**",
                                 "/api/v1/auth/**",
