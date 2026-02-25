@@ -29,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 @Tag(name = "product-controller", description = "Product management APIs")
-@SecurityRequirement(name = "bearer-jwt")
 public class ProductController extends BaseController {
 
     private final ProductService productService;
