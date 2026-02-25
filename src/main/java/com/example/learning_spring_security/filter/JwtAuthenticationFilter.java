@@ -25,12 +25,10 @@ import java.io.IOException;
 import java.util.Collections;
 
 @Slf4j
-// ត្រួតពិនិត្យការចូល
 public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
-
     private final UserDetailsService customUserDetailService;
 
     public JwtAuthenticationFilter(JwtService jwtService,
@@ -44,16 +42,17 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         this.objectMapper = objectMapper;
         this.customUserDetailService = customUserDetailService;
     }
+
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
 
         log.info("Start attempt to authentication");
-        Login authenticationRequest = objectMapper.readValue(request.getInputStream(),
-                Login.class);
+        Login authenticationRequest = objectMapper.readValue(request.getInputStream(), Login.class);
 
         customUserDetailService.saveUserAttemptAuthentication(authenticationRequest.username());
         log.info("End attempt to authentication");
+
         return getAuthenticationManager()
                 .authenticate(new UsernamePasswordAuthenticationToken(
                         authenticationRequest.username(),
@@ -83,25 +82,21 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
         var accessToken = jwtService.generateToken(userDetails);
         var refreshToken = jwtService.refreshToken(userDetails);
-
+        response.setHeader("Authorization", "Bearer " + accessToken);
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
         AuthenticationResponse authenticationResponse =
                 new AuthenticationResponse(accessToken, refreshToken);
-
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter()
                 .write(objectMapper.writeValueAsString(authenticationResponse));
-    }
 
+        log.info("Successful Authentication - Token generated and added to response");
+        log.info("Authorization Header: Bearer {}", accessToken);
+    }
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException, ServletException {
-        /*
-        CustomMessageException messageException = new CustomMessageException();
-        messageException.setMessage(failed.getLocalizedMessage());
-        messageException.setCode(String.valueOf(HttpStatus.UNAUTHORIZED.value()));
-
-         */
         var messageException = CustomMessageExceptionUtils.unauthorized();
         var msgJson = objectMapper.writeValueAsString(messageException);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

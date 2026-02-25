@@ -45,27 +45,23 @@ public class LoginController {
             log.info("user login {}",  authenticationRequest.username(),
                     authenticationRequest.password());
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            // Get user details safely
             Object principal = authentication.getPrincipal();
             UserDetailsImpl userDetails;
-
             if (principal instanceof UserDetailsImpl) {
                 userDetails = (UserDetailsImpl) principal;
             } else {
-                // Fallback load from service if principal is String
                 String username = principal.toString();
                 userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
             }
-            // Reset attempt counter on successful login
+
             userDetailsService.updateAttempt(authenticationRequest.username());
-            // Generate tokens
+
             String accessToken = jwtService.generateToken(userDetails);
             String refreshToken = jwtService.refreshToken(userDetails);
             log.info("User {} logged in successfully", authenticationRequest.username());
             return ResponseEntity.ok(new AuthenticationResponse(accessToken, refreshToken));
         } catch (BadCredentialsException e) {
             log.error("Invalid credentials for user: {}", authenticationRequest.username());
-            // Track failed attempt
             userDetailsService.saveUserAttemptAuthentication(authenticationRequest.username());
             throw new BadCredentialsException("Invalid username or password");
         }
