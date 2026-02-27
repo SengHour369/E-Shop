@@ -31,6 +31,7 @@ public class UserMapper {
                 .image(user.getImage())
                 .birthdate(user.getBirthdate())
                 .createdAt(user.getCreated())
+                .password(user.getPassword())
                 .updatedAt(user.getUpdated())
                 .deletedAt(user.getDeletedAt())
                 .build());

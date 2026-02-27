@@ -48,7 +48,7 @@ public class UserController {
        return ResponseEntity.ok(responseErrorTemplate);
    }
     @GetMapping("/user")
-    @Operation(summary = " Output all user")
+    @Operation(summary = " Output all admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ResponseErrorTemplate>> getAllUser() {
         List<ResponseErrorTemplate> responseErrorTemplate =  this.userService.getAllUsers();
