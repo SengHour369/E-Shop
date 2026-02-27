@@ -114,7 +114,7 @@ public class ProductController extends BaseController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Add image to product", description = "Upload an image to an existing product")
+    @Operation(summary = "Add image to product for admin", description = "Upload an image to an existing product")
     public ResponseEntity<ResponseErrorTemplate> addProductImage(
             @PathVariable Long id,
             @RequestPart("file") MultipartFile file) {

@@ -16,7 +16,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByIsActiveTrue(Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.subCategory.id = :subCategoryId")
-    Page<Product> findBySubCategoryId(@Param("subCategoryId") Long subCategoryId, Pageable pageable);  // បន្ថែម Pageable
+    Page<Product> findBySubCategoryId(@Param("subCategoryId") Long subCategoryId, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Product> searchProducts(@Param("keyword") String keyword, Pageable pageable);
@@ -25,7 +25,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByIdWithSkus(@Param("id") Long id);
 
     @Query("SELECT p FROM Product p WHERE p.subCategory.category.id = :categoryId")
-    Page<Product> findByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);  // បន្ថែម Pageable
+    Page<Product> findByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.subCategory.id = :subCategoryId")
     Long countBySubCategoryId(@Param("subCategoryId") Long subCategoryId);

@@ -7,4 +7,7 @@ public interface AuthService {
      ResponseErrorTemplate create(Register userRequest);
      ResponseErrorTemplate findById(Long id);
      ResponseErrorTemplate logIn(String username);
+    void requestPasswordReset(String email);
+    void resetPassword(String token, String newPassword);
+    void changePassword(Long userId, String currentPassword, String newPassword);
 }

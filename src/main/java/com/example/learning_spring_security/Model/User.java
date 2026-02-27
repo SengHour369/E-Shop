@@ -6,6 +6,7 @@ import lombok.*;
 
 
 import java.io.Serializable;
+import java.sql.Time;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -22,27 +23,8 @@ public class User  implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
     @PreRemove
     protected void onRemove() {
         deletedAt = LocalDateTime.now();
@@ -56,10 +38,10 @@ public class User  implements Serializable {
     @Column(name = "full_name")
     private String fullName;
     private int attempt;
+    @Column(name = "status", nullable = false)
     private String status;
     private String  image;
-
-
+    private String birthdate;
     @Column(name = "created", updatable = false)
     private LocalDateTime created;
     @Column(name = "updated", insertable = false)

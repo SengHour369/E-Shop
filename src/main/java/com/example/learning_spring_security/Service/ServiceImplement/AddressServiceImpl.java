@@ -36,14 +36,14 @@ public class AddressServiceImpl implements AddressService {
 
         Address address = AddressMapper.toEntity(request);
 
-        // If this is the first address or set as default, reset other defaults
+
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             addressRepository.resetDefaultAddressForUser(userId);
         }
 
         Address savedAddress = addressRepository.save(address);
 
-        // Add address to user
+
         user.getAddresses().add(savedAddress);
         userRepository.save(user);
 
@@ -61,16 +61,15 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getUserAddresses(Long userId, Pageable pageable) {
-        // Verify user exists
+
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
 
-        // Since we need pagination, we need to customize this query
-        // For now, we'll get all and paginate manually (not efficient for large data)
+
         List<Address> addresses = addressRepository.findByUserId(userId);
-        // Implement pagination manually or create custom query in repository
-        return Page.empty(); // Placeholder - need to implement properly
+
+        return Page.empty();
     }
 
     @Override

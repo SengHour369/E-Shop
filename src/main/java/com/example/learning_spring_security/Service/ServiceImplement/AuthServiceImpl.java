@@ -70,6 +70,21 @@ public class AuthServiceImpl implements AuthService {
                 .orElse(new ResponseErrorTemplate(msg, Constant.USER_NOT_FOUND_CODE, new Object()));
     }
 
+    @Override
+    public void requestPasswordReset(String email) {
+
+    }
+
+    @Override
+    public void resetPassword(String token, String newPassword) {
+
+    }
+
+    @Override
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+
+    }
+
     public ResponseErrorTemplate userMapper(User user) {
         RegisterResponse userResponse = new RegisterResponse(
                 user.getId(),

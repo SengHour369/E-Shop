@@ -26,7 +26,6 @@ import java.util.List;
 @RequestMapping("/api/v1/addresses")
 @RequiredArgsConstructor
 @Tag(name = "address-controller", description = "Address management APIs")
-@SecurityRequirement(name = "bearer-jwt")
 public class AddressController extends BaseController {
 
     private final AddressService addressService;
