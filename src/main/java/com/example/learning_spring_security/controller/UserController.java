@@ -47,14 +47,14 @@ public class UserController {
       ResponseErrorTemplate responseErrorTemplate =  this.userService.getUserById(id);
        return ResponseEntity.ok(responseErrorTemplate);
    }
-    @GetMapping("/user")
+    @GetMapping("/All")
     @Operation(summary = " Output all admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ResponseErrorTemplate>> getAllUser() {
         List<ResponseErrorTemplate> responseErrorTemplate =  this.userService.getAllUsers();
         return ResponseEntity.ok(responseErrorTemplate);
     }
-    @PutMapping(value = "/{id}/user/update")
+    @PutMapping(value = "/{id}/update")
     @Operation(summary = "update by admin ")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
@@ -68,7 +68,7 @@ public class UserController {
        this.userService.deleteUser(id);
       return null;
     }
-    @GetMapping("/All")
+    @GetMapping("/count")
     @Operation(summary = "count user by admin")
     @PreAuthorize("hasRole('ADMIN')")
     public  ResponseEntity<Long> getAllCountUser() {

@@ -13,19 +13,13 @@ import java.util.List;
 @Builder
 public class OrderResponse {
     private Long id;
-
     @JsonProperty("order_number")
     private String orderNumber;
-
     @JsonProperty("order_date")
     private LocalDateTime orderDate;
-
     private String status;
-    private BigDecimal subtotal;
-
     @JsonProperty("total_amount")
     private BigDecimal totalAmount;
-
     private List<OrderItemResponse> items;
     private PaymentResponse payment;
 

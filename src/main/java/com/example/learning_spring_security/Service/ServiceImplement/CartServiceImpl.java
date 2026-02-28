@@ -51,19 +51,18 @@ public class CartServiceImpl implements CartService {
         ProductSku productSku = productSkuRepository.findById(request.getProductSkuId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product SKU not found with id: " + request.getProductSkuId()));
 
-        // Check if item already exists in cart
+
         Optional<CartItem> existingItem = cart.getCartItems().stream()
                 .filter(item -> item.getProductSku().getId().equals(request.getProductSkuId()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
-            // Update quantity
+
             CartItem item = existingItem.get();
             Long newQuantity = item.getQuantity() + request.getQuantity();
             item.setQuantity(newQuantity);
             item.setTotalPrice(productSku.getPrice().multiply(BigDecimal.valueOf(newQuantity)));
         } else {
-            // Create new cart item
             CartItem newItem = CartItemMapper.toEntity(cart, productSku, request.getQuantity());
             cart.getCartItems().add(newItem);
         }
@@ -83,11 +82,11 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cart item not found with id: " + cartItemId));
 
         if (request.getQuantity() <= 0) {
-            // Remove item if quantity is 0 or negative
+
             cart.getCartItems().remove(cartItem);
             cartItemRepository.delete(cartItem);
         } else {
-            // Update quantity
+
             cartItem.setQuantity(request.getQuantity());
             cartItem.setTotalPrice(cartItem.getProductSku().getPrice()
                     .multiply(BigDecimal.valueOf(request.getQuantity())));

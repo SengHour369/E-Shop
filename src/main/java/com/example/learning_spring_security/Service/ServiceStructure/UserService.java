@@ -4,7 +4,6 @@ import com.example.learning_spring_security.dto.Request.UserRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 public interface UserService {
@@ -16,4 +15,5 @@ public interface UserService {
     ResponseErrorTemplate updateProfilePicture(Long userId, MultipartFile profilePictureUrl);
     Long countUsers();
     List<ResponseErrorTemplate> searchUsers(String keyword);
+    ResponseErrorTemplate changeUserPassword(Long userId, String oldPassword,String newPassword);
 }

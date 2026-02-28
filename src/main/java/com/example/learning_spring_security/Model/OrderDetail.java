@@ -65,9 +65,6 @@ public class OrderDetail {
     @Column(nullable = false)
     private String status; // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
 
-    @Column(nullable = false)
-    private BigDecimal subtotal;
-
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 

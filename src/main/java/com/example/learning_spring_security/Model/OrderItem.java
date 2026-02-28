@@ -55,8 +55,8 @@ public class OrderItem  {
     private Long quantity;
 
     @Column(name = "unit_price", nullable = false)
-    private BigDecimal unitPrice; // តម្លៃក្នុងមួយឯកតានៅពេលទិញ
+    private BigDecimal unitPrice;
 
     @Column(name = "total_price", nullable = false)
-    private BigDecimal totalPrice; // unitPrice * quantity
+    private BigDecimal totalPrice;
 }

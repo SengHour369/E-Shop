@@ -17,7 +17,6 @@ public class OrderMapper {
                 .orderNumber(order.getOrderNumber())
                 .orderDate(order.getOrderDate())
                 .status(order.getStatus())
-                .subtotal(order.getSubtotal())
                 .totalAmount(order.getTotalAmount())
                 .items(order.getOrderItems().stream()
                         .map(OrderItemMapper::toResponse)

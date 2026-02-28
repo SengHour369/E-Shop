@@ -14,7 +14,7 @@ public class OrderItemResponse {
     private Long quantity;
 
     @JsonProperty("unit_price")
-    private BigDecimal unitPrice;  // បន្ថែមតម្លៃក្នុងមួយឯកតា
+    private BigDecimal unitPrice;
 
     @JsonProperty("total_price")
     private BigDecimal totalPrice;

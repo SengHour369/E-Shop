@@ -48,32 +48,26 @@ public class OrderServiceImpl implements OrderService {
         if (cart.getCartItems().isEmpty()) {
             throw new BadRequestException("Cart is empty");
         }
-
         Address shippingAddress = addressRepository.findById(request.getAddressId())
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + request.getAddressId()));
 
-        // Verify user owns the address
         if (!addressRepository.isUserHasAddress(userId, request.getAddressId())) {
             throw new BadRequestException("Invalid shipping address");
         }
 
-        // Create order
         OrderDetail order = OrderDetail.builder()
                 .user(user)
                 .orderNumber(generateOrderNumber())
                 .orderDate(LocalDateTime.now())
                 .status("PENDING")
-                .subtotal(cart.getTotalPrice())
                 .totalAmount(cart.getTotalPrice())
                 .shippingAddress(shippingAddress)
                 .build();
 
-        // Create order items from cart items
         List<OrderItem> orderItems = cart.getCartItems().stream()
                 .map(cartItem -> {
-                    // Reduce stock
-                    productSkuRepository.reduceStock(cartItem.getProductSku().getId(), cartItem.getQuantity());
-
+                    productSkuRepository.reduceStock(cartItem.getProductSku().getId()
+                            , cartItem.getQuantity());
                     return OrderItemMapper.toEntity(
                             order,
                             cartItem.getProductSku(),
@@ -81,10 +75,8 @@ public class OrderServiceImpl implements OrderService {
                     );
                 })
                 .collect(Collectors.toList());
-
         order.setOrderItems(orderItems);
 
-        // Create payment
         Payment payment = Payment.builder()
                 .orderDetail(order)
                 .paymentMethod(request.getPaymentMethod())
@@ -94,17 +86,12 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         order.setPayment(payment);
-
-        // Save order
         OrderDetail savedOrder = orderRepository.save(order);
 
-        // Clear cart
-        cartItemRepository.deleteAllByCartId(cart.getId());
         cart.getCartItems().clear();
         cart.setTotalPrice(BigDecimal.ZERO);
         cart.setTotalItems(0);
         cartRepository.save(cart);
-
         return OrderMapper.toResponse(savedOrder);
     }
 
@@ -148,12 +135,12 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
 
-        // Update payment status if order is delivered/cancelled
+
         if ("DELIVERED".equals(status) && order.getPayment() != null) {
             order.getPayment().setStatus("COMPLETED");
         } else if ("CANCELLED".equals(status) && order.getPayment() != null) {
             order.getPayment().setStatus("REFUNDED");
-            // Restore stock
+
             order.getOrderItems().forEach(item ->
                     productSkuRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
             );

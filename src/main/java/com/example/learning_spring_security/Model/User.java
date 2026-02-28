@@ -59,7 +59,7 @@ public class User  implements Serializable {
     private List<OrderDetail> orders;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Cart cart;
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_address",
             joinColumns = @JoinColumn(name = "user_id"),

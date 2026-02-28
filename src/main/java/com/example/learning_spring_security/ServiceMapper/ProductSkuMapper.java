@@ -24,8 +24,6 @@ public class ProductSkuMapper {
                 .description(sku.getDescription())
                 .price(sku.getPrice())
                 .quantity(sku.getQuantity())
-                .lowStockThreshold(sku.getLowStockThreshold())
-                .productId(sku.getProduct() != null ? sku.getProduct().getId() : null)
                 .build();
     }
 

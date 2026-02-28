@@ -14,12 +14,5 @@ public class ProductSkuResponse {
     private String sku;
     private String description;
     private BigDecimal price;
-
     private Long quantity;
-
-    @JsonProperty("low_stock_threshold")
-    private Integer lowStockThreshold;
-
-    @JsonProperty("product_id")
-    private Long productId;
 }
