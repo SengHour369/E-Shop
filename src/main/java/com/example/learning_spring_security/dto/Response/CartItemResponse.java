@@ -10,10 +10,9 @@ import java.math.BigDecimal;
 @Getter
 @Builder
 public class CartItemResponse {
-    private Long id;
 
-    @JsonProperty("product_sku_id")
-    private Long productSkuId;
+//    @JsonProperty("product_sku_id")
+//    private Long productSkuId;
 
     @JsonProperty("product_sku")
     private ProductSkuResponse productSku;

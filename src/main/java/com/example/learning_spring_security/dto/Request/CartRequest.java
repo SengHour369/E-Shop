@@ -12,9 +12,9 @@ import lombok.*;
 @Builder
 public class CartRequest {
 
-    @NotNull(message = "Product SKU ID is required")
-    @JsonProperty("product_sku_id")
-    private Long productSkuId;
+    @NotNull(message = "Product  ID is required")
+    @JsonProperty("product_id")
+    private Long productId;
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;

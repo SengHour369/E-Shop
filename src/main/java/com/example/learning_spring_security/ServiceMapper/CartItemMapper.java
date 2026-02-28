@@ -22,8 +22,6 @@ public class CartItemMapper {
 
     public static CartItemResponse toResponse(CartItem cartItem) {
         return CartItemResponse.builder()
-                .id(cartItem.getId())
-                .productSkuId(cartItem.getProductSku().getId())
                 .productSku(ProductSkuMapper.toResponse(cartItem.getProductSku()))
                 .quantity(cartItem.getQuantity())
                 .totalPrice(cartItem.getTotalPrice())

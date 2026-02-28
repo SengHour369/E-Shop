@@ -56,9 +56,6 @@ public class ProductSku {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Column(name = "compare_price")
-    private BigDecimal comparePrice;
-
     @Column(nullable = false)
     private Long quantity;
 
@@ -67,14 +64,13 @@ public class ProductSku {
 
     private String color;
     private String size;
-    private String material;
+
 
     @Column(name = "is_default")
     private Boolean isDefault = false;
 
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CartItem> cartItems = new ArrayList<>();
-
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
 }

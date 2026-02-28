@@ -38,7 +38,7 @@ public class OrderItemMapper {
         }
 
         OrderItemResponse.OrderItemResponseBuilder builder = OrderItemResponse.builder()
-                .id(orderItem.getId())
+
                 .quantity(orderItem.getQuantity())
                 .unitPrice(orderItem.getUnitPrice())
                 .totalPrice(orderItem.getTotalPrice());

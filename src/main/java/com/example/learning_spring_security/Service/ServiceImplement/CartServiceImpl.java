@@ -1,14 +1,8 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
-import com.example.learning_spring_security.Model.Cart;
-import com.example.learning_spring_security.Model.CartItem;
-import com.example.learning_spring_security.Model.ProductSku;
-import com.example.learning_spring_security.Model.User;
-import com.example.learning_spring_security.Repository.CartItemRepository;
-import com.example.learning_spring_security.Repository.CartRepository;
-import com.example.learning_spring_security.Repository.ProductSkuRepository;
-import com.example.learning_spring_security.Repository.UserRepository;
+import com.example.learning_spring_security.Model.*;
+import com.example.learning_spring_security.Repository.*;
 import com.example.learning_spring_security.Service.ServiceStructure.CartService;
 import com.example.learning_spring_security.ServiceMapper.CartItemMapper;
 import com.example.learning_spring_security.ServiceMapper.CartMapper;
@@ -17,6 +11,7 @@ import com.example.learning_spring_security.dto.Response.CartResponse;
 
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,12 +22,14 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductSkuRepository productSkuRepository;
+    private final ProductRepository productRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -48,12 +45,21 @@ public class CartServiceImpl implements CartService {
         if (cart.getCartItems() == null) {
             cart.setCartItems(new ArrayList<>());
         }
-        ProductSku productSku = productSkuRepository.findById(request.getProductSkuId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product SKU not found with id: " + request.getProductSkuId()));
+        Optional<Product> product = this.productRepository.findById(request.getProductId());
+        if (product.isEmpty()) {
+            log.info("Product not found for product id: {}", request.getProductId());
+            throw new ResourceNotFoundException("Product not found for product id: " + request.getProductId());
+
+        }
+        Optional<ProductSku> productSku = productSkuRepository.findById(product.get().getId());
+        if (productSku.isEmpty()) {
+            log.info("Product sku not found for product id: {}", productSku.get().getId());
+            throw new ResourceNotFoundException("Product sku not found for product id: " + productSku.get().getId());
+        }
 
 
         Optional<CartItem> existingItem = cart.getCartItems().stream()
-                .filter(item -> item.getProductSku().getId().equals(request.getProductSkuId()))
+                .filter(item -> item.getProductSku().getId().equals(productSku.get()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
@@ -61,9 +67,9 @@ public class CartServiceImpl implements CartService {
             CartItem item = existingItem.get();
             Long newQuantity = item.getQuantity() + request.getQuantity();
             item.setQuantity(newQuantity);
-            item.setTotalPrice(productSku.getPrice().multiply(BigDecimal.valueOf(newQuantity)));
+            item.setTotalPrice(productSku.get().getPrice().multiply(BigDecimal.valueOf(newQuantity)));
         } else {
-            CartItem newItem = CartItemMapper.toEntity(cart, productSku, request.getQuantity());
+            CartItem newItem = CartItemMapper.toEntity(cart, productSku.get(), request.getQuantity());
             cart.getCartItems().add(newItem);
         }
 

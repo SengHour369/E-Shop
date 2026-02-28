@@ -48,9 +48,6 @@ public class Product {
 
     @Column(length = 2000)
     private String description;
-
-   // private List<String > image;
-
     private String mainImage;
 
     @Column(name = "is_active")

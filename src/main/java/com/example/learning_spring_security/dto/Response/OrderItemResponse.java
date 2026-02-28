@@ -10,15 +10,11 @@ import java.math.BigDecimal;
 @Getter
 @Builder
 public class OrderItemResponse {
-    private Long id;
     private Long quantity;
-
     @JsonProperty("unit_price")
     private BigDecimal unitPrice;
-
     @JsonProperty("total_price")
     private BigDecimal totalPrice;
-
     @JsonProperty("product_sku")
     private ProductSkuResponse productSku;
 }
