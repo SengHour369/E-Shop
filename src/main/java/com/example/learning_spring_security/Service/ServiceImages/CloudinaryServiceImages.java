@@ -15,16 +15,25 @@ public class CloudinaryServiceImages implements CloudinaryService {
     private Cloudinary cloudinary;
     @Override
     public String uploadFile(MultipartFile file, String folderName) {
-        try{
-            HashMap<Object, Object> map = new HashMap<>();
-            map.put("folderName", folderName);
-            map.put("folder", folderName);
-            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),map);
+        try {
+
+            HashMap<String, Object> options = new HashMap<>();
+            options.put("folder", folderName);
+            Map uploadResult = cloudinary.uploader()
+                    .upload(file.getBytes(), options);
             String publicId = (String) uploadResult.get("public_id");
-            return cloudinary.url().secure(true).generate(publicId);
+            // Background removal transformation
+            return cloudinary.url()
+                    .transformation(
+                            new com.cloudinary.Transformation()
+                                    .effect("background_removal")
+                                    // transparent background
+                                    .fetchFormat("png")
+                    )
+                    .secure(true)
+                    .generate(publicId);
         } catch (IOException e) {
             throw new RuntimeException(e);
-
         }
     }
 }

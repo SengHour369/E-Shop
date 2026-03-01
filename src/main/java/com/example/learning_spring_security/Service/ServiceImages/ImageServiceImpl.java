@@ -1,5 +1,7 @@
 package com.example.learning_spring_security.Service.ServiceImages;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Repository.ImageRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.CloudinaryService;
@@ -19,6 +21,7 @@ public class ImageServiceImpl implements ImageService {
     private ImageRepository imageRepository;
 
 
+
     @Override
     public String uploadImage(MultipartFile imageModel) {
         try {
@@ -26,6 +29,7 @@ public class ImageServiceImpl implements ImageService {
             if (imageModel.isEmpty()) {
                 return null;
             }
+
             Image image = new Image();
             image.setUrl(cloudinaryService.uploadFile(imageModel, "folder_1"));
             if(image.getUrl() == null) {
