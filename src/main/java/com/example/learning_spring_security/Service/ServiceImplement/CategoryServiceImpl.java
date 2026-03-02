@@ -97,7 +97,7 @@ public class CategoryServiceImpl implements CategoryService {
     public ResponseErrorTemplate getCategoryWithSubCategories(Long id) {
         Category category = categoryRepository.findByIdWithSubCategories(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
-        return CategoryMapper.toResponse(category);
+        return CategoryMapper.toResponseWithSubCategory(category);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.Category;
 import com.example.learning_spring_security.dto.Request.CategoryRequest;
 import com.example.learning_spring_security.dto.Response.CategoryResponse;
+import com.example.learning_spring_security.dto.Response.CategoryResponseWithSubCategory;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
 
@@ -21,6 +22,7 @@ public class CategoryMapper {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
+
                 .build();
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, categoryResponse);
     }
@@ -28,5 +30,16 @@ public class CategoryMapper {
     public static void updateEntity(Category category, CategoryRequest request) {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
+    }
+    public static ResponseErrorTemplate toResponseWithSubCategory(Category category) {
+        CategoryResponseWithSubCategory categoryResponse = CategoryResponseWithSubCategory.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .description(category.getDescription())
+                .subCategories(category.getSubCategories().
+                        stream()
+                        .map(SubCategoryMapper::toResponse).toList())
+                .build();
+        return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, categoryResponse);
     }
 }
