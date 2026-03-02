@@ -2,6 +2,7 @@ package com.example.learning_spring_security.Model;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 
 
@@ -32,6 +33,7 @@ public class User  implements Serializable {
     @Column(name = "username", unique = true, nullable = false)
     private String username;
     @Column(name = "email", unique = true, nullable = false)
+    @Email(message = "Invalid email format")
     private String email;
     @Column(name = "password", nullable = false)
     private String password;
