@@ -30,18 +30,6 @@ public class CategoryController extends BaseController {
         return ResponseEntity.ok(categories);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<ResponseErrorTemplate>> getAllCategories() {
-        List<ResponseErrorTemplate> categories = categoryService.getAllCategories();
-        return ResponseEntity.ok(categories);
-    }
-
-    @GetMapping("/with-subcategories")
-    public ResponseEntity<List<ResponseErrorTemplate>> getAllCategoriesWithSubCategories() {
-        List<ResponseErrorTemplate> categories = categoryService.getAllCategoriesWithSubCategories();
-        return ResponseEntity.ok(categories);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<ResponseErrorTemplate> getCategoryById(@PathVariable Long id) {
         ResponseErrorTemplate category = categoryService.getCategoryById(id);
