@@ -14,6 +14,8 @@ public class ProductSkuMapper {
                 .price(request.getPrice())
                 .quantity(request.getQuantity())
                 .product(product)
+                .color(request.getColor())
+                .size(request.getSize())
                 .build();
     }
 
@@ -23,6 +25,8 @@ public class ProductSkuMapper {
                 .description(sku.getDescription())
                 .price(sku.getPrice())
                 .quantity(sku.getQuantity())
+                .color(sku.getColor())
+                .size(sku.getSize())
                 .build();
     }
 

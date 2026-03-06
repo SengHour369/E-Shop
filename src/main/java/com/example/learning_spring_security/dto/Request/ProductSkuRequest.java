@@ -20,7 +20,8 @@ public class ProductSkuRequest {
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
     private BigDecimal price;
-
+    private String color;
+    private String size;
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;

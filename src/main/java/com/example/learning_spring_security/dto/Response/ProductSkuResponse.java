@@ -13,5 +13,7 @@ public class ProductSkuResponse {
     private String sku;
     private String description;
     private BigDecimal price;
+    private String color;
+    private String size;
     private Long quantity;
 }
