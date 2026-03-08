@@ -56,15 +56,6 @@ public class AddressController extends BaseController {
         ResponseErrorTemplate address = addressService.getAddressById(id);
         return ResponseEntity.ok(address);
     }
-
-    @GetMapping("/user/{userId}/default")
-    @Operation(summary = "Get default address", description = "Get default address for a user")
-    public ResponseEntity<ResponseErrorTemplate> getDefaultAddress(
-            @Parameter(description = "User ID", example = "1") @PathVariable Long userId) {
-        ResponseErrorTemplate address = addressService.getDefaultAddress(userId);
-        return ResponseEntity.ok(address);
-    }
-
     @PostMapping("/user/{userId}")
     @Operation(summary = "Create address", description = "Create a new address for a user")
 
@@ -82,15 +73,6 @@ public class AddressController extends BaseController {
             @Parameter(description = "User ID", example = "1") @PathVariable Long userId,
             @Valid @RequestBody AddressRequest request) {
         ResponseErrorTemplate response = addressService.updateAddress(id, request, userId);
-        return ResponseEntity.ok(response);
-    }
-
-    @PatchMapping("/{addressId}/user/{userId}/set-default")
-    @Operation(summary = "Set default address", description = "Set an address as default for a user")
-    public ResponseEntity<ResponseErrorTemplate> setDefaultAddress(
-            @Parameter(description = "Address ID", example = "1") @PathVariable Long addressId,
-            @Parameter(description = "User ID", example = "1") @PathVariable Long userId) {
-        ResponseErrorTemplate response = addressService.setDefaultAddress(addressId, userId);
         return ResponseEntity.ok(response);
     }
 
