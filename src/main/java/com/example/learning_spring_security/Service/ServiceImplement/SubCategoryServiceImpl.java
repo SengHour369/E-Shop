@@ -17,9 +17,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,16 +34,23 @@ public class SubCategoryServiceImpl implements SubCategoryService {
     private final ImageService imageService;
 
     @Override
-    public ResponseErrorTemplate createSubCategory(SubCategoryRequest request) {
+    public ResponseErrorTemplate createSubCategory(
+            SubCategoryRequest request,
+             MultipartFile file) throws Exception {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
 
         if (subCategoryRepository.existsByNameAndCategoryId(request.getName(), request.getCategoryId())) {
             throw new DuplicateResourceException("SubCategory already exists with name: " + request.getName() + " in this category");
         }
+        if(file.isEmpty()) {
+            throw new Exception("file in image is empty");
+        }
 
         SubCategory subCategory = SubCategoryMapper.toEntity(request);
         subCategory.setCategory(category);
+            String  imageUrl = this.imageService.uploadImage(file);
+            subCategory.setImage(imageUrl);
 
         SubCategory savedSubCategory = subCategoryRepository.save(subCategory);
         return SubCategoryMapper.toResponse(savedSubCategory);
@@ -75,7 +84,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
     }
 
     @Override
-    public ResponseErrorTemplate updateSubCategory(Long id, SubCategoryRequest request) {
+    public ResponseErrorTemplate updateSubCategory(Long id, SubCategoryRequest request,MultipartFile file) {
         SubCategory subCategory = subCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + id));
 
@@ -90,6 +99,10 @@ public class SubCategoryServiceImpl implements SubCategoryService {
             Category newCategory = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
             subCategory.setCategory(newCategory);
+        }
+        if(file != null &&   !Objects.equals(file.getOriginalFilename(), subCategory.getImage())) {
+            String  imageUrl = this.imageService.uploadImage(file);
+            subCategory.setImage(imageUrl);
         }
 
         SubCategoryMapper.updateEntity(subCategory, request);
@@ -113,15 +126,4 @@ public class SubCategoryServiceImpl implements SubCategoryService {
         return SubCategoryMapper.toResponse(subCategory);
     }
 
-    @Override
-    public ResponseErrorTemplate addImageToProduct(Long id, MultipartFile image) {
-        SubCategory subCategory = this.subCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + id));
-        if(image != null ){
-            String  imageUrl = this.imageService.uploadImage(image);
-            subCategory.setImage(imageUrl);
-            this.subCategoryRepository.save(subCategory);
-        }
-        return SubCategoryMapper.toResponse(subCategory);
-    }
 }

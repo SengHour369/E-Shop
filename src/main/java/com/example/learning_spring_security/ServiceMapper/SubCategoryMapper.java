@@ -52,5 +52,8 @@ public class SubCategoryMapper {
         if (request.getDescription() != null) {
             subCategory.setDescription(request.getDescription());
         }
+        if(subCategory.getImage() != null) {
+            subCategory.setImage(subCategory.getImage());
+        }
     }
 }

@@ -1,9 +1,11 @@
 package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceStructure.SubCategoryService;
+import com.example.learning_spring_security.dto.Request.ProductRequest;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
@@ -49,18 +51,33 @@ public class SubCategoryController extends BaseController {
         ResponseErrorTemplate subCategory = subCategoryService.getSubCategoryWithProducts(id);
         return ResponseEntity.ok(subCategory);
     }
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseErrorTemplate> createSubCategory(
+            @RequestParam String name,
+            @RequestParam Long categoryId,
+            @RequestParam String description,
+            @RequestParam(required = false) MultipartFile image) throws Exception {
 
-    @PostMapping
-    public ResponseEntity<ResponseErrorTemplate> createSubCategory(@Valid @RequestBody SubCategoryRequest request) {
-        ResponseErrorTemplate response = subCategoryService.createSubCategory(request);
-        return  ResponseEntity.ok(response);
+        SubCategoryRequest request = new SubCategoryRequest();
+        request.setName(name);
+        request.setCategoryId(categoryId);
+        request.setDescription(description);
+
+        ResponseErrorTemplate response = subCategoryService.createSubCategory(request, image);
+        return ResponseEntity.ok(response);
     }
-
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}",consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseErrorTemplate> updateSubCategory(
             @PathVariable Long id,
-            @Valid @RequestBody SubCategoryRequest request) {
-        ResponseErrorTemplate response = subCategoryService.updateSubCategory(id, request);
+            @RequestParam String name,
+            @RequestParam Long categoryId,
+            @RequestParam String description,
+            @RequestParam(required = false) MultipartFile file) {
+        SubCategoryRequest request = new SubCategoryRequest();
+        request.setCategoryId(categoryId);
+        request.setName(name);
+        request.setDescription(description);
+        ResponseErrorTemplate response = subCategoryService.updateSubCategory(id, request,file);
         return ResponseEntity.ok(response);
     }
 
@@ -68,14 +85,5 @@ public class SubCategoryController extends BaseController {
     public ResponseEntity<Void> deleteSubCategory(@PathVariable Long id) {
         subCategoryService.deleteSubCategory(id);
         return ResponseEntity.noContent().build();
-    }
-    @PostMapping(value = "/{id}/image",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Add image to SubCategory", description = "Upload an image to an existing SubCategory")
-    public  ResponseEntity<ResponseErrorTemplate> addSubCategoryImage(
-            @PathVariable Long id,
-            @RequestPart("file")MultipartFile file){
-        ResponseErrorTemplate response = this.subCategoryService.addImageToProduct(id, file);
-        return  ResponseEntity.ok(response);
-
     }
 }

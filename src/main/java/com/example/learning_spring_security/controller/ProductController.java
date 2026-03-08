@@ -1,5 +1,6 @@
 package com.example.learning_spring_security.controller;
 
+import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Service.ServiceStructure.ProductService;
 
 import com.example.learning_spring_security.dto.Request.ProductRequest;
@@ -104,12 +105,8 @@ public class ProductController extends BaseController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create product", description = "Create a new product (Admin only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Product created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "403", description = "Access denied - Admin only")
-    })
-    public ResponseEntity<ResponseErrorTemplate> createProduct(@Valid @RequestBody ProductRequest request) {
+
+    public ResponseEntity<ResponseErrorTemplate> createProduct(@Valid @RequestBody ProductRequest request  ) throws Exception {
         ResponseErrorTemplate response = productService.createProduct(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -146,10 +143,6 @@ public class ProductController extends BaseController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete product", description = "Delete a product by ID (Admin only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Product deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Product not found")
-    })
     public ResponseEntity<Void> deleteProduct(
             @Parameter(description = "Product ID", example = "1") @PathVariable Long id) {
         productService.deleteProduct(id);

@@ -10,12 +10,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface SubCategoryService {
-    ResponseErrorTemplate createSubCategory(SubCategoryRequest request);
+    ResponseErrorTemplate createSubCategory(SubCategoryRequest request,MultipartFile file) throws Exception;
     ResponseErrorTemplate getSubCategoryById(Long id);
     Page<ResponseErrorTemplate> getSubCategoryAll( Pageable pageable);
     List<ResponseErrorTemplate> getSubCategoriesByCategoryAsList(Long categoryId);
-    ResponseErrorTemplate updateSubCategory(Long id, SubCategoryRequest request);
+    ResponseErrorTemplate updateSubCategory(Long id, SubCategoryRequest request,MultipartFile file);
     void deleteSubCategory(Long id);
     ResponseErrorTemplate getSubCategoryWithProducts(Long id);
-    ResponseErrorTemplate addImageToProduct(Long id, MultipartFile image);
 }

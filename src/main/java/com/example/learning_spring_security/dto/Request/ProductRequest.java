@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,9 +17,7 @@ public class ProductRequest {
 
     @NotBlank(message = "Product name is required")
     private String name;
-
     private String description;
-
     @JsonProperty("is_active")
     private Boolean isActive = true;
 

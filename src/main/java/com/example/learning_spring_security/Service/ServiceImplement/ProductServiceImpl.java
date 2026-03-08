@@ -35,14 +35,13 @@ public class ProductServiceImpl implements ProductService {
     private final ImageService imageService;
 
     @Override
-    public ResponseErrorTemplate createProduct(ProductRequest request) {
+    public ResponseErrorTemplate createProduct(ProductRequest request) throws Exception {
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
 
         Product product = ProductMapper.toEntity(request, subCategory);
 
         Product savedProduct = productRepository.save(product);
-
         if (request.getSkus() != null && !request.getSkus().isEmpty()) {
             List<ProductSku> skus = request.getSkus().stream()
                     .map(skuRequest -> {
@@ -52,6 +51,7 @@ public class ProductServiceImpl implements ProductService {
                     })
                     .collect(Collectors.toList());
             productSkuRepository.saveAll(skus);
+
             savedProduct.setProductSkus(skus);
         }
 

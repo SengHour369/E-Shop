@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface ProductService {
-    ResponseErrorTemplate createProduct(ProductRequest request);
+    ResponseErrorTemplate createProduct(ProductRequest request) throws Exception;
     ResponseErrorTemplate getProductById(Long id);
     ResponseErrorTemplate getProductWithSkus(Long id);
     Page<ResponseErrorTemplate> getAllProducts(Pageable pageable);
