@@ -47,14 +47,8 @@ public class Address {
     @Column(name = "address_line1", nullable = false)
     private String addressLine1;
 
-    @Column(name = "address_line2")
-    private String addressLine2;
-
     @Column(nullable = false)
     private String city;
-
-    @Column(nullable = false)
-    private String state;
 
     @Column(name = "zip_code", nullable = false)
     private String zipCode;

@@ -32,11 +32,7 @@ public class AddressController extends BaseController {
 
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get user addresses", description = "Get all addresses for a specific user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved addresses"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+
     public ResponseEntity<List<ResponseErrorTemplate>> getUserAddresses(
             @Parameter(description = "User ID", example = "1", required = true)
             @PathVariable Long userId) {
@@ -71,10 +67,7 @@ public class AddressController extends BaseController {
 
     @PostMapping("/user/{userId}")
     @Operation(summary = "Create address", description = "Create a new address for a user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Address created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input")
-    })
+
     public ResponseEntity<ResponseErrorTemplate> createAddress(
             @Parameter(description = "User ID", example = "1") @PathVariable Long userId,
             @Valid @RequestBody AddressRequest request) {
@@ -103,10 +96,7 @@ public class AddressController extends BaseController {
 
     @DeleteMapping("/{id}/user/{userId}")
     @Operation(summary = "Delete address", description = "Delete an address")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Address deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Address not found")
-    })
+
     public ResponseEntity<Void> deleteAddress(
             @Parameter(description = "Address ID", example = "1") @PathVariable Long id,
             @Parameter(description = "User ID", example = "1") @PathVariable Long userId) {

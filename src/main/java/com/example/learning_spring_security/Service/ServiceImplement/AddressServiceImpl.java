@@ -89,12 +89,11 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
 
-        // Verify user owns this address
         if (!addressRepository.isUserHasAddress(userId, id)) {
             throw new UnauthorizedException("User does not own this address");
         }
 
-        // If setting as default, reset other defaults
+
         if (Boolean.TRUE.equals(request.getIsDefault()) && !Boolean.TRUE.equals(address.getIsDefault())) {
             addressRepository.resetDefaultAddressForUser(userId);
         }
@@ -109,12 +108,12 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
 
-        // Verify user owns this address
+
         if (!addressRepository.isUserHasAddress(userId, id)) {
             throw new UnauthorizedException("User does not own this address");
         }
 
-        // Remove from user's addresses
+
         User user = userRepository.findById(userId).get();
         user.getAddresses().remove(address);
         userRepository.save(user);
@@ -127,7 +126,7 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + addressId));
 
-        // Verify user owns this address
+
         if (!addressRepository.isUserHasAddress(userId, addressId)) {
             throw new UnauthorizedException("User does not own this address");
         }

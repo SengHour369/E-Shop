@@ -14,11 +14,8 @@ public class AddressResponse {
     @JsonProperty("address_line1")
     private String addressLine1;
 
-    @JsonProperty("address_line2")
-    private String addressLine2;
-
     private String city;
-    private String state;
+
 
     @JsonProperty("zip_code")
     private String zipCode;
