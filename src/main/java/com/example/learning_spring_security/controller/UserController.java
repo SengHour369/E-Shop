@@ -56,7 +56,7 @@ public class UserController {
     }
     @PutMapping(value = "/{id}/update")
     @Operation(summary = "update by admin ")
-    @PreAuthorize("hasRole('ADMIN')")
+   // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
        ResponseErrorTemplate responseErrorTemplate = this.userService.updateUser(id,userRequest);
        return ResponseEntity.ok(responseErrorTemplate);
