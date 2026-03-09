@@ -16,6 +16,8 @@ public class CartItemResponse {
 
     @JsonProperty("product_sku")
     private ProductSkuResponse productSku;
+    private String image;
+    private String name;
 
     private Long quantity;
 
