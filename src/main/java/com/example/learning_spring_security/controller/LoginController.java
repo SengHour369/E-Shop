@@ -1,5 +1,6 @@
 package com.example.learning_spring_security.controller;
 
+import com.example.learning_spring_security.Service.ServiceImplement.AuthServiceImpl;
 import com.example.learning_spring_security.dto.Request.Login;
 import com.example.learning_spring_security.dto.Response.AuthenticationResponse;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
@@ -28,7 +29,7 @@ public class LoginController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final ObjectMapper objectMapper;
+    private final AuthServiceImpl  authService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody Login authenticationRequest) {
@@ -52,14 +53,15 @@ public class LoginController {
             } else {
                 String username = principal.toString();
                 userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
-            }
 
+            }
+            var  user = this.authService.findById(userDetails.getUsername());
             userDetailsService.updateAttempt(authenticationRequest.username());
 
             String accessToken = jwtService.generateToken(userDetails);
             String refreshToken = jwtService.refreshToken(userDetails);
             log.info("User {} logged in successfully", authenticationRequest.username());
-            return ResponseEntity.ok(new AuthenticationResponse(accessToken, refreshToken));
+            return ResponseEntity.ok(new AuthenticationResponse(user.get(),accessToken, refreshToken));
         } catch (BadCredentialsException e) {
             log.error("Invalid credentials for user: {}", authenticationRequest.username());
             userDetailsService.saveUserAttemptAuthentication(authenticationRequest.username());

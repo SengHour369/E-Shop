@@ -85,7 +85,7 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         response.setHeader("Authorization", "Bearer " + accessToken);
         response.setHeader("Access-Control-Expose-Headers", "Authorization");
         AuthenticationResponse authenticationResponse =
-                new AuthenticationResponse(accessToken, refreshToken);
+                new AuthenticationResponse(null,accessToken, refreshToken);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter()
                 .write(objectMapper.writeValueAsString(authenticationResponse));

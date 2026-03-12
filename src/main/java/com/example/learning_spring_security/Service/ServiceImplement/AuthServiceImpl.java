@@ -54,11 +54,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ResponseErrorTemplate findById(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        var msg = String.format(Constant.USER_ID_NOT_FOUND, id);
-        return user.map(this::userMapper)
-                .orElse(new ResponseErrorTemplate(msg, Constant.USER_NOT_FOUND_CODE, new Object()));
+    public Optional<Long> findById(String username) {
+        Optional<Long> user = userRepository.findByUsername(username);
+        return user;
     }
 
     @Override
