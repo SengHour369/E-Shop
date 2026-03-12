@@ -55,8 +55,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Optional<Long> findById(String username) {
-        Optional<Long> user = userRepository.findByUsername(username);
-        return user;
+        Optional<User> user = userRepository.findByUsername(username);
+        return user.map(User::getId);
     }
 
     @Override
