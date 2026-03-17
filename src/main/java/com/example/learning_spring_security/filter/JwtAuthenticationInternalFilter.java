@@ -59,13 +59,6 @@ public class JwtAuthenticationInternalFilter extends OncePerRequestFilter {
                 }
             }catch (Exception ex){
                 log.error("{}", ex.getLocalizedMessage());
-               /*
-                CustomMessageException messageException = new CustomMessageException();
-                messageException.setMessage("Unauthorized");
-                messageException.setCode(String.valueOf(HttpStatus.UNAUTHORIZED.value()));
-
-                */
-
                 var messageException = CustomMessageExceptionUtils.unauthorized();
                 var msgJson = objectMapper.writeValueAsString(messageException);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
