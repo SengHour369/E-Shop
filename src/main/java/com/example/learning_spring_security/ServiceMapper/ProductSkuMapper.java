@@ -21,6 +21,7 @@ public class ProductSkuMapper {
 
     public static ProductSkuResponse toResponse(ProductSku sku) {
         return ProductSkuResponse.builder()
+                .id(sku.getId())
                 .sku(sku.getSku())
                 .description(sku.getDescription())
                 .price(sku.getPrice())
