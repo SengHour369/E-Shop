@@ -4,7 +4,6 @@ import com.example.learning_spring_security.Model.Cart;
 import com.example.learning_spring_security.Model.CartItem;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.ProductSku;
-import com.example.learning_spring_security.ServiceMapper.ProductSkuMapper;
 import com.example.learning_spring_security.dto.Response.CartItemResponse;
 import org.springframework.stereotype.Service;
 
