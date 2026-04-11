@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Config.ConfigSecurity.CoudinaryConfig;
+package com.example.learning_spring_security.CoudinaryConfig;
 
 
 import com.cloudinary.Cloudinary;
