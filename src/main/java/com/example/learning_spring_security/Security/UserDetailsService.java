@@ -28,11 +28,12 @@ public class UserDetailsService implements org.springframework.security.core.use
         return this.customUserDetail(username);
     }
 
-    private UserDetailsImpl customUserDetail(String username) {
-        Optional<User> user = userRepository.findFirstByUsernameAndStatus(username, Constant.ACT);
+    private UserDetailsImpl customUserDetail(String usernameOrEmail) {
+        // Try to find by username or email (case-insensitive)
+        Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
 
         if(user.isEmpty()){
-            log.warn("Username {} unauthorized", username);
+            log.warn("Username or Email {} unauthorized", usernameOrEmail);
             throw new CustomMessageException("Unauthorized", String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
@@ -45,22 +46,22 @@ public class UserDetailsService implements org.springframework.security.core.use
                         .collect(Collectors.toList()));
     }
 
-    public void saveUserAttemptAuthentication(String username) {
-        Optional<User> user = userRepository.findFirstByUsernameAndStatus(username, Constant.ACT);
+    public void saveUserAttemptAuthentication(String usernameOrEmail) {
+        Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
         if(user.isPresent()) {
             int attempt = user.get().getAttempt() + 1;
             user.get().setAttempt(attempt);
             user.get().setUpdated(LocalDateTime.now());
             if(user.get().getAttempt() > 3) {
-                log.warn("User {} update status to blocked", username);
+                log.warn("User {} update status to blocked", usernameOrEmail);
                 user.get().setStatus(Constant.BLK);
             }
             userRepository.save(user.get());
         }
     }
 
-    public void updateAttempt(String username) {
-        Optional<User> user = userRepository.findFirstByUsernameAndStatus(username, Constant.ACT);
+    public void updateAttempt(String usernameOrEmail) {
+        Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
         if(user.isPresent()) {
             user.get().setAttempt(0);
             user.get().setUpdated(LocalDateTime.now());

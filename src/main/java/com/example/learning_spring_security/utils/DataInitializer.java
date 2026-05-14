@@ -57,7 +57,10 @@ public class DataInitializer implements CommandLineRunner {
                     .attempt(0)
                     .build();
 
-            userRepository.save(admin);
+            User savedAdmin = userRepository.save(admin);
+            System.out.println("Admin user created with ID: " + savedAdmin.getId() + ", email: " + savedAdmin.getEmail());
+        } else {
+            System.out.println("Admin user already exists");
         }
     }
 }

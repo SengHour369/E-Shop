@@ -12,21 +12,24 @@ import com.example.learning_spring_security.Service.ServiceStructure.ProductServ
 import com.example.learning_spring_security.ServiceMapper.ProductMapper;
 import com.example.learning_spring_security.ServiceMapper.ProductSkuMapper;
 import com.example.learning_spring_security.dto.Request.ProductRequest;
-import com.example.learning_spring_security.dto.Response.ProductResponse;
+import com.example.learning_spring_security.dto.Request.ProductSkuRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -40,6 +43,12 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
 
         Product product = ProductMapper.toEntity(request, subCategory);
+
+        // Handle image upload if provided
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            String imageUrl = imageService.uploadImage(request.getImage());
+            product.setMainImage(imageUrl);
+        }
 
         Product savedProduct = productRepository.save(product);
         if (request.getSkus() != null && !request.getSkus().isEmpty()) {

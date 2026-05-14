@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User is not found", "id", id);
         }
         log.info("update user successfully by id is {}", id);
-            user.get().setPassword(request.getPassword());
+            user.get().setPassword(passwordEncoder.encode(request.getPassword()));
             user.get().setFullName(request.getFullName());
             user.get().setEmail(request.getEmail());
             user.get().setBirthdate(request.getBirthdate());
@@ -118,18 +118,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseErrorTemplate changeUserPassword(Long userId, String oldPassword, String newPassword) {
-           Optional<User>  user = this.userRepository.findById(userId);
-           if (user.isEmpty()) {
-               throw new ResourceNotFoundException("User is not found", "id", userId);
-           }
-           User user1 = user.get();
-           if(!passwordEncoder.matches(oldPassword,user1.getPassword())){
-               user1.setPassword(newPassword);
-              throw  new ResourceNotFoundException("Old Password Doesn't Match");
-           }
-           user1.setPassword(newPassword);
-           this.userRepository.save(user1);
-           log.info("Password Changed Successfully for user ID :{}",user1.getId());
-           return UserMapper.toResponse(user1);
-    }
+            Optional<User>  user = this.userRepository.findById(userId);
+            if (user.isEmpty()) {
+                throw new ResourceNotFoundException("User is not found", "id", userId);
+            }
+            User user1 = user.get();
+            if(!passwordEncoder.matches(oldPassword,user1.getPassword())){
+               throw  new ResourceNotFoundException("Old Password Doesn't Match");
+            }
+            user1.setPassword(passwordEncoder.encode(newPassword));
+            this.userRepository.save(user1);
+            log.info("Password Changed Successfully for user ID :{}",user1.getId());
+            return UserMapper.toResponse(user1);
+     }
 }

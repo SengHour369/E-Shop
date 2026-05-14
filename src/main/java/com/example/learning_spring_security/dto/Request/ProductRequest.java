@@ -26,4 +26,6 @@ public class ProductRequest {
     private Long subCategoryId;
 
     private List<ProductSkuRequest> skus;
+
+    private MultipartFile image;
 }

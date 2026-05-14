@@ -1,7 +1,6 @@
 package com.example.learning_spring_security.Repository;
 
 import com.example.learning_spring_security.Model.User;
-import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,5 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT p FROM User p WHERE LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.username) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<User> searchUsers(@Param("keyword")String keyword);
     Optional<User> findByUsername(String name);
+    Optional<User> findByEmail(String email);
+    @Query("SELECT u FROM User u WHERE (LOWER(u.username) = LOWER(:credential) OR LOWER(u.email) = LOWER(:credential)) AND u.status = :status")
+    Optional<User> findByUsernameOrEmailAndStatus(@Param("credential") String credential, @Param("status") String status);
 //    Optional<User> findByVerificationCode(String verificationCode);
 }
