@@ -14,4 +14,10 @@ public interface OrderService {
     Page<ResponseErrorTemplate> getAllOrders(Pageable pageable);
     ResponseErrorTemplate updateOrderStatus(Long id, String status);
     ResponseErrorTemplate cancelOrder(Long id, Long userId);
+
+    // Bakong Payment Integration Methods
+    ResponseErrorTemplate createOrderWithBakongPayment(Long userId, OrderRequest request);
+    ResponseErrorTemplate initiateBakongPayment(Long orderId);
+    ResponseErrorTemplate verifyBakongPayment(Long orderId, String transactionId);
+    ResponseErrorTemplate processBakongPaymentCallback(String orderNumber, String transactionId, String status);
 }

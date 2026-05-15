@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Can login with either username or email
  */
 public record Login(
-        @JsonProperty("username_or_email")
+        @JsonProperty("username")
         String username,
         String password
 ){

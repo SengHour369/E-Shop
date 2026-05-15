@@ -1,5 +1,8 @@
 package com.example.learning_spring_security.Bakong.service.impl.dto;
 
+import lombok.Builder;
+
+@Builder
 public record BakongRequest(
         String currency,
         Double amount,

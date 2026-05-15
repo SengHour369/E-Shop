@@ -29,24 +29,24 @@ public class BakongController {
     public KHQRResponse<KHQRData> generateQR(@RequestBody BakongRequest request){
         return service.generateQR(request);
     }
-
-    @PostMapping("/get-qr-image")
-    public ResponseEntity<byte[]> getQRImage(@Valid @RequestBody GetQRImageRequest request) {
-        try {
-            byte[] imageBytes = service.getQRImage(request);
-
-            return ResponseEntity
-                    .ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"qrcode.png\"")
-                    .contentType(MediaType.IMAGE_PNG)
-                    .body(imageBytes);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .badRequest()
-                    .contentType(MediaType.TEXT_PLAIN)
-                    .body(e.getMessage().getBytes());
-        }
-    }
+//
+//    @PostMapping("/get-qr-image")
+//    public ResponseEntity<byte[]> getQRImage(@Valid @RequestBody GetQRImageRequest request) {
+//        try {
+//            byte[] imageBytes = service.getQRImage(request);
+//
+//            return ResponseEntity
+//                    .ok()
+//                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"qrcode.png\"")
+//                    .contentType(MediaType.IMAGE_PNG)
+//                    .body(imageBytes);
+//        } catch (Exception e) {
+//            return ResponseEntity
+//                    .badRequest()
+//                    .contentType(MediaType.TEXT_PLAIN)
+//                    .body(e.getMessage().getBytes());
+//        }
+//    }
 
     @PostMapping("/check-transaction")
     public ResponseEntity<BakongResponse> checkTransaction(
