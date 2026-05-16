@@ -45,8 +45,8 @@ public class AuthServiceImpl implements AuthService {
                 .roles(roles)
                 .attempt(0)
                 .status(Constant.ACT)
-                .created(LocalDateTime.now())
                 .build();
+        user.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(user);
 
@@ -59,13 +59,29 @@ public class AuthServiceImpl implements AuthService {
         return user.map(User::getId);
     }
 
-    @Override
-    public ResponseErrorTemplate logIn(String username) {
-        Optional<User> user = userRepository.findFirstByUsernameAndStatus(username, Constant.ACT);
+    public Optional<User> findUserByUsername(String usernameOrEmail) {
+        log.info("Finding user by username or email: {}", usernameOrEmail);
+        return userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
+    }
 
-        var msg = String.format(Constant.USER_NAME_NOT_FOUND, user);
-        return user.map(this::userMapper)
-                .orElse(new ResponseErrorTemplate(msg, Constant.USER_NOT_FOUND_CODE, new Object()));
+    public Optional<User> findUserByUsernameOrEmail(String credential) {
+        log.info("Looking up user with credential: {}", credential);
+        return userRepository.findByUsernameOrEmailAndStatus(credential, Constant.ACT);
+    }
+
+    @Override
+    public ResponseErrorTemplate logIn(String usernameOrEmail) {
+        log.info("Attempting to login with: {}", usernameOrEmail);
+        Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
+
+        if(user.isEmpty()) {
+            log.warn("User not found or inactive for credential: {}", usernameOrEmail);
+            var msg = String.format(Constant.USER_NAME_NOT_FOUND, usernameOrEmail);
+            return new ResponseErrorTemplate(msg, Constant.USER_NOT_FOUND_CODE, new Object());
+        }
+        
+        log.info("User found successfully: {}", user.get().getUsername());
+        return this.userMapper(user.get());
     }
 
     @Override
@@ -91,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getEmail(),
                 user.getFullName(),
                 user.getRoles().stream().map(Role::getName).toList(),
-                user.getCreated()
+                user.getCreatedAt()
         );
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, userResponse);
     }

@@ -71,4 +71,35 @@ public class OrderController extends BaseController {
         ResponseErrorTemplate order = orderService.cancelOrder(id, userId);
         return ResponseEntity.ok(order);
     }
+
+    @PostMapping("/user/{userId}/from-cart/bakong")
+    public ResponseEntity<ResponseErrorTemplate> createOrderWithBakongPayment(
+            @PathVariable Long userId,
+            @Valid @RequestBody OrderRequest request) {
+        ResponseErrorTemplate order = orderService.createOrderWithBakongPayment(userId, request);
+        return new ResponseEntity<>(order, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{orderId}/bakong/initiate")
+    public ResponseEntity<ResponseErrorTemplate> initiateBakongPayment(@PathVariable Long orderId) {
+        ResponseErrorTemplate response = orderService.initiateBakongPayment(orderId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{orderId}/bakong/verify")
+    public ResponseEntity<ResponseErrorTemplate> verifyBakongPayment(
+            @PathVariable Long orderId,
+            @RequestParam String transactionId) {
+        ResponseErrorTemplate response = orderService.verifyBakongPayment(orderId, transactionId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/bakong/callback")
+    public ResponseEntity<ResponseErrorTemplate> processBakongPaymentCallback(
+            @RequestParam String orderNumber,
+            @RequestParam String transactionId,
+            @RequestParam String status) {
+        ResponseErrorTemplate response = orderService.processBakongPaymentCallback(orderNumber, transactionId, status);
+        return ResponseEntity.ok(response);
+    }
 }

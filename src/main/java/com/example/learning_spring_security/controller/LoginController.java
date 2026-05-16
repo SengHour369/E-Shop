@@ -6,7 +6,6 @@ import com.example.learning_spring_security.dto.Response.AuthenticationResponse;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import com.example.learning_spring_security.JWT.JwtService;
 import com.example.learning_spring_security.Security.UserDetailsService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -43,25 +42,24 @@ public class LoginController {
 
                     )
             );
-            log.info("user login {}",  authenticationRequest.username(),
-                    authenticationRequest.password());
+            log.info("User login attempt for: {}", authenticationRequest.username());
             SecurityContextHolder.getContext().setAuthentication(authentication);
             Object principal = authentication.getPrincipal();
             UserDetailsImpl userDetails;
             if (principal instanceof UserDetailsImpl) {
                 userDetails = (UserDetailsImpl) principal;
             } else {
-                String username = principal.toString();
+                String username = (principal != null) ? principal.toString() : authenticationRequest.username();
                 userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
-
             }
-            var  user = this.authService.findById(userDetails.getUsername());
+            var user = this.authService.findUserByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             userDetailsService.updateAttempt(authenticationRequest.username());
 
             String accessToken = jwtService.generateToken(userDetails);
             String refreshToken = jwtService.refreshToken(userDetails);
             log.info("User {} logged in successfully", authenticationRequest.username());
-            return ResponseEntity.ok(new AuthenticationResponse(user.get(),accessToken, refreshToken));
+            return ResponseEntity.ok(new AuthenticationResponse(user.getId(), accessToken, refreshToken));
         } catch (BadCredentialsException e) {
             log.error("Invalid credentials for user: {}", authenticationRequest.username());
             userDetailsService.saveUserAttemptAuthentication(authenticationRequest.username());

@@ -104,9 +104,21 @@ public class ProductController extends BaseController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create product", description = "Create a new product (Admin only)")
+    @Operation(summary = "Create product", description = "Create a new product with optional image (Admin only)")
+    public ResponseEntity<ResponseErrorTemplate> createProduct(
+            @RequestPart("name") String name,
+            @RequestPart(value = "description", required = false) String description,
+            @RequestPart("sub_category_id") Long subCategoryId,
+            @RequestPart(value = "is_active", required = false) Boolean isActive,
+            @RequestPart(value = "skus", required = false) String skusJson,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
+        ProductRequest request = new ProductRequest();
+        request.setName(name);
+        request.setDescription(description);
+        request.setSubCategoryId(subCategoryId);
+        request.setIsActive(isActive != null ? isActive : true);
+        request.setImage(image);
 
-    public ResponseEntity<ResponseErrorTemplate> createProduct(@Valid @RequestBody ProductRequest request  ) throws Exception {
         ResponseErrorTemplate response = productService.createProduct(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }

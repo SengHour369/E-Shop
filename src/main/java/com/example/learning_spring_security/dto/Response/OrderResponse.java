@@ -22,5 +22,8 @@ public class OrderResponse {
     private BigDecimal totalAmount;
     private List<OrderItemResponse> items;
     private PaymentResponse payment;
-
+    @JsonProperty("qr_code")
+    private String qrCode;
+    @JsonProperty("payment_url")
+    private String paymentUrl;
 }

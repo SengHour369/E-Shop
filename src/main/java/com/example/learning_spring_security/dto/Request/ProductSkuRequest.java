@@ -25,5 +25,4 @@ public class ProductSkuRequest {
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;
-
 }

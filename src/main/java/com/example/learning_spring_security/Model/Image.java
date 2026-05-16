@@ -8,7 +8,7 @@ import java.util.UUID;
 @Entity
 @Data
 @Table(name = "images")
-public class Image {
+public class Image extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

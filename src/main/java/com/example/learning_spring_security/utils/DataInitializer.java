@@ -40,7 +40,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createAdminIfNotFound() {
-        if (!userRepository.existsByUsername("admin")) {
+        if (!userRepository.existsByUsernameAndDeletedFalse("admin")) {
             Role adminRole = roleRepository.findByName("ADMIN")
                     .orElseThrow(() -> new RuntimeException("Admin role not found"));
 
@@ -57,7 +57,10 @@ public class DataInitializer implements CommandLineRunner {
                     .attempt(0)
                     .build();
 
-            userRepository.save(admin);
+            User savedAdmin = userRepository.save(admin);
+            System.out.println("Admin user created with ID: " + savedAdmin.getId() + ", email: " + savedAdmin.getEmail());
+        } else {
+            System.out.println("Admin user already exists");
         }
     }
 }
