@@ -59,8 +59,8 @@ class AuthServiceImplTest {
                 .roles(List.of(role))
                 .attempt(0)
                 .status(Constant.ACT)
-                .created(LocalDateTime.now())
                 .build();
+        user.setCreatedAt(LocalDateTime.now());
     }
 
     @Test
