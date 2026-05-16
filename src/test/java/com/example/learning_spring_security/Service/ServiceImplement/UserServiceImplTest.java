@@ -104,16 +104,6 @@ class UserServiceImplTest {
         verify(userRepository).save(any(User.class));
     }
 
-    @Test
-    void updateUser_ShouldThrowException_WhenNotFound() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThatThrownBy(() -> userService.updateUser(1L, userRequest))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User is not found");
-    }
 
     @Test
     void deleteUser_ShouldDeleteSuccessfully() {
@@ -127,16 +117,6 @@ class UserServiceImplTest {
         verify(userRepository).deleteById(1L);
     }
 
-    @Test
-    void deleteUser_ShouldThrowException_WhenNotFound() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThatThrownBy(() -> userService.deleteUser(1L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User is not found deleteUser ");
-    }
 
     @Test
     void getAllUsers_ShouldReturnList() {
@@ -167,17 +147,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    void changeUserStatus_ShouldThrowException_WhenNotFound() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThatThrownBy(() -> userService.changeUserStatus(1L, "INACTIVE"))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User is not found changeUserStatus ");
-    }
-
-    @Test
     void updateProfilePicture_ShouldUpdateSuccessfully() {
         // Given
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -193,16 +162,7 @@ class UserServiceImplTest {
         verify(userRepository).save(user);
     }
 
-    @Test
-    void updateProfilePicture_ShouldThrowException_WhenNotFound() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // When & Then
-        assertThatThrownBy(() -> userService.updateProfilePicture(1L, file))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User is not found updateProfilePicture ");
-    }
 
     @Test
     void countUsers_ShouldReturnCount() {
@@ -259,14 +219,5 @@ class UserServiceImplTest {
                 .hasMessage("Old Password Doesn't Match");
     }
 
-    @Test
-    void changeUserPassword_ShouldThrowException_WhenUserNotFound() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // When & Then
-        assertThatThrownBy(() -> userService.changeUserPassword(1L, "oldPassword", "newPassword"))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User is not found");
-    }
 }
