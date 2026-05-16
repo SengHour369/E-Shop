@@ -181,10 +181,6 @@ public class OrderServiceImpl implements OrderService {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    // ===========================================
-    // BAKONG PAYMENT INTEGRATION METHODS
-    // ===========================================
-
     @Override
     public ResponseErrorTemplate createOrderWithBakongPayment(Long userId, OrderRequest request) {
         // Validate payment method is BAKONG
@@ -270,7 +266,7 @@ public class OrderServiceImpl implements OrderService {
                     .storeLabel("E_SHOP_STORE")
                     .terminalLabel("TERMINAL_01")
                     .mobileNumber("012345678")
-                    .purposeOfTransaction("Payment for Order " + order.getOrderNumber())
+                    .purposeOfTransaction("Payment " + order.getOrderNumber())
                     .expirationTimestamp(15)
                     .build();
 

@@ -30,9 +30,9 @@ public class UserMapper {
                 .status(user.getStatus())
                 .image(user.getImage())
                 .birthdate(user.getBirthdate())
-                .createdAt(user.getCreated())
+                .createdAt(user.getCreatedAt())
                 .password(user.getPassword())
-                .updatedAt(user.getUpdated())
+                .updatedAt(user.getUpdatedAt())
                 .deletedAt(user.getDeletedAt())
                 .build());
     }

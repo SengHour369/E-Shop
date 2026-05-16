@@ -20,16 +20,11 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "tbl_user")
-public class User  implements Serializable {
+public class User extends BaseEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-    @PreRemove
-    protected void onRemove() {
-        deletedAt = LocalDateTime.now();
-    }
+
     @Column(name = "username", unique = true, nullable = false)
     private String username;
     @Column(name = "email", unique = true, nullable = false)
@@ -44,10 +39,7 @@ public class User  implements Serializable {
     private String status;
     private String  image;
     private String birthdate;
-    @Column(name = "created", updatable = false)
-    private LocalDateTime created;
-    @Column(name = "updated", insertable = false)
-    private LocalDateTime updated;
+    private Boolean deleted =  false;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

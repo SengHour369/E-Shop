@@ -45,8 +45,8 @@ public class AuthServiceImpl implements AuthService {
                 .roles(roles)
                 .attempt(0)
                 .status(Constant.ACT)
-                .created(LocalDateTime.now())
                 .build();
+        user.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(user);
 
@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getEmail(),
                 user.getFullName(),
                 user.getRoles().stream().map(Role::getName).toList(),
-                user.getCreated()
+                user.getCreatedAt()
         );
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, userResponse);
     }

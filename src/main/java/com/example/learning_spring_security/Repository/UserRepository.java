@@ -11,10 +11,12 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findFirstByUsernameAndStatus(String username, String status);
     Optional<User> findFirstByUsernameOrEmail(String username, String email);
-    Boolean existsByUsername(String username);
-    @Query("SELECT p FROM User p WHERE LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.username) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+
+    Boolean existsByUsernameAndDeletedFalse(String username);
+    @Query("SELECT p FROM User p WHERE LOWER(p.fullName)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.username) LIKE LOWER(CONCAT('%', :keyword, '%')) And (p.deleted IS NULL OR p.deleted = False)")
     List<User> searchUsers(@Param("keyword")String keyword);
-    Optional<User> findByUsername(String name);
+    @Query("")
+    Optional<User> findByUsername(@Param("name") String name);
     Optional<User> findByEmail(String email);
     @Query("SELECT u FROM User u WHERE (LOWER(u.username) = LOWER(:credential) OR LOWER(u.email) = LOWER(:credential)) AND u.status = :status")
     Optional<User> findByUsernameOrEmailAndStatus(@Param("credential") String credential, @Param("status") String status);

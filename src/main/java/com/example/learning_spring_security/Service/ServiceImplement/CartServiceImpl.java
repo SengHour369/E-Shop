@@ -145,7 +145,6 @@ public class CartServiceImpl implements CartService {
                 .orElseGet(() -> {
                     User user = userRepository.findById(userId)
                             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
                     Cart newCart = Cart.builder()
                             .user(user)
                             .totalPrice(BigDecimal.ZERO)

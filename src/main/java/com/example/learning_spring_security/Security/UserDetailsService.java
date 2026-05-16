@@ -51,7 +51,7 @@ public class UserDetailsService implements org.springframework.security.core.use
         if(user.isPresent()) {
             int attempt = user.get().getAttempt() + 1;
             user.get().setAttempt(attempt);
-            user.get().setUpdated(LocalDateTime.now());
+            user.get().setUpdatedAt(LocalDateTime.now());
             if(user.get().getAttempt() > 3) {
                 log.warn("User {} update status to blocked", usernameOrEmail);
                 user.get().setStatus(Constant.BLK);
@@ -64,7 +64,7 @@ public class UserDetailsService implements org.springframework.security.core.use
         Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
         if(user.isPresent()) {
             user.get().setAttempt(0);
-            user.get().setUpdated(LocalDateTime.now());
+            user.get().setUpdatedAt(LocalDateTime.now());
             userRepository.save(user.get());
         }
     }

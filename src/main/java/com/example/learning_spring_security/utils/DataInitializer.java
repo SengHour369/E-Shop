@@ -40,7 +40,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createAdminIfNotFound() {
-        if (!userRepository.existsByUsername("admin")) {
+        if (!userRepository.existsByUsernameAndDeletedFalse("admin")) {
             Role adminRole = roleRepository.findByName("ADMIN")
                     .orElseThrow(() -> new RuntimeException("Admin role not found"));
 
