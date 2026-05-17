@@ -33,4 +33,6 @@ public class Cart extends BaseEntity  {
 
     @Column(name = "total_items")
     private Integer totalItems = 0;
+
+    private Boolean deleted = false;
 }

@@ -47,4 +47,6 @@ public class OrderDetail extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress;
+
+    private Boolean deleted = false;
 }

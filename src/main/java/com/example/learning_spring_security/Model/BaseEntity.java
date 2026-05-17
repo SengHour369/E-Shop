@@ -19,7 +19,7 @@ public abstract class BaseEntity {
     @Column(name = "updated_at",insertable = false)
     protected LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
+    @Column(name = "deleted_at",insertable = false,updatable = false)
     protected LocalDateTime deletedAt;
 
     @PrePersist

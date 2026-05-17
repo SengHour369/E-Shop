@@ -45,8 +45,9 @@ public class AuthServiceImpl implements AuthService {
                 .roles(roles)
                 .attempt(0)
                 .status(Constant.ACT)
+                .deleted(false)
                 .build();
-        user.setCreatedAt(LocalDateTime.now());
+                 user.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(user);
 
