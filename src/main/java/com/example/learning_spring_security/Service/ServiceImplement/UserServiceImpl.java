@@ -27,7 +27,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseErrorTemplate getUserById(Long id) {
-        Optional<User> user = this.userRepository.findById(id);
+        Optional<User> user = this.userRepository.findUserById(id);
         if(user.isEmpty()){
             log.error("User is not found by id :{}",id);
             throw new ResourceNotFoundException("User is not found by id");
@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseErrorTemplate updateUser(Long id, UserRequest request) {
-        Optional<User>  user = this.userRepository.findById(id);
+        Optional<User>  user = this.userRepository.findUserById(id);
         if (user.isEmpty()) {
             throw new ResourceNotFoundException("User is not found", "id", id);
         }
@@ -55,7 +55,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id){
-        Optional<User> user = this.userRepository.findById(id);
+        Optional<User> user = this.userRepository.findUserById(id);
         if (user.isEmpty()) {
             throw new ResourceNotFoundException("User is not found deleteUser ", "id", id);
         }
@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<ResponseErrorTemplate> getAllUsers() {
         log.info("get All Users");
-        return  this.userRepository.findAll()
+        return  this.userRepository.findAllUser()
                 .stream().map(UserMapper::toResponse)
                 .toList();
     }
@@ -74,7 +74,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseErrorTemplate changeUserStatus(Long id, String status) {
-        Optional<User> user = userRepository.findById(id);
+        Optional<User> user = userRepository.findUserById(id);
                if(user.isEmpty()) {
                    log.info("User is not found changeUserStatus by ID {}", id);
                    throw new ResourceNotFoundException("User is not found changeUserStatus ", "id", id);
@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseErrorTemplate updateProfilePicture(Long userId, MultipartFile profilePictureUrl) {
-        Optional<User> user = this.userRepository.findById(userId);
+        Optional<User> user = this.userRepository.findUserById(userId);
         if (user.isEmpty()) {
             log.info("User is not found updateProfilePicture by ID {}", userId);
             throw new ResourceNotFoundException("User is not found updateProfilePicture ", "id", userId);
@@ -103,7 +103,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Long countUsers() {
-        log.info("count users : {}", this.userRepository.findAll().size());
+        log.info("count users : {}", this.userRepository.findAllUser().size());
         return this.userRepository.count();
     }
 
@@ -118,7 +118,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseErrorTemplate changeUserPassword(Long userId, String oldPassword, String newPassword) {
-            Optional<User>  user = this.userRepository.findById(userId);
+            Optional<User>  user = this.userRepository.findUserById(userId);
             if (user.isEmpty()) {
                 throw new ResourceNotFoundException("User is not found", "id", userId);
             }

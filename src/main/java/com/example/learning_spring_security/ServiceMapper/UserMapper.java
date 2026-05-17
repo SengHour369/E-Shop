@@ -18,6 +18,7 @@ public class UserMapper {
                 .password(request.getPassword())
                 .fullName(request.getFullName())
                 .attempt(0)
+                .deleted(false)
                 .build();
     }
 

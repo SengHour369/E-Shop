@@ -36,4 +36,6 @@ public class Address extends BaseEntity {
 
     @ManyToMany(mappedBy = "addresses")
     private List<User> users;
+
+    private Boolean deleted = false;
 }

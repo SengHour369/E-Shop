@@ -40,4 +40,6 @@ public class Payment  extends BaseEntity{
 
     @Column(name = "payment_provider_response", length = 2000)
     private String paymentProviderResponse;
+
+    private Boolean deleted = false;
 }

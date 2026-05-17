@@ -17,4 +17,5 @@ public class Image extends BaseEntity {
     @Column(name = "url_image")
     private String url;
 
+
 }

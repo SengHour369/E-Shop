@@ -7,8 +7,7 @@ import lombok.*;
 
 
 import java.io.Serializable;
-import java.sql.Time;
-import java.time.LocalDateTime;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -39,6 +38,7 @@ public class User extends BaseEntity implements Serializable {
     private String status;
     private String  image;
     private String birthdate;
+    @Column(name = "deleted", nullable = false)
     private Boolean deleted =  false;
 
     @ManyToMany(fetch = FetchType.EAGER)
