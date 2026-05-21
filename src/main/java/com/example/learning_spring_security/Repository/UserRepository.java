@@ -30,4 +30,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE u.id =:id AND (u.deleted IS NULL OR u.deleted = False)
     """)
     Optional<User> findUserById(@Param("id") Long id);
+
+    Boolean existsByIdAndDeletedFalse(Long id);
+
 }

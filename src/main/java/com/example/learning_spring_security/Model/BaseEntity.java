@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@MappedSuperclass
 public abstract class BaseEntity {
 
     @Column(name = "created_at", updatable = false)

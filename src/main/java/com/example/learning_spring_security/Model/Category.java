@@ -24,6 +24,7 @@ public class Category extends BaseEntity {
     private String name;
 
     private String description;
+    private Boolean deleted = false;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SubCategory> subCategories = new ArrayList<>(); // ប្តូរពី subCategoryItems

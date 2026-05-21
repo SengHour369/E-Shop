@@ -9,17 +9,22 @@ import com.example.learning_spring_security.dto.Response.UserResponse;
 
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class UserMapper {
 
     public static User toEntity(UserRequest request) {
-        return User.builder()
+        User user = User.builder()
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .fullName(request.getFullName())
                 .attempt(0)
                 .deleted(false)
                 .build();
+
+        user.setCreatedAt(LocalDateTime.now());
+        return  user;
     }
 
     public static ResponseErrorTemplate toResponse(User user) {

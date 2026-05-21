@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -23,53 +23,75 @@ public class BakongTokenServiceImpl implements BakongTokenService {
 
     @Value("${bakong.base-url}")
     private String baseUrl;
+
     @Value("${bakong.email}")
     private String email;
 
     private String cachedToken;
     private Instant tokenExpiry;
 
+    private static final long SAFETY_SECONDS = 60;
+
     @Override
     public synchronized String getToken() {
-        if (cachedToken != null && tokenExpiry != null && Instant.now().isBefore(tokenExpiry)) {
-            log.info("Using cached token");
+
+        if (cachedToken != null
+                && tokenExpiry != null
+                && Instant.now().isBefore(tokenExpiry.minusSeconds(SAFETY_SECONDS))) {
             return cachedToken;
         }
 
-        log.info("Renewing token from Bakong");
+        return refreshToken();
+    }
+    private String refreshToken() {
 
         try {
             String url = baseUrl.replaceAll("/+$", "") + "/v1/renew_token";
 
-            String responseBody = restClient.post()
+            String response = restClient.post()
                     .uri(url)
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
                     .body(Map.of("email", email))
                     .retrieve()
+                    .onStatus(status -> status.isError(),
+                            (req, res) -> {
+                                throw new RuntimeException("Bakong API error: " + res.getStatusCode());
+                            })
                     .body(String.class);
 
-            JsonNode root = mapper.readTree(responseBody);
+            if (response == null || response.isEmpty()) {
+                throw new RuntimeException("Empty response from Bakong");
+            }
+
+            JsonNode root = mapper.readTree(response);
             JsonNode tokenNode = root.path("data").path("token");
+
             if (tokenNode.isMissingNode() || tokenNode.isNull()) {
-                throw new RuntimeException("Bakong token not returned");
+                throw new RuntimeException("Token not returned");
             }
 
             cachedToken = tokenNode.asText();
 
-            // Decode JWT to get real expiry
             String[] parts = cachedToken.split("\\.");
-            String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
-            JsonNode payloadNode = mapper.readTree(payload);
-            long exp = payloadNode.path("exp").asLong();
-            tokenExpiry = Instant.ofEpochSecond(exp);
+            if (parts.length != 3) {
+                throw new RuntimeException("Invalid JWT format");
+            }
 
-            log.info("Obtained new token, expires at {}", tokenExpiry);
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+            JsonNode payloadNode = mapper.readTree(payload);
+
+            long exp = payloadNode.path("exp").asLong();
+            tokenExpiry = Instant.ofEpochSecond(exp).minusSeconds(SAFETY_SECONDS);
+
+            log.info("New token generated, expires at {}", tokenExpiry);
 
             return cachedToken;
+
         } catch (Exception e) {
-            log.error("Failed to obtain Bakong token: {}", e.getMessage());
-            throw new RuntimeException("Failed to obtain Bakong token", e);
+            log.error("Failed to refresh Bakong token", e);
+            throw new RuntimeException("Token refresh failed", e);
         }
     }
-}
+ }
+

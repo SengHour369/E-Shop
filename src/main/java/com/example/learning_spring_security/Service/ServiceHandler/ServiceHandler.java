@@ -33,7 +33,7 @@ public class ServiceHandler {
             );
         }
 
-        if (categoryRepository.existsByName(name)) {
+        if (categoryRepository.existsByNameAndDeletedFalse(name)) {
             throw new CustomMessageException(
                     "Category with name '" + name + "' already exists",
                     String.valueOf(HttpStatus.CONFLICT.value())
