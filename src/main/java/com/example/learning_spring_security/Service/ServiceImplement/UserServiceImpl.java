@@ -60,7 +60,8 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User is not found deleteUser ", "id", id);
         }
         log.info("Delete user successfully with id {}",id);
-        this.userRepository.deleteById(user.get().getId());
+        user.get().setDeleted(true);
+        this.userRepository.save(user.get());
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -55,7 +56,9 @@ public class DataInitializer implements CommandLineRunner {
                     .status(Constant.ACT)
                     .roles(roles)
                     .attempt(0)
+                    .deleted(false)
                     .build();
+            admin.setCreatedAt(LocalDateTime.now());
 
             User savedAdmin = userRepository.save(admin);
             System.out.println("Admin user created with ID: " + savedAdmin.getId() + ", email: " + savedAdmin.getEmail());

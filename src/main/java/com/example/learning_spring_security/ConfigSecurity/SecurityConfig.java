@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Config.ConfigSecurity;
+package com.example.learning_spring_security.ConfigSecurity;
 
 import com.example.learning_spring_security.Exception.CustomDeniedHandler;
 import com.example.learning_spring_security.JWT.JwtConfig;

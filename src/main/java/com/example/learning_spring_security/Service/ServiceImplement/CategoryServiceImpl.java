@@ -7,7 +7,6 @@ import com.example.learning_spring_security.Repository.CategoryRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.CategoryService;
 import com.example.learning_spring_security.ServiceMapper.CategoryMapper;
 import com.example.learning_spring_security.dto.Request.CategoryRequest;
-import com.example.learning_spring_security.dto.Response.CategoryResponse;
 
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +28,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public ResponseErrorTemplate createCategory(CategoryRequest request) {
-        if (categoryRepository.existsByName(request.getName())) {
+        if (categoryRepository.existsByNameAndDeletedFalse(request.getName())) {
             throw new DuplicateResourceException("Category already exists with name: " + request.getName());
         }
 
@@ -40,7 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByCategoryId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         return CategoryMapper.toResponse(category);
     }
@@ -70,11 +70,11 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public ResponseErrorTemplate updateCategory(Long id, CategoryRequest request) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByCategoryId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         
         if (request.getName() != null && !request.getName().equals(category.getName())) {
-            if (categoryRepository.existsByName(request.getName())) {
+            if (categoryRepository.existsByNameAndDeletedFalse(request.getName())) {
                 throw new DuplicateResourceException("Category already exists with name: " + request.getName());
             }
         }
@@ -86,10 +86,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(Long id) {
-        if (!categoryRepository.existsById(id)) {
+        Optional<Category> category = categoryRepository.findByCategoryId(id);
+        if (category.isEmpty()) {
             throw new ResourceNotFoundException("Category not found with id: " + id);
         }
-        categoryRepository.deleteById(id);
+        category.get().setDeleted(true);
+        categoryRepository.save(category.get());
     }
 
     @Override

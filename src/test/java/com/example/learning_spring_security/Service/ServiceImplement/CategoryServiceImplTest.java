@@ -23,7 +23,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,7 +55,7 @@ class CategoryServiceImplTest {
     @Test
     void createCategory_ShouldCreateSuccessfully() {
         // Given
-        when(categoryRepository.existsByName("Electronics")).thenReturn(false);
+        when(categoryRepository.existsByNameAndDeletedFalse("Electronics")).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
         // When
@@ -64,14 +63,14 @@ class CategoryServiceImplTest {
 
         // Then
         assertThat(response).isNotNull();
-        verify(categoryRepository).existsByName("Electronics");
+        verify(categoryRepository).existsByNameAndDeletedFalse("Electronics");
         verify(categoryRepository).save(any(Category.class));
     }
 
     @Test
     void createCategory_ShouldThrowException_WhenCategoryExists() {
         // Given
-        when(categoryRepository.existsByName("Electronics")).thenReturn(true);
+        when(categoryRepository.existsByNameAndDeletedFalse("Electronics")).thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> categoryService.createCategory(categoryRequest))
@@ -164,7 +163,7 @@ class CategoryServiceImplTest {
                 .description("Updated description")
                 .build();
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(categoryRepository.existsByName("Updated Electronics")).thenReturn(false);
+        when(categoryRepository.existsByNameAndDeletedFalse("Updated Electronics")).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
         // When
@@ -194,7 +193,7 @@ class CategoryServiceImplTest {
                 .name("Existing Name")
                 .build();
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(categoryRepository.existsByName("Existing Name")).thenReturn(true);
+        when(categoryRepository.existsByNameAndDeletedFalse("Existing Name")).thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> categoryService.updateCategory(1L, updateRequest))

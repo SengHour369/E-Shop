@@ -146,6 +146,11 @@
             <version>1.0.0.17</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

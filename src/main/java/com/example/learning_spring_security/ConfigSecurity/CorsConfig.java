@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Config.ConfigSecurity;
+package com.example.learning_spring_security.ConfigSecurity;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

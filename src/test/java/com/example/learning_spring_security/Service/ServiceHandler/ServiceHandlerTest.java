@@ -3,18 +3,14 @@ package com.example.learning_spring_security.Service.ServiceHandler;
 import com.example.learning_spring_security.Exception.CustomMessageException;
 import com.example.learning_spring_security.Repository.CategoryRepository;
 import com.example.learning_spring_security.Repository.SubCategoryRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,11 +28,11 @@ class ServiceHandlerTest {
     @Test
     void validateCategoryNameNotExists_ShouldPass_WhenNameIsUnique() {
         // Given
-        when(categoryRepository.existsByName("UniqueName")).thenReturn(false);
+        when(categoryRepository.existsByNameAndDeletedFalse("UniqueName")).thenReturn(false);
 
         // When & Then
         serviceHandler.validateCategoryNameNotExists("UniqueName");
-        verify(categoryRepository).existsByName("UniqueName");
+        verify(categoryRepository).existsByNameAndDeletedFalse("UniqueName");
     }
 
     @Test
@@ -50,7 +46,7 @@ class ServiceHandlerTest {
     @Test
     void validateCategoryNameNotExists_ShouldThrowException_WhenNameAlreadyExists() {
         // Given
-        when(categoryRepository.existsByName("ExistingName")).thenReturn(true);
+        when(categoryRepository.existsByNameAndDeletedFalse("ExistingName")).thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> serviceHandler.validateCategoryNameNotExists("ExistingName"))
