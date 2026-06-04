@@ -25,6 +25,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -102,35 +104,23 @@ public class ProductController extends BaseController {
         return ResponseEntity.ok(product);
     }
 
-    @PostMapping
+    @PostMapping( consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create product", description = "Create a new product with optional image (Admin only)")
-    public ResponseEntity<ResponseErrorTemplate> createProduct(
-            @RequestPart("name") String name,
-            @RequestPart(value = "description", required = false) String description,
-            @RequestPart("sub_category_id") Long subCategoryId,
-            @RequestPart(value = "is_active", required = false) Boolean isActive,
-            @RequestPart(value = "skus", required = false) String skusJson,
-            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
-        ProductRequest request = new ProductRequest();
-        request.setName(name);
-        request.setDescription(description);
-        request.setSubCategoryId(subCategoryId);
-        request.setIsActive(isActive != null ? isActive : true);
-        request.setImage(image);
-
-        ResponseErrorTemplate response = productService.createProduct(request);
+    public ResponseEntity<ResponseErrorTemplate> createProduct(@Valid @RequestBody ProductRequest request, @RequestPart List<MultipartFile> files) throws Exception {
+        ResponseErrorTemplate response = productService.createProduct(request,files);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Add image to product for admin", description = "Upload an image to an existing product")
-    public ResponseEntity<ResponseErrorTemplate> addProductImage(
-            @PathVariable Long id,
-            @RequestPart("file") MultipartFile file) {
 
-        ResponseErrorTemplate response = productService.addImageToProduct(id, file);
-        return ResponseEntity.ok(response);
-    }
+//    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    @Operation(summary = "Add image to product for admin", description = "Upload an image to an existing product")
+//    public ResponseEntity<ResponseErrorTemplate> addProductImage(
+//            @PathVariable Long id,
+//            @RequestPart("file") MultipartFile file) {
+//
+//        ResponseErrorTemplate response = productService.addImageToProduct(id, file);
+//        return ResponseEntity.ok(response);
+//    }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

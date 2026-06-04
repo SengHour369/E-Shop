@@ -7,8 +7,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface ProductService {
-    ResponseErrorTemplate createProduct(ProductRequest request) throws Exception;
+    ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files) throws Exception;
     ResponseErrorTemplate getProductById(Long id);
     ResponseErrorTemplate getProductWithSkus(Long id);
     Page<ResponseErrorTemplate> getAllProducts(Pageable pageable);
@@ -19,5 +21,5 @@ public interface ProductService {
     ResponseErrorTemplate updateProduct(Long id, ProductRequest request);
     void deleteProduct(Long id);
     ResponseErrorTemplate updateProductStatus(Long id, Boolean isActive);
-    ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file);
+ //   ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file);
 }

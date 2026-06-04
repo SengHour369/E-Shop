@@ -38,31 +38,12 @@ public class ProductServiceImpl implements ProductService {
     private final ImageService imageService;
 
     @Override
-    public ResponseErrorTemplate createProduct(ProductRequest request) throws Exception {
+    public ResponseErrorTemplate createProduct(ProductRequest request,List<MultipartFile> files) throws Exception {
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
-
         Product product = ProductMapper.toEntity(request, subCategory);
 
-        // Handle image upload if provided
-        if (request.getImage() != null && !request.getImage().isEmpty()) {
-            String imageUrl = imageService.uploadImage(request.getImage());
-            product.setMainImage(imageUrl);
-        }
-
         Product savedProduct = productRepository.save(product);
-        if (request.getSkus() != null && !request.getSkus().isEmpty()) {
-            List<ProductSku> skus = request.getSkus().stream()
-                    .map(skuRequest -> {
-                        ProductSku sku = ProductSkuMapper.toEntity(skuRequest, savedProduct);
-                        sku.setProduct(savedProduct);
-                        return sku;
-                    })
-                    .collect(Collectors.toList());
-            productSkuRepository.saveAll(skus);
-
-            savedProduct.setProductSkus(skus);
-        }
 
         return ProductMapper.toResponse(savedProduct);
     }
@@ -97,19 +78,19 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByIsActiveTrue(pageable)
                 .map(ProductMapper::toResponse);
     }
-    @Override
-    public ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
-
-        if (file != null ) {
-            String imageUrl = imageService.uploadImage(file);
-            product.setMainImage(imageUrl);
-            productRepository.save(product);
-        }
-
-        return ProductMapper.toResponse(product);
-    }
+//    @Override
+//    public ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file) {
+//        Product product = productRepository.findById(productId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+//
+//        if (file != null ) {
+//            String imageUrl = imageService.uploadImage(file);
+//            product.setMainImage(imageUrl);
+//            productRepository.save(product);
+//        }
+//
+//        return ProductMapper.toResponse(product);
+//    }
 
     @Override
     @Transactional(readOnly = true)

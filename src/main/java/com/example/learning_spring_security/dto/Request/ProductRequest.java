@@ -20,12 +20,8 @@ public class ProductRequest {
     private String description;
     @JsonProperty("is_active")
     private Boolean isActive = true;
-
     @NotNull(message = "Subcategory ID is required")
     @JsonProperty("sub_category_id")
     private Long subCategoryId;
 
-    private List<ProductSkuRequest> skus;
-
-    private MultipartFile image;
 }

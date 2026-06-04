@@ -54,6 +54,8 @@ public class DataInitializer implements CommandLineRunner {
                     .password(passwordEncoder.encode("admin123"))
                     .fullName("System Administrator")
                     .status(Constant.ACT)
+                    .enabled(true)
+                    .phone("097328636")
                     .roles(roles)
                     .attempt(0)
                     .deleted(false)

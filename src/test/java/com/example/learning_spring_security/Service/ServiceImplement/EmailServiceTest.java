@@ -24,11 +24,11 @@ class EmailServiceTest {
     private JavaMailSender mailSender;
 
     @InjectMocks
-    private EmailService emailService;
+    private EmailNotificationService emailNotificationService;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(emailService, "fromEmail", "test@example.com");
+        ReflectionTestUtils.setField(emailNotificationService, "fromEmail", "test@example.com");
     }
 
     @Test
@@ -39,7 +39,7 @@ class EmailServiceTest {
         String body = "Test Body";
 
         // When
-        emailService.sendSimpleEmail(to, subject, body);
+        emailNotificationService.sendSimpleEmail(to, subject, body);
 
         // Then
         verify(mailSender).send(any(SimpleMailMessage.class));
@@ -54,7 +54,7 @@ class EmailServiceTest {
         doThrow(new RuntimeException("Mail server error")).when(mailSender).send(any(SimpleMailMessage.class));
 
         // When & Then
-        assertThatThrownBy(() -> emailService.sendSimpleEmail(to, subject, body))
+        assertThatThrownBy(() -> emailNotificationService.sendSimpleEmail(to, subject, body))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Failed to send email");
     }
@@ -69,7 +69,7 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         // When
-        emailService.sendHtmlEmail(to, subject, htmlBody);
+        emailNotificationService.sendHtmlEmail(to, subject, htmlBody);
 
         // Then
         verify(mailSender).createMimeMessage();
@@ -88,7 +88,7 @@ class EmailServiceTest {
         doThrow(new MessagingException("MIME error")).when(mailSender).send(mimeMessage);
 
         // When & Then
-        assertThatThrownBy(() -> emailService.sendHtmlEmail(to, subject, htmlBody))
+        assertThatThrownBy(() -> emailNotificationService.sendHtmlEmail(to, subject, htmlBody))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Failed to send HTML email");
     }
@@ -101,7 +101,7 @@ class EmailServiceTest {
         String body = "Test Body";
 
         // When
-        emailService.sendEmailToMultiple(recipients, subject, body);
+        emailNotificationService.sendEmailToMultiple(recipients, subject, body);
 
         // Then
         verify(mailSender).send(any(SimpleMailMessage.class));
@@ -116,7 +116,7 @@ class EmailServiceTest {
         doThrow(new RuntimeException("Mail server error")).when(mailSender).send(any(SimpleMailMessage.class));
 
         // When & Then
-        assertThatThrownBy(() -> emailService.sendEmailToMultiple(recipients, subject, body))
+        assertThatThrownBy(() -> emailNotificationService.sendEmailToMultiple(recipients, subject, body))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Failed to send email to multiple recipients");
     }
@@ -128,7 +128,7 @@ class EmailServiceTest {
         String username = "testuser";
 
         // When
-        emailService.sendRegistrationConfirmationEmail(to, username);
+        emailNotificationService.sendRegistrationConfirmationEmail(to, username);
 
         // Then
         verify(mailSender).send(any(SimpleMailMessage.class));
@@ -144,7 +144,7 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         // When
-        emailService.sendOrderConfirmationEmail(to, orderNumber, totalAmount);
+        emailNotificationService.sendOrderConfirmationEmail(to, orderNumber, totalAmount);
 
         // Then
         verify(mailSender).createMimeMessage();
@@ -160,7 +160,7 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         // When
-        emailService.sendPasswordResetEmail(to, resetLink);
+        emailNotificationService.sendPasswordResetEmail(to, resetLink);
 
         // Then
         verify(mailSender).createMimeMessage();
@@ -177,7 +177,7 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         // When
-        emailService.sendOrderShippedEmail(to, orderNumber, trackingNumber);
+        emailNotificationService.sendOrderShippedEmail(to, orderNumber, trackingNumber);
 
         // Then
         verify(mailSender).createMimeMessage();
@@ -194,7 +194,7 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         // When
-        emailService.sendOrderCancellationEmail(to, orderNumber, reason);
+        emailNotificationService.sendOrderCancellationEmail(to, orderNumber, reason);
 
         // Then
         verify(mailSender).createMimeMessage();
