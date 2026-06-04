@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.io.Serializable;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,6 +41,14 @@ public class User extends BaseEntity implements Serializable {
     private String birthdate;
     @Column(name = "deleted", nullable = false)
     private Boolean deleted =  false;
+    @Column(name = "phone",unique = true,nullable = false)
+    private String phone;
+    @Column(name = "verification_code")
+    private String verificationCode;
+    @Column(name = "verification_expiration")
+    private LocalDateTime verificationCodeExpiresAt;
+
+    private boolean enabled = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

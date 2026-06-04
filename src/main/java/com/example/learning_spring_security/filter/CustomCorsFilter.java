@@ -4,39 +4,35 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-
-@Configuration
+@Component
+@Order(1)
 @Slf4j
 public class CustomCorsFilter implements Filter {
-
-
-    private final static String ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
-    private final static String ACCESS_CONTROL_ALLOW_METHOD = "Access-Control-Allow-Methods";
-    private final static String ACCESS_CONTROL_ALLOW_HEADER = "Access-Control-Allow-Headers";
-    private final static String ACCESS_CONTROL_MAX_AGE = "Access-Control-Max-Age";
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
                          FilterChain filterChain) throws IOException, ServletException {
 
-        log.info("ServletRequest {}", servletRequest);
-        log.info("ServletResponse {}", servletResponse);
-        final HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        httpServletResponse.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-        httpServletResponse.setHeader(ACCESS_CONTROL_ALLOW_METHOD, "*");
-        httpServletResponse.setHeader(ACCESS_CONTROL_ALLOW_HEADER, "Authorization, Content-Type");
-        httpServletResponse.setHeader(ACCESS_CONTROL_MAX_AGE, "3600");
+        log.info("CORS Filter - Method: {}, URI: {}", request.getMethod(), request.getRequestURI());
 
-        if(HttpMethod.OPTIONS.name().equalsIgnoreCase(((HttpServletRequest) servletRequest).getMethod())) {
-            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+        response.setHeader("Access-Control-Max-Age", "3600");
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return;
         }
+
         filterChain.doFilter(servletRequest, servletResponse);
     }
-
 }

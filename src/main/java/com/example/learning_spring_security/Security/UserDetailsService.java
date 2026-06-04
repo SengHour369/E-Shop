@@ -24,49 +24,72 @@ public class UserDetailsService implements org.springframework.security.core.use
     private final UserRepository userRepository;
 
     @Override
-    public  UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info(" loadUserByUsername called with: {}", username);
         return this.customUserDetail(username);
     }
 
     private UserDetailsImpl customUserDetail(String usernameOrEmail) {
-        // Try to find by username or email (case-insensitive)
+        log.info(" Searching for user by username or email: {}", usernameOrEmail);
+
         Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
 
-        if(user.isEmpty()){
-            log.warn("Username or Email {} unauthorized", usernameOrEmail);
+        if (user.isEmpty()) {
+            log.warn(" Username or Email {} not found or inactive", usernameOrEmail);
             throw new CustomMessageException("Unauthorized", String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
+        User foundUser = user.get();
+        log.info(" User found: {} (ID: {}, Email: {})",
+                foundUser.getUsername(), foundUser.getId(), foundUser.getEmail());
 
         return new UserDetailsImpl(
-                user.get().getUsername(),
-                user.get().getPassword(),
-                user.get().getRoles()
-                        .stream().map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList()));
+                foundUser.getUsername(),
+                foundUser.getEmail(),
+                foundUser.getPassword(),
+                foundUser.getRoles()
+                        .stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getName()))
+                        .collect(Collectors.toList())
+        );
     }
+
 
     public void saveUserAttemptAuthentication(String usernameOrEmail) {
+        log.info(" Recording authentication attempt for: {}", usernameOrEmail);
+
         Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
-        if(user.isPresent()) {
-            int attempt = user.get().getAttempt() + 1;
-            user.get().setAttempt(attempt);
-            user.get().setUpdatedAt(LocalDateTime.now());
-            if(user.get().getAttempt() > 3) {
-                log.warn("User {} update status to blocked", usernameOrEmail);
-                user.get().setStatus(Constant.BLK);
+
+        if (user.isPresent()) {
+            User foundUser = user.get();
+            int attempt = foundUser.getAttempt() + 1;
+            foundUser.setAttempt(attempt);
+
+            if (foundUser.getAttempt() > 3) {
+                log.warn(" User {} exceeded 3 attempts. Blocking account...", usernameOrEmail);
+                foundUser.setStatus(Constant.BLK);
             }
-            userRepository.save(user.get());
+
+            userRepository.save(foundUser);
+            log.info(" Attempt count updated to {} for user: {}", attempt, foundUser.getUsername());
+        } else {
+            log.warn("User not found for attempt recording: {}", usernameOrEmail);
         }
     }
+
 
     public void updateAttempt(String usernameOrEmail) {
+        log.info(" Resetting attempt count for: {}", usernameOrEmail);
+
         Optional<User> user = userRepository.findByUsernameOrEmailAndStatus(usernameOrEmail, Constant.ACT);
-        if(user.isPresent()) {
-            user.get().setAttempt(0);
-            user.get().setUpdatedAt(LocalDateTime.now());
-            userRepository.save(user.get());
+
+        if (user.isPresent()) {
+            User foundUser = user.get();
+            foundUser.setAttempt(0);
+            userRepository.save(foundUser);
+            log.info(" Attempt count reset to 0 for user: {}", foundUser.getUsername());
+        } else {
+            log.warn(" User not found for attempt reset: {}", usernameOrEmail);
         }
     }
-
 }

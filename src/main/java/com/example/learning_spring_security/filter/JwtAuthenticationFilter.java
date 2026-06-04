@@ -50,13 +50,13 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         log.info("Start attempt to authentication");
         Login authenticationRequest = objectMapper.readValue(request.getInputStream(), Login.class);
 
-        customUserDetailService.saveUserAttemptAuthentication(authenticationRequest.username());
+        customUserDetailService.saveUserAttemptAuthentication(authenticationRequest.CriteriaValue());
         log.info("End attempt to authentication");
 
         return getAuthenticationManager()
                 .authenticate(new UsernamePasswordAuthenticationToken(
-                        authenticationRequest.username(),
-                        authenticationRequest.password(),
+                        authenticationRequest.CriteriaValue(),
+                        authenticationRequest.Password(),
                         Collections.emptyList())
                 );
     }

@@ -14,13 +14,9 @@ public class ProductResponse {
     private Long id;
     private String name;
     private String description;
-    //private List<String> image;
-
     @JsonProperty("main_image")
-    private String mainImage;
-
+    private List<String> Image;
     @JsonProperty("is_active")
     private Boolean isActive;
-
     private List<ProductSkuResponse> skus;
 }

@@ -2,6 +2,7 @@ package com.example.learning_spring_security.JWT;
 
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.security.Key;
 

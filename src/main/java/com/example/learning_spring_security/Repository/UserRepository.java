@@ -14,12 +14,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Boolean existsByUsernameAndDeletedFalse(String username);
     @Query("SELECT p FROM User p WHERE LOWER(p.fullName)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.username) LIKE LOWER(CONCAT('%', :keyword, '%')) And (p.deleted IS NULL OR p.deleted = False)")
     List<User> searchUsers(@Param("keyword")String keyword);
-    @Query("SELECT u FROM User u WHERE LOWER(u.username) = LOWER(:name) AND (u.deleted IS NULL OR u.deleted = False)")
-    Optional<User> findByUsername(@Param("name") String name);
-    Optional<User> findByEmail(String email);
+    @Query("SELECT u FROM User u WHERE LOWER(u.username) = LOWER(:Username) AND (u.deleted IS NULL OR u.deleted = False) AND u.status = 'ACT'")
+    Optional<User> findByUsername(@Param("Username") String name);
+    @Query("SELECT u FROM User u WHERE LOWER(u.email) = LOWER(:Email) AND (u.deleted IS NULL OR u.deleted = False) AND u.status = 'ACT'")
+    Optional<User> findByEmail(String Email);
     @Query("SELECT u FROM User u WHERE (LOWER(u.username) = LOWER(:credential) OR LOWER(u.email) = LOWER(:credential)) AND (u.deleted IS NULL OR u.deleted = False) AND u.status = :status")
     Optional<User> findByUsernameOrEmailAndStatus(@Param("credential") String credential, @Param("status") String status);
-//    Optional<User> findByVerificationCode(String verificationCode);
+        Optional<User> findByVerificationCode(String verificationCode);
     @Query("""
             SELECT u FROM User u
             WHERE (u.deleted IS NULL OR u.deleted = False)

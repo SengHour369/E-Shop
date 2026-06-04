@@ -16,6 +16,7 @@ public class UserResponse{
     private String password;
     private String fullName;
     private String birthdate;
+    private String phone;
     private int attempt;
     private String status;
     private String  image;

@@ -34,7 +34,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         Optional<User> user;
         try {
-            user = userRepository.findFirstByUsernameAndStatus(username, Constant.ACT);
+            user = userRepository.findByUsernameOrEmailAndStatus(username, Constant.ACT);
         }catch (Exception ex) {
             log.error("{}", ex.getLocalizedMessage());
             throw new CustomMessageException("User not found.", String.valueOf(HttpStatus.UNAUTHORIZED.value()));

@@ -45,7 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
     private final ProductSkuRepository productSkuRepository;
 
-    // Bakong Payment Service
+
     private final BakongService bakongService;
 
     @Override
@@ -183,18 +183,17 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public ResponseErrorTemplate createOrderWithBakongPayment(Long userId, OrderRequest request) {
-        // Validate payment method is BAKONG
         if (!"BAKONG".equalsIgnoreCase(request.getPaymentMethod())) {
             throw new BadRequestException("This method is only for Bakong payments");
         }
 
-        // Create order using existing logic
+
         ResponseErrorTemplate orderResponse = createOrderFromCart(userId, request);
 
-        // Extract order details from response
+
         OrderResponse orderData = (OrderResponse) orderResponse.object();
 
-        // Initiate Bakong payment immediately
+
         try {
             BakongRequest bakongRequest = BakongRequest.builder()
                     .currency("KHR")
@@ -208,7 +207,7 @@ public class OrderServiceImpl implements OrderService {
                     .terminalLabel("TERMINAL_01")
                     .mobileNumber("012345678")
                     .purposeOfTransaction("Payment " + orderData.getOrderNumber())
-                    .expirationTimestamp(15) // 15 minutes
+                    .expirationTimestamp(15)
                     .build();
 
             KHQRResponse<KHQRData> bakongResponse = bakongService.generateQR(bakongRequest);
@@ -228,13 +227,11 @@ public class OrderServiceImpl implements OrderService {
                  order.setPayment(payment);
                 orderRepository.save(order);
                  orderData.setPayment(PaymentMapper.toResponse(payment));
-                // Return enhanced response with QR code
                 orderData.setQrCode(bakongResponse.getData().getQr());
                 orderData.setPaymentUrl("bakong://payment?qr=" + bakongResponse.getData());
                   }
 
         } catch (Exception e) {
-            // Log error but don't fail order creation
             System.err.println("Failed to generate Bakong QR: " + e.getMessage());
         }
 
@@ -265,7 +262,7 @@ public class OrderServiceImpl implements OrderService {
                     .billNumber(order.getOrderNumber())
                     .storeLabel("E_SHOP_STORE")
                     .terminalLabel("TERMINAL_01")
-                    .mobileNumber("012345678")
+                    .mobileNumber("097328636")
                     .purposeOfTransaction("Payment " + order.getOrderNumber())
                     .expirationTimestamp(15)
                     .build();
@@ -313,7 +310,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         try {
-            // Extract MD5 from transaction ID or use provided transactionId as MD5
+
             String md5 = transactionId.contains("-") ?
                     transactionId.split("-")[1] : transactionId;
 
@@ -368,8 +365,6 @@ public class OrderServiceImpl implements OrderService {
         if (!"BAKONG".equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
             throw new BadRequestException("Order does not use Bakong payment method");
         }
-
-        // Update payment and order status based on callback
         Payment payment = order.getPayment();
         payment.setTransactionId(transactionId);
 
@@ -383,7 +378,6 @@ public class OrderServiceImpl implements OrderService {
             case "CANCELLED":
                 order.setStatus("CANCELLED");
                 payment.setStatus("FAILED");
-                // Restore inventory
                 order.getOrderItems().forEach(item ->
                         productSkuRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
                 );

@@ -18,13 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class RegisterController {
 
     private final AuthService userService;
-
-
     @PostMapping("/accounts/register")
     public ResponseEntity<Object> register(@RequestBody Register userRequest) {
         log.info("Intercept registration new user with req: {}", userRequest);
         return ResponseEntity.ok(userService.create(userRequest));
     }
-
-
 }
