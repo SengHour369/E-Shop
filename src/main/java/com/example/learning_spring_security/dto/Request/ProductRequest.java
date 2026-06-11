@@ -1,10 +1,10 @@
 package com.example.learning_spring_security.dto.Request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,5 +23,7 @@ public class ProductRequest {
     @NotNull(message = "Subcategory ID is required")
     @JsonProperty("sub_category_id")
     private Long subCategoryId;
+   @Valid
+    private List<ProductSkuRequest> skus;
 
 }

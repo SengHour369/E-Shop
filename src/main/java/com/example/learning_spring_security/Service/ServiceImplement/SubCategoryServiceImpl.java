@@ -49,8 +49,8 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
         SubCategory subCategory = SubCategoryMapper.toEntity(request);
         subCategory.setCategory(category);
-            String  imageUrl = this.imageService.uploadImage(file);
-            subCategory.setImage(imageUrl);
+//            String  imageUrl = this.imageService.uploadImage(file);
+//            subCategory.setImage(imageUrl);
 
         SubCategory savedSubCategory = subCategoryRepository.save(subCategory);
         return SubCategoryMapper.toResponse(savedSubCategory);
@@ -101,8 +101,8 @@ public class SubCategoryServiceImpl implements SubCategoryService {
             subCategory.setCategory(newCategory);
         }
         if(file != null &&   !Objects.equals(file.getOriginalFilename(), subCategory.getImage())) {
-            String  imageUrl = this.imageService.uploadImage(file);
-            subCategory.setImage(imageUrl);
+//            String  imageUrl = this.imageService.uploadImage(file);
+//            subCategory.setImage(imageUrl);
         }
 
         SubCategoryMapper.updateEntity(subCategory, request);

@@ -18,8 +18,8 @@ public interface ProductService {
     Page<ResponseErrorTemplate> getProductsBySubCategory(Long subCategoryId, Pageable pageable);
     Page<ResponseErrorTemplate> getProductsByCategory(Long categoryId, Pageable pageable);
     Page<ResponseErrorTemplate> searchProducts(String keyword, Pageable pageable);
-    ResponseErrorTemplate updateProduct(Long id, ProductRequest request);
+    ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files) throws Exception;
     void deleteProduct(Long id);
     ResponseErrorTemplate updateProductStatus(Long id, Boolean isActive);
- //   ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file);
+    //   ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file);
 }

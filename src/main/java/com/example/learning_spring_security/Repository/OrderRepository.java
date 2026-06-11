@@ -21,6 +21,24 @@ public interface OrderRepository extends JpaRepository<OrderDetail, Long> {
     @Query("SELECT o FROM OrderDetail o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.productSku WHERE o.id = :id")
     Optional<OrderDetail> findByIdWithItems(@Param("id") Long id);
 
+    @Query("SELECT DISTINCT o FROM OrderDetail o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.productSku sku " +
+            "LEFT JOIN FETCH sku.product " +
+            "LEFT JOIN FETCH o.payment " +
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "WHERE o.id = :id")
+    Optional<OrderDetail> findByIdWithFullDetail(@Param("id") Long id);
+
+    @Query("SELECT DISTINCT o FROM OrderDetail o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.productSku sku " +
+            "LEFT JOIN FETCH sku.product " +
+            "LEFT JOIN FETCH o.payment " +
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "WHERE o.orderNumber = :orderNumber")
+    Optional<OrderDetail> findByOrderNumberWithFullDetail(@Param("orderNumber") String orderNumber);
+
     @Query("SELECT o FROM OrderDetail o LEFT JOIN FETCH o.payment WHERE o.id = :id")
     Optional<OrderDetail> findByIdWithPayment(@Param("id") Long id);
 

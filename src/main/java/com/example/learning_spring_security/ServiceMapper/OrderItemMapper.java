@@ -38,16 +38,19 @@ public class OrderItemMapper {
         }
 
         OrderItemResponse.OrderItemResponseBuilder builder = OrderItemResponse.builder()
-
+                .id(orderItem.getId())
                 .quantity(orderItem.getQuantity())
                 .unitPrice(orderItem.getUnitPrice())
                 .totalPrice(orderItem.getTotalPrice());
 
         if (orderItem.getProductSku() != null) {
             builder.productSku(ProductSkuMapper.toResponse(orderItem.getProductSku()));
+            if (orderItem.getProductSku().getProduct() != null) {
+                builder.productName(orderItem.getProductSku().getProduct().getName());
+            }
         }
 
-        return   builder.build();
+        return builder.build();
 
     }
 

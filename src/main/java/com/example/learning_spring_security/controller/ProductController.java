@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @RestController
@@ -103,32 +104,79 @@ public class ProductController extends BaseController {
         ResponseErrorTemplate product = productService.getProductWithSkus(id);
         return ResponseEntity.ok(product);
     }
-
-    @PostMapping( consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create product", description = "Create a new product with optional image (Admin only)")
-    public ResponseEntity<ResponseErrorTemplate> createProduct(@Valid @RequestBody ProductRequest request, @RequestPart List<MultipartFile> files) throws Exception {
-        ResponseErrorTemplate response = productService.createProduct(request,files);
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Create product", description = "Create a new product via JSON (Admin only)")
+    public ResponseEntity<ResponseErrorTemplate> createProductJson(
+            @Valid @RequestBody ProductRequest request) throws Exception {
+        ResponseErrorTemplate response = productService.createProduct(request, null);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-//    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    @Operation(summary = "Add image to product for admin", description = "Upload an image to an existing product")
-//    public ResponseEntity<ResponseErrorTemplate> addProductImage(
-//            @PathVariable Long id,
-//            @RequestPart("file") MultipartFile file) {
-//
-//        ResponseErrorTemplate response = productService.addImageToProduct(id, file);
-//        return ResponseEntity.ok(response);
-//    }
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Create product with files", description = "Create a new product with optional images (Admin only)")
+    public ResponseEntity<ResponseErrorTemplate> createProduct(
+            @RequestParam String name,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false, defaultValue = "true") Boolean is_active,
+            @RequestParam Long sub_category_id,
+            @RequestParam(required = false) String skus,
+            @RequestParam(value = "files") List<MultipartFile> files) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        ProductRequest request = new ProductRequest();
+        request.setName(name);
+        request.setDescription(description);
+        request.setIsActive(is_active);
+        request.setSubCategoryId(sub_category_id);
+        
+        if (skus != null && !skus.isEmpty()) {
+            List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList = 
+                mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
+                    List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
+            request.setSkus(skuList);
+        }
+        
+        ResponseErrorTemplate response = productService.createProduct(request, files);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update product", description = "Update an existing product (Admin only)")
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Update product", description = "Update an existing product via JSON (Admin only)")
+    public ResponseEntity<ResponseErrorTemplate> updateProductJson(
+            @Parameter(description = "Product ID", example = "1") @PathVariable Long id,
+            @Valid @RequestBody ProductRequest request) throws Exception {
+        ResponseErrorTemplate response = productService.updateProduct(id, request, null);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Update product with files", description = "Update an existing product with optional files (Admin only)")
     public ResponseEntity<ResponseErrorTemplate> updateProduct(
             @Parameter(description = "Product ID", example = "1") @PathVariable Long id,
-            @Valid @RequestBody ProductRequest request) {
-        ResponseErrorTemplate response = productService.updateProduct(id, request);
+            @RequestParam String name,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false, defaultValue = "true") Boolean is_active,
+            @RequestParam Long sub_category_id,
+            @RequestParam(required = false) String skus,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        ProductRequest request = new ProductRequest();
+        request.setName(name);
+        request.setDescription(description);
+        request.setIsActive(is_active);
+        request.setSubCategoryId(sub_category_id);
+        
+        if (skus != null && !skus.isEmpty()) {
+            List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList = 
+                mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
+                    List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
+            request.setSkus(skuList);
+        }
+        
+        ResponseErrorTemplate response = productService.updateProduct(id, request, files);
         return ResponseEntity.ok(response);
     }
 

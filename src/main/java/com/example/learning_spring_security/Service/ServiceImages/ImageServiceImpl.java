@@ -1,29 +1,26 @@
 package com.example.learning_spring_security.Service.ServiceImages;
 
-import com.cloudinary.Cloudinary;
-import com.cloudinary.Transformation;
+
 import com.example.learning_spring_security.Model.Image;
-import com.example.learning_spring_security.Repository.ImageRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.CloudinaryService;
 import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
+
 @Service
+@Slf4j
 public class ImageServiceImpl implements ImageService {
 
     @Autowired
     private CloudinaryService cloudinaryService;
-    @Autowired
-    private ImageRepository imageRepository;
 
 
 
     @Override
-    public String uploadImage(MultipartFile imageModel) {
+    public Image uploadImage(MultipartFile imageModel) {
         try {
 
             if (imageModel.isEmpty()) {
@@ -31,14 +28,16 @@ public class ImageServiceImpl implements ImageService {
             }
 
             Image image = new Image();
+
             image.setUrl(cloudinaryService.uploadFile(imageModel, "folder_1"));
             if(image.getUrl() == null) {
                 return null;
             }
-            imageRepository.save(image);
-            return image.getUrl();
+            // Do NOT persist the Image here. We only upload to Cloudinary and return an Image entity
+            // that will be attached to a Product and persisted together with the Product (cascade = ALL).
+            return image;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to upload image to Cloudinary", e);
             return null;
         }
 
