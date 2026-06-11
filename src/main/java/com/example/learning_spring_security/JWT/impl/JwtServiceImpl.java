@@ -58,7 +58,7 @@ public class JwtServiceImpl extends JwtConfig implements JwtService {
         return Jwts.builder()
                 .setSubject(customUserDetail.getUsername())
                 .claim("authorities", customUserDetail.getAuthorities()
-                    .stream().map(GrantedAuthority::getAuthority)
+                        .stream().map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList()))
                 .claim("roles", roles)
                 .claim("isEnable", customUserDetail.isEnabled())
@@ -71,23 +71,24 @@ public class JwtServiceImpl extends JwtConfig implements JwtService {
 
     @Override
     public String refreshToken(UserDetailsImpl customUserDetail) {
-
-        // TODO: 4/4/23  you have to implement it by yourself to support refresh token
         Instant currentTime = Instant.now();
         return Jwts.builder()
                 .setSubject(customUserDetail.getUsername())
+                .claim("type", "refresh")
                 .setIssuedAt(Date.from(currentTime))
-                .setExpiration(Date.from(currentTime.plusSeconds(getExpiration())))
+                .setExpiration(Date.from(currentTime.plusSeconds(getRefreshExpiration())))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
-
     }
 
 
     @Override
     public boolean isValidToken(String token) {
-        final String username = extractUsername(token);
-
+        Claims claims = extractAllClaims(token);
+        if (claims.getExpiration().before(new Date())) {
+            throw new CustomMessageException("Token expiration", String.valueOf(HttpStatus.UNAUTHORIZED.value()));
+        }
+        String username = claims.getSubject();
         UserDetailsImpl userDetails = (UserDetailsImpl) userDetailService.loadUserByUsername(username);
         return userDetails != null;
     }
@@ -104,7 +105,7 @@ public class JwtServiceImpl extends JwtConfig implements JwtService {
     private Claims extractAllClaims(String token) {
 
         try {
-           return Jwts.parserBuilder()
+            return Jwts.parserBuilder()
                     .setSigningKey(getKey())
                     .build()
                     .parseClaimsJws(token)

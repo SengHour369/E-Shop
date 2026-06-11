@@ -25,4 +25,8 @@ public class ProductSkuRequest {
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;
+    @JsonProperty("low_stock_threshold")
+    private Integer lowStockThreshold = 5;
+    @JsonProperty("is_default")
+    private Boolean isDefault = false;
 }

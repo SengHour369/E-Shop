@@ -20,8 +20,25 @@ public class OrderResponse {
     private String status;
     @JsonProperty("total_amount")
     private BigDecimal totalAmount;
+
+    @JsonProperty("customer_id")
+    private Long customerId;
+    @JsonProperty("customer_name")
+    private String customerName;
+    @JsonProperty("customer_email")
+    private String customerEmail;
+
+    @JsonProperty("shipping_address")
+    private AddressResponse shippingAddress;
+
     private List<OrderItemResponse> items;
     private PaymentResponse payment;
+
+    @JsonProperty("created_at")
+    private LocalDateTime createdAt;
+    @JsonProperty("updated_at")
+    private LocalDateTime updatedAt;
+
     @JsonProperty("qr_code")
     private String qrCode;
     @JsonProperty("payment_url")

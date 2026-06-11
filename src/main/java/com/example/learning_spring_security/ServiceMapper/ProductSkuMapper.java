@@ -13,9 +13,11 @@ public class ProductSkuMapper {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .quantity(request.getQuantity())
-                .product(product)
                 .color(request.getColor())
                 .size(request.getSize())
+                .lowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 5)
+                .isDefault(request.getIsDefault() != null ? request.getIsDefault() : false)
+                .product(product)
                 .build();
     }
 
@@ -36,5 +38,9 @@ public class ProductSkuMapper {
         sku.setDescription(request.getDescription());
         sku.setPrice(request.getPrice());
         sku.setQuantity(request.getQuantity());
+        sku.setColor(request.getColor());
+        sku.setSize(request.getSize());
+        if (request.getLowStockThreshold() != null) sku.setLowStockThreshold(request.getLowStockThreshold());
+        if (request.getIsDefault() != null) sku.setIsDefault(request.getIsDefault());
     }
 }

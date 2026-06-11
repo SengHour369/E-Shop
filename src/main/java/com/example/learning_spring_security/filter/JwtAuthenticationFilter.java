@@ -49,8 +49,7 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
         log.info("Start attempt to authentication");
         Login authenticationRequest = objectMapper.readValue(request.getInputStream(), Login.class);
-
-        customUserDetailService.saveUserAttemptAuthentication(authenticationRequest.CriteriaValue());
+        request.setAttribute("loginUsername", authenticationRequest.CriteriaValue());
         log.info("End attempt to authentication");
 
         return getAuthenticationManager()
@@ -80,6 +79,8 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
             userDetails = (UserDetailsImpl) customUserDetailService.loadUserByUsername(username);
         }
 
+        customUserDetailService.updateAttempt(userDetails.getUsername());
+
         var accessToken = jwtService.generateToken(userDetails);
         var refreshToken = jwtService.refreshToken(userDetails);
         response.setHeader("Authorization", "Bearer " + accessToken);
@@ -97,6 +98,10 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException, ServletException {
+        String usernameOrEmail = (String) request.getAttribute("loginUsername");
+        if (usernameOrEmail != null && !usernameOrEmail.isBlank()) {
+            customUserDetailService.saveUserAttemptAuthentication(usernameOrEmail);
+        }
         var messageException = CustomMessageExceptionUtils.unauthorized();
         var msgJson = objectMapper.writeValueAsString(messageException);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

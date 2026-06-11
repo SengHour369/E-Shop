@@ -1,0 +1,25 @@
+{
+  "name": "iPhone 15",
+  "description": "Latest Apple smartphone",
+  "is_active": true,
+  "sub_category_id": 1,
+  "skus": [
+    {
+      "sku": "IPHONE15-BLK-128",
+      "price": 999.99,
+      "quantity": 50,
+      "color": "Black",
+      "size": "128GB",
+      "is_default": true,
+      "low_stock_threshold": 5
+    },
+    {
+      "sku": "IPHONE15-WHT-256",
+      "price": 1099.99,
+      "quantity": 30,
+      "color": "White",
+      "size": "256GB",
+      "is_default": false
+    }
+  ]
+}

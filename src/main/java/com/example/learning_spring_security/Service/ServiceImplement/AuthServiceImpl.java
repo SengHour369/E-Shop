@@ -56,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
 
     @Override
+    @Transactional
     public ResponseErrorTemplate create(Register userRequest) {
         log.info("Starting registration for user: {}", userRequest.username());
 
@@ -80,12 +81,13 @@ public class AuthServiceImpl implements AuthService {
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
 
-        userRepository.save(user);
-        sendVerificationEmail(user);
+        User savedUser = userRepository.save(user);
+        log.info("User registered successfully: {}", savedUser.getUsername());
 
-        log.info("User registered successfully: {}", user.getUsername());
+        // Email is sent after save so a mail failure does not roll back the registration
+        sendVerificationEmail(savedUser);
 
-        RegisterResponse registerResponse = userMapper(user);
+        RegisterResponse registerResponse = userMapper(savedUser);
 
         return ResponseErrorTemplate.builder()
                 .message("User registered successfully. Please check your email to verify your account.")
@@ -161,8 +163,8 @@ public class AuthServiceImpl implements AuthService {
 
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
-        sendVerificationEmail(user);
         userRepository.save(user);
+        sendVerificationEmail(user);
 
         log.info("Verification code resent to: {}", email);
 
@@ -181,53 +183,62 @@ public class AuthServiceImpl implements AuthService {
         String value = input.CriteriaValue();
         String password = input.Password();
 
+        if (type == null) {
+            throw new CustomMessageException("Login type is required. Use 1 for email, 2 for username.",
+                    String.valueOf(HttpStatus.BAD_REQUEST.value()));
+        }
+
         log.info("Authenticating user with type: {}, value: {}", type, value);
 
-         authenticationManager.authenticate(
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(value, password)
         );
-       Optional<User> user = this.userRepository.findByUsernameOrEmailAndStatus(value,Constant.ACT);
 
-        UserDetailsImpl userDetails = null;
-           if (type == 1L) {
-               userDetails = this.loadUserByEmail(value);
-           }
-            if (type == 2L) {
-                userDetails = this.loadUserByUsername(value);
-            }
+        UserDetailsImpl userDetails;
+        if (type.equals(1L)) {
+            userDetails = this.loadUserByEmail(value);
+        } else if (type.equals(2L)) {
+            userDetails = this.loadUserByUsername(value);
+        } else {
+            throw new CustomMessageException("Invalid login type. Use 1 for email or 2 for username.",
+                    String.valueOf(HttpStatus.BAD_REQUEST.value()));
+        }
 
-        if (!user.get().isEnabled()) {
+        User user = userRepository.findByUsernameOrEmailAndStatus(value, Constant.ACT)
+                .orElseThrow(() -> new CustomMessageException("User not found.",
+                        String.valueOf(HttpStatus.UNAUTHORIZED.value())));
+
+        if (!user.isEnabled()) {
             throw new CustomMessageException("Please verify your email before logging in.",
                     String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
-        if (Constant.BLK.equals(user.get().getStatus())) {
+        if (Constant.BLK.equals(user.getStatus())) {
             throw new CustomMessageException("Account is locked. Please contact support.",
                     String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
-        user.get().setAttempt(0);
-        userRepository.save(user.get());
+        user.setAttempt(0);
+        userRepository.save(user);
 
         String accessToken = jwtService.generateToken(userDetails);
+        refreshTokenRepository.deleteByUser(user);
+        String refreshToken = generateAndSaveRefreshToken(user);
 
-        refreshTokenRepository.deleteByUser(user.get());
-        String refreshToken = generateAndSaveRefreshToken(user.get());
+        log.info("Login successful for user: {}", user.getUsername());
 
-        log.info("Login successful for user: {}", user.get().getUsername());
-
-        String role = user.get().getRoles().stream()
+        String role = user.getRoles().stream()
                 .map(Role::getName)
                 .findFirst()
                 .orElse("USER");
 
         return AuthenticationResponse.builder()
-                .id(user.get().getId())
+                .id(user.getId())
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .email(user.get().getEmail())
-                .username(user.get().getUsername())
+                .email(user.getEmail())
+                .username(user.getUsername())
                 .role(role)
                 .build();
     }
@@ -313,7 +324,7 @@ public class AuthServiceImpl implements AuthService {
                     .used(false)
                     .build();
             passwordResetTokenRepository.save(resetToken);
-
+            // Save committed before sending email — mail failure won't roll back the token
             emailService.sendPasswordResetEmail(user.getEmail(), token);
             log.info("Password reset email sent to: {}", request.getEmail());
         }
@@ -411,6 +422,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Long> findById(String username) {
         Optional<User> user = userRepository.findByUsername(username);
         return user.map(User::getId);
@@ -430,6 +442,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void changePassword(Long userId, String currentPassword, String newPassword) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {

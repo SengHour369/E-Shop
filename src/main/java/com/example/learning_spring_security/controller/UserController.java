@@ -25,50 +25,50 @@ import java.util.List;
 
 public class UserController {
    private final UserService userService;
-   @PostMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
+   @PostMapping(value = "/id", consumes = MediaType.ALL_VALUE)
    @PreAuthorize("hasRole('ADMIN')")
    @Operation(summary = "Change user status for admin")
-   public ResponseEntity<ResponseErrorTemplate> updateUserStatus(@PathVariable Long id,
+   public ResponseEntity<ResponseErrorTemplate> updateUserStatus(@RequestParam Long id,
                                                                  @RequestParam String status) {
         ResponseErrorTemplate responseErrorTemplate = this.userService.changeUserStatus(id,status);
         return ResponseEntity.ok(responseErrorTemplate);
    }
-   @PostMapping(value = "/{id}/image",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+   @PostMapping(value = "/id/image",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
    @Operation(summary =  "Update image user for user")
-   public  ResponseEntity<ResponseErrorTemplate> updateUserImage(@PathVariable Long id,
+   public  ResponseEntity<ResponseErrorTemplate> updateUserImage(@RequestParam Long id,
                                                                  @RequestPart("file") MultipartFile file) {
        ResponseErrorTemplate responseErrorTemplate = this.userService.updateProfilePicture(id, file);
        return ResponseEntity.ok(responseErrorTemplate);
    }
-    @GetMapping(value = "/{id}/user")
+    @GetMapping(value = "/id/user")
     @Operation(summary = " Output By Id user ")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ResponseErrorTemplate> getUserByIdAllUser(@PathVariable Long id) {
+    public ResponseEntity<ResponseErrorTemplate> getUserByIdAllUser(@RequestParam Long id) {
       ResponseErrorTemplate responseErrorTemplate =  this.userService.getUserById(id);
        return ResponseEntity.ok(responseErrorTemplate);
    }
-    @GetMapping("/All")
+    @PostMapping("/All")
     @Operation(summary = " Output all admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ResponseErrorTemplate>> getAllUser() {
         List<ResponseErrorTemplate> responseErrorTemplate =  this.userService.getAllUsers();
         return ResponseEntity.ok(responseErrorTemplate);
     }
-    @PutMapping(value = "/{id}/update")
+    @PostMapping(value = "/id/update")
     @Operation(summary = "update by admin ")
    // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
        ResponseErrorTemplate responseErrorTemplate = this.userService.updateUser(id,userRequest);
        return ResponseEntity.ok(responseErrorTemplate);
     }
-    @DeleteMapping(value = "/{id}/delete")
+    @PostMapping(value = "/id/delete")
     @Operation(summary ="delete by admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ResponseErrorTemplate> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ResponseErrorTemplate> deleteUser(@RequestParam Long id) {
        this.userService.deleteUser(id);
       return null;
     }
-    @GetMapping("/count")
+    @PostMapping("/count")
     @Operation(summary = "count user by admin")
     @PreAuthorize("hasRole('ADMIN')")
     public  ResponseEntity<Long> getAllCountUser() {

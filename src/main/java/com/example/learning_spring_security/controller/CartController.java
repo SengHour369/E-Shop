@@ -17,45 +17,45 @@ public class CartController extends BaseController {
 
     private final CartService cartService;
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ResponseErrorTemplate> getCartByUserId(@PathVariable Long userId) {
+    @PostMapping("/user/id")
+    public ResponseEntity<ResponseErrorTemplate> getCartByUserId(@RequestParam Long userId) {
         ResponseErrorTemplate cart = cartService.getCartByUserId(userId);
         return ResponseEntity.ok(cart);
     }
 
-    @GetMapping("/user/{userId}/get-or-create")
-    public ResponseEntity<ResponseErrorTemplate> getOrCreateCart(@PathVariable Long userId) {
+    @PostMapping("/user/id/get-or-create")
+    public ResponseEntity<ResponseErrorTemplate> getOrCreateCart(@RequestParam Long userId) {
         ResponseErrorTemplate cart = cartService.getOrCreateCart(userId);
         return ResponseEntity.ok(cart);
     }
 
-    @PostMapping("/user/{userId}/items")
+    @PostMapping("/user/id/items")
     public ResponseEntity<ResponseErrorTemplate> addItemToCart(
-            @PathVariable Long userId,
+            @RequestParam Long userId,
             @Valid @RequestBody CartRequest request) {
         ResponseErrorTemplate cart = cartService.addItemToCart(userId, request);
         return new ResponseEntity<>(cart, HttpStatus.CREATED);
     }
 
-    @PutMapping("/user/{userId}/items/{cartItemId}")
+    @PostMapping("/user/id/items/cartItemId")
     public ResponseEntity<ResponseErrorTemplate> updateCartItem(
-            @PathVariable Long userId,
-            @PathVariable Long cartItemId,
+            @RequestParam Long userId,
+            @RequestParam Long cartItemId,
             @Valid @RequestBody CartRequest request) {
         ResponseErrorTemplate cart = cartService.updateCartItem(userId, cartItemId, request);
         return ResponseEntity.ok(cart);
     }
 
-    @DeleteMapping("/user/{userId}/items/{cartItemId}")
+    @PostMapping("/user/userId/items/cartItemId")
     public ResponseEntity<ResponseErrorTemplate> removeItemFromCart(
-            @PathVariable Long userId,
-            @PathVariable Long cartItemId) {
+            @RequestParam Long userId,
+            @RequestParam Long cartItemId) {
         ResponseErrorTemplate cart = cartService.removeItemFromCart(userId, cartItemId);
         return ResponseEntity.ok(cart);
     }
 
-    @DeleteMapping("/user/{userId}/clear")
-    public ResponseEntity<ResponseErrorTemplate> clearCart(@PathVariable Long userId) {
+    @PostMapping("/user/userId/clear")
+    public ResponseEntity<ResponseErrorTemplate> clearCart(@RequestParam Long userId) {
         ResponseErrorTemplate cart = cartService.clearCart(userId);
         return ResponseEntity.ok(cart);
     }

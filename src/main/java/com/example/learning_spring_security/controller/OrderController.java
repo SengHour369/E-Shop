@@ -28,67 +28,67 @@ public class OrderController extends BaseController {
         return ResponseEntity.ok(orders);
     }
 
-    @GetMapping("/user/{userId}")
+    @PostMapping("/user/id/")
     public ResponseEntity<Page<ResponseErrorTemplate>> getUserOrders(
-            @PathVariable Long userId,
+            @RequestParam Long userId,
             @PageableDefault(size = 10, sort = "orderDate", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResponseErrorTemplate> orders = orderService.getUserOrders(userId, pageable);
         return ResponseEntity.ok(orders);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseErrorTemplate> getOrderById(@PathVariable Long id) {
+    @PostMapping("/id/")
+    public ResponseEntity<ResponseErrorTemplate> getOrderById(@RequestParam Long id) {
         ResponseErrorTemplate order = orderService.getOrderById(id);
         return ResponseEntity.ok(order);
     }
 
-    @GetMapping("/number/{orderNumber}")
-    public ResponseEntity<ResponseErrorTemplate> getOrderByNumber(@PathVariable String orderNumber) {
+    @PostMapping("/number/")
+    public ResponseEntity<ResponseErrorTemplate> getOrderByNumber(@RequestParam String orderNumber) {
         ResponseErrorTemplate order = orderService.getOrderByNumber(orderNumber);
         return ResponseEntity.ok(order);
     }
 
-    @PostMapping("/user/{userId}/from-cart")
+    @PostMapping("/user/from-cart")
     public ResponseEntity<ResponseErrorTemplate> createOrderFromCart(
-            @PathVariable Long userId,
+            @RequestParam Long userId,
             @Valid @RequestBody OrderRequest request) {
         ResponseErrorTemplate order = orderService.createOrderFromCart(userId, request);
         return new ResponseEntity<>(order, HttpStatus.CREATED);
     }
 
-    @PatchMapping("/{id}/status")
+    @PostMapping("/status/")
     public ResponseEntity<ResponseErrorTemplate> updateOrderStatus(
-            @PathVariable Long id,
+            @RequestParam Long id,
             @RequestParam String status) {
         ResponseErrorTemplate order = orderService.updateOrderStatus(id, status);
         return ResponseEntity.ok(order);
     }
 
-    @PostMapping("/{id}/user/{userId}/cancel")
+    @PostMapping("/user/cancel")
     public ResponseEntity<ResponseErrorTemplate> cancelOrder(
-            @PathVariable Long id,
-            @PathVariable Long userId) {
+            @RequestParam Long id,
+            @RequestParam Long userId) {
         ResponseErrorTemplate order = orderService.cancelOrder(id, userId);
         return ResponseEntity.ok(order);
     }
 
-    @PostMapping("/user/{userId}/from-cart/bakong")
+    @PostMapping("/user/from-cart/bakong")
     public ResponseEntity<ResponseErrorTemplate> createOrderWithBakongPayment(
-            @PathVariable Long userId,
+            @RequestParam Long userId,
             @Valid @RequestBody OrderRequest request) {
         ResponseErrorTemplate order = orderService.createOrderWithBakongPayment(userId, request);
         return new ResponseEntity<>(order, HttpStatus.CREATED);
     }
 
-    @PostMapping("/{orderId}/bakong/initiate")
-    public ResponseEntity<ResponseErrorTemplate> initiateBakongPayment(@PathVariable Long orderId) {
+    @PostMapping("/bakong/initiate")
+    public ResponseEntity<ResponseErrorTemplate> initiateBakongPayment(@RequestParam Long orderId) {
         ResponseErrorTemplate response = orderService.initiateBakongPayment(orderId);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{orderId}/bakong/verify")
+    @PostMapping("/bakong/verify")
     public ResponseEntity<ResponseErrorTemplate> verifyBakongPayment(
-            @PathVariable Long orderId,
+            @RequestParam Long orderId,
             @RequestParam String transactionId) {
         ResponseErrorTemplate response = orderService.verifyBakongPayment(orderId, transactionId);
         return ResponseEntity.ok(response);

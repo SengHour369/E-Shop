@@ -23,47 +23,47 @@ public class CategoryController extends BaseController {
 
     private final CategoryService categoryService;
 
-    @GetMapping
+    @PostMapping("/get/all")
     public ResponseEntity<Page<ResponseErrorTemplate>> getAllCategories(
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<ResponseErrorTemplate> categories = categoryService.getAllCategories(pageable);
         return ResponseEntity.ok(categories);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseErrorTemplate> getCategoryById(@PathVariable Long id) {
+    @PostMapping("/id/get/")
+    public ResponseEntity<ResponseErrorTemplate> getCategoryById(@RequestParam Long id) {
         ResponseErrorTemplate category = categoryService.getCategoryById(id);
         return ResponseEntity.ok(category);
     }
 
-    @GetMapping("/name/{name}")
-    public ResponseEntity<ResponseErrorTemplate> getCategoryByName(@PathVariable String name) {
+    @PostMapping("/name/")
+    public ResponseEntity<ResponseErrorTemplate> getCategoryByName(@RequestParam String name) {
         ResponseErrorTemplate category = categoryService.getCategoryByName(name);
         return ResponseEntity.ok(category);
     }
 
-    @GetMapping("/{id}/with-subcategories")
-    public ResponseEntity<ResponseErrorTemplate> getCategoryWithSubCategories(@PathVariable Long id) {
+    @PostMapping("/with-subcategories")
+    public ResponseEntity<ResponseErrorTemplate> getCategoryWithSubCategories(@RequestParam Long id) {
         ResponseErrorTemplate category = categoryService.getCategoryWithSubCategories(id);
         return ResponseEntity.ok(category);
     }
 
-    @PostMapping
+    @PostMapping("/create/")
     public ResponseEntity<ResponseErrorTemplate> createCategory(@Valid @RequestBody CategoryRequest request) {
         ResponseErrorTemplate response = categoryService.createCategory(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/id/update")
     public ResponseEntity<ResponseErrorTemplate> updateCategory(
-            @PathVariable Long id,
+            @RequestParam Long id,
             @Valid @RequestBody CategoryRequest request) {
         ResponseErrorTemplate response = categoryService.updateCategory(id, request);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteCategory(@RequestParam Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }

@@ -14,6 +14,8 @@ public class JwtConfig {
     private String prefix;
     @Value("${jwt.expiration}")
     private Long expiration;
+    @Value("${jwt.refresh-expiration}")
+    private Long refreshExpiration;
     @Value("${jwt.secret}")
     private String secret;
 }

@@ -1,6 +1,7 @@
 package com.example.learning_spring_security.ServiceMapper;
 
 import com.example.learning_spring_security.Constant.Constant;
+import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.dto.Request.ProductRequest;
@@ -15,8 +16,6 @@ public class ProductMapper {
         return Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-//                .image(request.getImage())
-//                .mainImage(request.getMainImage())
                 .isActive(request.getIsActive())
                 .subCategory(subCategory)
                 .build();
@@ -27,7 +26,8 @@ public class ProductMapper {
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
-                .Image(product.getImage())
+                .Image(product.getImage().stream().map(Image::getUrl)
+                        .collect(Collectors.toList()))
                 .isActive(product.getIsActive())
                 .skus(product.getProductSkus().stream()
                         .map(ProductSkuMapper::toResponse)
@@ -40,8 +40,6 @@ public class ProductMapper {
                                     SubCategory subCategory) {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
-//        product.setImage(request.getImage());
-//        product.setMainImage(request.getMainImage());
         product.setIsActive(request.getIsActive());
         product.setSubCategory(subCategory);
     }

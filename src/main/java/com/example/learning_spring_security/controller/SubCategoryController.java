@@ -27,31 +27,31 @@ public class SubCategoryController extends BaseController {
 
     private final SubCategoryService subCategoryService;
 
-    @GetMapping("/All")
+    @PostMapping("/All")
     public ResponseEntity<Page<ResponseErrorTemplate>> getSubCategoriesByCategory(
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<ResponseErrorTemplate> subCategories = subCategoryService.getSubCategoryAll( pageable);
         return ResponseEntity.ok(subCategories);
     }
 
-    @GetMapping("/category/{categoryId}/all")
-    public ResponseEntity<List<ResponseErrorTemplate>> getSubCategoriesByCategoryAsList(@PathVariable Long categoryId) {
+    @PostMapping("/category/id/all")
+    public ResponseEntity<List<ResponseErrorTemplate>> getSubCategoriesByCategoryAsList(@RequestParam Long categoryId) {
         List<ResponseErrorTemplate> subCategories = subCategoryService.getSubCategoriesByCategoryAsList(categoryId);
         return ResponseEntity.ok(subCategories);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseErrorTemplate> getSubCategoryById(@PathVariable Long id) {
+    @PostMapping("/id")
+    public ResponseEntity<ResponseErrorTemplate> getSubCategoryById(@RequestParam Long id) {
         ResponseErrorTemplate subCategory = subCategoryService.getSubCategoryById(id);
         return ResponseEntity.ok(subCategory);
     }
 
-    @GetMapping("/{id}/with-products")
-    public ResponseEntity<ResponseErrorTemplate> getSubCategoryWithProducts(@PathVariable Long id) {
+    @PostMapping("/with-products")
+    public ResponseEntity<ResponseErrorTemplate> getSubCategoryWithProducts(@RequestParam Long id) {
         ResponseErrorTemplate subCategory = subCategoryService.getSubCategoryWithProducts(id);
         return ResponseEntity.ok(subCategory);
     }
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/create/",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseErrorTemplate> createSubCategory(
             @RequestParam String name,
             @RequestParam Long categoryId,
@@ -66,9 +66,9 @@ public class SubCategoryController extends BaseController {
         ResponseErrorTemplate response = subCategoryService.createSubCategory(request, image);
         return ResponseEntity.ok(response);
     }
-    @PutMapping(value = "/{id}",consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/update",consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseErrorTemplate> updateSubCategory(
-            @PathVariable Long id,
+            @RequestParam Long id,
             @RequestParam String name,
             @RequestParam Long categoryId,
             @RequestParam String description,
@@ -81,8 +81,8 @@ public class SubCategoryController extends BaseController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSubCategory(@PathVariable Long id) {
+    @PostMapping("/delete/")
+    public ResponseEntity<Void> deleteSubCategory(@RequestParam Long id) {
         subCategoryService.deleteSubCategory(id);
         return ResponseEntity.noContent().build();
     }

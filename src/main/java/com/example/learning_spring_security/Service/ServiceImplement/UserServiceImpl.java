@@ -96,8 +96,8 @@ public class UserServiceImpl implements UserService {
         }
         log.info("Update profile picture successfully with id {}",userId);
 
-        String url = this.imageService.uploadImage(profilePictureUrl);
-        user.get().setImage(url);
+//        String url = this.imageService.uploadImage(profilePictureUrl);
+//        user.get().setImage(url);
         return UserMapper.toResponse(userRepository.save(user.get()));
     }
 

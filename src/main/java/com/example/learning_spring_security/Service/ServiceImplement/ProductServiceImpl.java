@@ -1,6 +1,7 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
+import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.Model.SubCategory;
@@ -24,11 +25,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class ProductServiceImpl implements ProductService {
 
@@ -38,13 +39,35 @@ public class ProductServiceImpl implements ProductService {
     private final ImageService imageService;
 
     @Override
-    public ResponseErrorTemplate createProduct(ProductRequest request,List<MultipartFile> files) throws Exception {
+    @Transactional
+    public ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files) throws Exception {
+
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
+        List<Image> imageUrls = List.of();
+        if (files == null || files.isEmpty()) {
+            throw new Exception("file in image is empty");
+        }
+            imageUrls = files.stream()
+                    .map(imageService::uploadImage)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
         Product product = ProductMapper.toEntity(request, subCategory);
+        product.setImage(imageUrls);
+        if (imageUrls != null) {
+            imageUrls.forEach(img -> img.setProduct(product));
+        }
+
+        if (request.getSkus() != null && !request.getSkus().isEmpty()) {
+            List<ProductSku> skus = request.getSkus().stream()
+                    .map(skuReq -> ProductSkuMapper.toEntity(skuReq, product))
+                    .collect(Collectors.toList());
+            product.setProductSkus(skus);
+        }
 
         Product savedProduct = productRepository.save(product);
-
+        log.info("Product created: id={}, name={}, skus={}", savedProduct.getId(), savedProduct.getName(), savedProduct.getProductSkus().size());
         return ProductMapper.toResponse(savedProduct);
     }
 
@@ -78,20 +101,6 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByIsActiveTrue(pageable)
                 .map(ProductMapper::toResponse);
     }
-//    @Override
-//    public ResponseErrorTemplate addImageToProduct(Long productId, MultipartFile file) {
-//        Product product = productRepository.findById(productId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
-//
-//        if (file != null ) {
-//            String imageUrl = imageService.uploadImage(file);
-//            product.setMainImage(imageUrl);
-//            productRepository.save(product);
-//        }
-//
-//        return ProductMapper.toResponse(product);
-//    }
-
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getProductsBySubCategory(Long subCategoryId, Pageable pageable) {
@@ -117,18 +126,31 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ResponseErrorTemplate updateProduct(Long id, ProductRequest request) {
+    @Transactional
+    public ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
-        SubCategory subCategory = null;
+        SubCategory subCategory = product.getSubCategory();
         if (request.getSubCategoryId() != null) {
             subCategory = subCategoryRepository.findById(request.getSubCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
         }
 
+        if (files != null && !files.isEmpty()) {
+            List<Image> newImageUrls = files.stream()
+                    .map(imageService::uploadImage)
+                    .filter(url -> url != null)
+                    .collect(Collectors.toList());
+            product.setImage(newImageUrls);
+            if (newImageUrls != null) {
+                newImageUrls.forEach(img -> img.setProduct(product));
+            }
+        }
+
         ProductMapper.updateEntity(product, request, subCategory);
         Product updatedProduct = productRepository.save(product);
+        log.info("Product updated: id={}, name={}", updatedProduct.getId(), updatedProduct.getName());
         return ProductMapper.toResponse(updatedProduct);
     }
 

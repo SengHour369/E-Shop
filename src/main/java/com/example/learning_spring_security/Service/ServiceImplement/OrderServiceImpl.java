@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class OrderServiceImpl implements OrderService {
 
@@ -47,8 +46,10 @@ public class OrderServiceImpl implements OrderService {
 
 
     private final BakongService bakongService;
+    private final EmailNotificationService emailNotificationService;
 
     @Override
+    @Transactional
     public ResponseErrorTemplate createOrderFromCart(Long userId, OrderRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
@@ -103,13 +104,24 @@ public class OrderServiceImpl implements OrderService {
         cart.setTotalPrice(BigDecimal.ZERO);
         cart.setTotalItems(0);
         cartRepository.save(cart);
+
+        try {
+            emailNotificationService.sendOrderConfirmationEmail(
+                    user.getEmail(),
+                    savedOrder.getOrderNumber(),
+                    savedOrder.getTotalAmount().doubleValue()
+            );
+        } catch (Exception e) {
+            log.warn("Failed to send order confirmation email for order {}: {}", savedOrder.getOrderNumber(), e.getMessage());
+        }
+
         return OrderMapper.toResponse(savedOrder);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrderById(Long id) {
-        OrderDetail order = orderRepository.findByIdWithItems(id)
+        OrderDetail order = orderRepository.findByIdWithFullDetail(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         return OrderMapper.toResponse(order);
     }
@@ -117,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrderByNumber(String orderNumber) {
-        OrderDetail order = orderRepository.findByOrderNumber(orderNumber)
+        OrderDetail order = orderRepository.findByOrderNumberWithFullDetail(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with number: " + orderNumber));
         return OrderMapper.toResponse(order);
     }
@@ -146,18 +158,36 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
 
-
         if ("DELIVERED".equals(status) && order.getPayment() != null) {
             order.getPayment().setStatus("COMPLETED");
         } else if ("CANCELLED".equals(status) && order.getPayment() != null) {
             order.getPayment().setStatus("REFUNDED");
-
             order.getOrderItems().forEach(item ->
                     productSkuRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
             );
         }
 
         OrderDetail updatedOrder = orderRepository.save(order);
+
+        try {
+            String customerEmail = updatedOrder.getUser().getEmail();
+            if ("SHIPPED".equals(status)) {
+                emailNotificationService.sendOrderShippedEmail(
+                        customerEmail,
+                        updatedOrder.getOrderNumber(),
+                        updatedOrder.getOrderNumber()
+                );
+            } else if ("CANCELLED".equals(status)) {
+                emailNotificationService.sendOrderCancellationEmail(
+                        customerEmail,
+                        updatedOrder.getOrderNumber(),
+                        "Order cancelled by admin"
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send status update email for order {}: {}", updatedOrder.getOrderNumber(), e.getMessage());
+        }
+
         return OrderMapper.toResponse(updatedOrder);
     }
 
@@ -174,7 +204,26 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("Only pending orders can be cancelled");
         }
 
-        return updateOrderStatus(id, "CANCELLED");
+        order.setStatus("CANCELLED");
+        if (order.getPayment() != null) {
+            order.getPayment().setStatus("REFUNDED");
+            order.getOrderItems().forEach(item ->
+                    productSkuRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
+            );
+        }
+        OrderDetail cancelled = orderRepository.save(order);
+
+        try {
+            emailNotificationService.sendOrderCancellationEmail(
+                    cancelled.getUser().getEmail(),
+                    cancelled.getOrderNumber(),
+                    "Cancelled by customer"
+            );
+        } catch (Exception e) {
+            log.warn("Failed to send cancellation email for order {}: {}", cancelled.getOrderNumber(), e.getMessage());
+        }
+
+        return OrderMapper.toResponse(cancelled);
     }
 
     private String generateOrderNumber() {
@@ -199,7 +248,7 @@ public class OrderServiceImpl implements OrderService {
                     .currency("KHR")
                     .amount(orderData.getTotalAmount().doubleValue())
                     .merchantName("E_Shop")
-                    .merchantCity("PHNOM PENH")
+                    .merchantCity("PHNOM_PENH")
                     .merchantId("ESHOP001")
                     .acquiringBank("BAKONG")
                     .billNumber(orderData.getOrderNumber())
@@ -211,7 +260,8 @@ public class OrderServiceImpl implements OrderService {
                     .build();
 
             KHQRResponse<KHQRData> bakongResponse = bakongService.generateQR(bakongRequest);
-           System.out.println("Failed to generate QR code: " + bakongResponse.getKHQRStatus().getMessage());
+            System.out.println("Bakong QR response: " +bakongRequest.amount());
+            System.out.println("Failed to generate QR code: " + bakongResponse.getKHQRStatus().getMessage());
             if (bakongResponse != null
                     && bakongResponse.getKHQRStatus() != null
                     && bakongResponse.getKHQRStatus().getCode() == 0) {
@@ -224,12 +274,12 @@ public class OrderServiceImpl implements OrderService {
                 payment.setTransactionId("BAKONG-" + orderData.getOrderNumber());
                 payment.setPaymentProvider("BAKONG");
                 payment.setPaymentProviderResponse(bakongResponse.getData().getQr());
-                 order.setPayment(payment);
+                order.setPayment(payment);
                 orderRepository.save(order);
-                 orderData.setPayment(PaymentMapper.toResponse(payment));
+                orderData.setPayment(PaymentMapper.toResponse(payment));
                 orderData.setQrCode(bakongResponse.getData().getQr());
                 orderData.setPaymentUrl("bakong://payment?qr=" + bakongResponse.getData());
-                  }
+            }
 
         } catch (Exception e) {
             System.err.println("Failed to generate Bakong QR: " + e.getMessage());
