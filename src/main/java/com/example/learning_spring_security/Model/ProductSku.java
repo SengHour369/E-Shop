@@ -37,11 +37,6 @@ public class ProductSku extends BaseEntity {
 
     @Column(name = "low_stock_threshold")
     private Integer lowStockThreshold = 5;
-
-    private String color;
-    private String size;
-
-
     @Column(name = "is_default")
     private Boolean isDefault = false;
 
@@ -49,4 +44,6 @@ public class ProductSku extends BaseEntity {
     private List<CartItem> cartItems = new ArrayList<>();
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
+    @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ProductAttribute> productAttributes = new ArrayList<>();
 }

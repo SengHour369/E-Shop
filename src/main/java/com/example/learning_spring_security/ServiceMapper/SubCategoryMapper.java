@@ -34,7 +34,7 @@ public class SubCategoryMapper {
             response.setCategoryName(subCategory.getCategory().getName());
         }
         if (subCategory.getImage() != null) {
-            response.setImage(subCategory.getImage());
+            response.setImage(subCategory.getImage().getUrl());
         }
 
 

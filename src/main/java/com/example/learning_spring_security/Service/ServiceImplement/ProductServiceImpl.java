@@ -8,6 +8,7 @@ import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.Repository.ProductRepository;
 import com.example.learning_spring_security.Repository.ProductSkuRepository;
 import com.example.learning_spring_security.Repository.SubCategoryRepository;
+import com.example.learning_spring_security.Service.ProductSkuService;
 import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
 import com.example.learning_spring_security.Service.ServiceStructure.ProductService;
 import com.example.learning_spring_security.ServiceMapper.ProductMapper;
@@ -34,9 +35,9 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
-    private final ProductSkuRepository productSkuRepository;
     private final SubCategoryRepository subCategoryRepository;
     private final ImageService imageService;
+    private final ProductSkuServiceImpl productSkuServiceImpl;
 
     @Override
     @Transactional
@@ -53,20 +54,24 @@ public class ProductServiceImpl implements ProductService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
-        Product product = ProductMapper.toEntity(request, subCategory);
+        Product product = ProductMapper.toEntity(request, subCategory,request.getSkus());
         product.setImage(imageUrls);
         if (imageUrls != null) {
             imageUrls.forEach(img -> img.setProduct(product));
         }
 
+        Product savedProduct = productRepository.save(product);
+        System.out.println("ddddddddddddddddddddddddddddddddddddddddddddd+ "+savedProduct.getId());
         if (request.getSkus() != null && !request.getSkus().isEmpty()) {
-            List<ProductSku> skus = request.getSkus().stream()
-                    .map(skuReq -> ProductSkuMapper.toEntity(skuReq, product))
-                    .collect(Collectors.toList());
-            product.setProductSkus(skus);
+            for(ProductSkuRequest productSkuRequest : request.getSkus()) {
+                  this.productSkuServiceImpl.createSku(savedProduct.getId(), productSkuRequest);
+
+            }
         }
 
-        Product savedProduct = productRepository.save(product);
+
+
+
         log.info("Product created: id={}, name={}, skus={}", savedProduct.getId(), savedProduct.getName(), savedProduct.getProductSkus().size());
         return ProductMapper.toResponse(savedProduct);
     }

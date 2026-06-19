@@ -1,6 +1,7 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
+import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.User;
 import com.example.learning_spring_security.Repository.UserRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
@@ -96,8 +97,8 @@ public class UserServiceImpl implements UserService {
         }
         log.info("Update profile picture successfully with id {}",userId);
 
-//        String url = this.imageService.uploadImage(profilePictureUrl);
-//        user.get().setImage(url);
+        Image url = this.imageService.uploadImage(profilePictureUrl);
+        user.get().setImage(url);
         return UserMapper.toResponse(userRepository.save(user.get()));
     }
 

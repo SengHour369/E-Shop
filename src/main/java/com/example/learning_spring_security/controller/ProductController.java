@@ -122,6 +122,7 @@ public class ProductController extends BaseController {
             @RequestParam(required = false, defaultValue = "true") Boolean is_active,
             @RequestParam Long sub_category_id,
             @RequestParam(required = false) String skus,
+         //  @RequestBody ProductRequest productRequest,
             @RequestParam(value = "files") List<MultipartFile> files) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProductRequest request = new ProductRequest();

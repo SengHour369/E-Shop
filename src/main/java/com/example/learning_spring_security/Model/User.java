@@ -37,7 +37,8 @@ public class User extends BaseEntity implements Serializable {
     private int attempt;
     @Column(name = "status", nullable = false)
     private String status;
-    private String  image;
+    @OneToOne(cascade = CascadeType.ALL)
+    private Image  image;
     private String birthdate;
     @Column(name = "deleted", nullable = false)
     private Boolean deleted =  false;

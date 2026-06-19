@@ -3,22 +3,30 @@ package com.example.learning_spring_security.ServiceMapper;
 import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.Product;
+import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.dto.Request.ProductRequest;
+import com.example.learning_spring_security.dto.Request.ProductSkuRequest;
 import com.example.learning_spring_security.dto.Response.ProductResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ProductMapper {
 
-    public static Product toEntity(ProductRequest request, SubCategory subCategory) {
-        return Product.builder()
+    public static Product toEntity(ProductRequest request, SubCategory subCategory, List<ProductSkuRequest> productSku) {
+
+          Product  product = Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .isActive(request.getIsActive())
                 .subCategory(subCategory)
                 .build();
+        product.setProductSkus(productSku.stream()
+                .map(skuRequest -> ProductSkuMapper.toEntity(skuRequest, product))
+                .collect(Collectors.toList()));
+       return product;
     }
 
     public static ResponseErrorTemplate toResponse(Product product) {
