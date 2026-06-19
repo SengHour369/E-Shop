@@ -20,8 +20,12 @@ public class Image extends BaseEntity {
     @Column(name = "url_image")
     private String url;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id")
     private Product product;
-
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "SubCategory_id")
+    private SubCategory  subCategory;
+    @OneToOne(cascade = CascadeType.ALL)
+    private User user;
 
 }

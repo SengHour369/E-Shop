@@ -3,6 +3,7 @@ package com.example.learning_spring_security.Service.ServiceImplement;
 import com.example.learning_spring_security.Exception.ExceptionService.DuplicateResourceException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.Category;
+import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.Repository.CategoryRepository;
 import com.example.learning_spring_security.Repository.SubCategoryRepository;
@@ -49,8 +50,8 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
         SubCategory subCategory = SubCategoryMapper.toEntity(request);
         subCategory.setCategory(category);
-//            String  imageUrl = this.imageService.uploadImage(file);
-//            subCategory.setImage(imageUrl);
+            Image imageUrl = this.imageService.uploadImage(file);
+            subCategory.setImage(imageUrl);
 
         SubCategory savedSubCategory = subCategoryRepository.save(subCategory);
         return SubCategoryMapper.toResponse(savedSubCategory);
@@ -101,8 +102,8 @@ public class SubCategoryServiceImpl implements SubCategoryService {
             subCategory.setCategory(newCategory);
         }
         if(file != null &&   !Objects.equals(file.getOriginalFilename(), subCategory.getImage())) {
-//            String  imageUrl = this.imageService.uploadImage(file);
-//            subCategory.setImage(imageUrl);
+            Image  imageUrl = this.imageService.uploadImage(file);
+            subCategory.setImage(imageUrl);
         }
 
         SubCategoryMapper.updateEntity(subCategory, request);

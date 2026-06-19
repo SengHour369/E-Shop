@@ -86,6 +86,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/v1/inventory/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/v1/attributes/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/v1/attribute-values/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/products/**").hasAuthority("ADMIN")

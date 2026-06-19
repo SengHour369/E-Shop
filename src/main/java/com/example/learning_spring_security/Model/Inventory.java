@@ -18,7 +18,7 @@ public class Inventory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Each SKU has inventory (IMPORTANT)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_sku_id", nullable = false)
     private ProductSku productSku;
@@ -41,7 +41,6 @@ public class Inventory {
 
     private LocalDateTime updatedAt;
 
-    // Auto set timestamps
     @PrePersist
     public void onCreate() {
         this.createdAt = LocalDateTime.now();

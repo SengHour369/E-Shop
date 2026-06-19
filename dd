@@ -736,6 +736,192 @@
       ]
     },
     {
+      "name": "Attributes",
+      "item": [
+        {
+          "name": "Create Attribute",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/attributes", "host": ["{{baseUrl}}"], "path": ["api","v1","attributes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Color\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Attributes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/attributes", "host": ["{{baseUrl}}"], "path": ["api","v1","attributes"] }
+          }
+        },
+        {
+          "name": "Get Attribute by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/attributes/1", "host": ["{{baseUrl}}"], "path": ["api","v1","attributes","1"] }
+          }
+        },
+        {
+          "name": "Get Attribute by Name",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/attributes/name/Color", "host": ["{{baseUrl}}"], "path": ["api","v1","attributes","name","Color"] }
+          }
+        },
+        {
+          "name": "Update Attribute",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/attributes/1", "host": ["{{baseUrl}}"], "path": ["api","v1","attributes","1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Color Updated\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Attribute",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/attributes/1", "host": ["{{baseUrl}}"], "path": ["api","v1","attributes","1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attribute Values",
+      "item": [
+        {
+          "name": "Create Attribute Value",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/attribute-values", "host": ["{{baseUrl}}"], "path": ["api","v1","attribute-values"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attribute_id\": 1,\n  \"value\": \"Red\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Attribute Value by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/attribute-values/1", "host": ["{{baseUrl}}"], "path": ["api","v1","attribute-values","1"] }
+          }
+        },
+        {
+          "name": "Get Values by Attribute ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/attribute-values/attribute/1", "host": ["{{baseUrl}}"], "path": ["api","v1","attribute-values","attribute","1"] }
+          }
+        },
+        {
+          "name": "Update Attribute Value",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/attribute-values/1", "host": ["{{baseUrl}}"], "path": ["api","v1","attribute-values","1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attribute_id\": 1,\n  \"value\": \"Red Updated\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Attribute Value",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/attribute-values/1", "host": ["{{baseUrl}}"], "path": ["api","v1","attribute-values","1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Variant Attributes",
+      "item": [
+        {
+          "name": "Assign Attribute to SKU",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/variant-attributes", "host": ["{{baseUrl}}"], "path": ["api","v1","variant-attributes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku_id\": 1,\n  \"attribute_id\": 1,\n  \"attribute_value_id\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Variant Attribute by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/variant-attributes/1", "host": ["{{baseUrl}}"], "path": ["api","v1","variant-attributes","1"] }
+          }
+        },
+        {
+          "name": "Get Attributes by SKU ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/variant-attributes/sku/1", "host": ["{{baseUrl}}"], "path": ["api","v1","variant-attributes","sku","1"] }
+          }
+        },
+        {
+          "name": "Update Variant Attribute",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/variant-attributes/1", "host": ["{{baseUrl}}"], "path": ["api","v1","variant-attributes","1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attribute_id\": 1,\n  \"attribute_value_id\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove Attribute from SKU",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/variant-attributes/1", "host": ["{{baseUrl}}"], "path": ["api","v1","variant-attributes","1"] }
+          }
+        },
+        {
+          "name": "Remove All Attributes from SKU",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/variant-attributes/sku/1/all", "host": ["{{baseUrl}}"], "path": ["api","v1","variant-attributes","sku","1","all"] }
+          }
+        }
+      ]
+    },
+    {
       "name": "Address",
       "item": [
         {
