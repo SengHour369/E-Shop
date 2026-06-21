@@ -10,7 +10,6 @@ import lombok.*;
 public class ProductAttributeValueResponse {
     private Long id;
     private String value;
-    private Long attributeId;
-    private String attributeName;
+
 }
 

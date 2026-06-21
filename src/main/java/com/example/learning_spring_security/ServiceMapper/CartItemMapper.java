@@ -25,6 +25,7 @@ public class CartItemMapper {
     public static CartItemResponse toResponse(CartItem cartItem) {
         ProductSku productSku = cartItem.getProductSku();
         Product  product = productSku.getProduct();
+        ProductSkuMapper productSkuMapper = new ProductSkuMapper();
         return CartItemResponse.builder()
                 .id(cartItem.getId())
                 .image(String.valueOf(product.getImage()))

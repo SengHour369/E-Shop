@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -176,45 +177,38 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRoles().stream().map(Role::getName).findFirst().orElse("USER"))
                 .build();
     }
-
     @Transactional
     public AuthenticationResponse authenticate(Login input) {
-        Long type = input.CriteriaType();
+
         String value = input.CriteriaValue();
         String password = input.Password();
 
-        if (type == null) {
-            throw new CustomMessageException("Login type is required. Use 1 for email, 2 for username.",
-                    String.valueOf(HttpStatus.BAD_REQUEST.value()));
-        }
+        log.info("Authenticating user: {}", value);
 
-        log.info("Authenticating user with type: {}, value: {}", type, value);
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(value, password)
+                );
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(value, password)
-        );
-
-        UserDetailsImpl userDetails;
-        if (type.equals(1L)) {
-            userDetails = this.loadUserByEmail(value);
-        } else if (type.equals(2L)) {
-            userDetails = this.loadUserByUsername(value);
-        } else {
-            throw new CustomMessageException("Invalid login type. Use 1 for email or 2 for username.",
-                    String.valueOf(HttpStatus.BAD_REQUEST.value()));
-        }
+        // 🔥 MUST COME FROM PROVIDER
+        UserDetailsImpl userDetails =
+                (UserDetailsImpl) authentication.getPrincipal();
 
         User user = userRepository.findByUsernameOrEmailAndStatus(value, Constant.ACT)
-                .orElseThrow(() -> new CustomMessageException("User not found.",
-                        String.valueOf(HttpStatus.UNAUTHORIZED.value())));
+                .orElseThrow(() ->
+                        new CustomMessageException(
+                                "User not found",
+                                String.valueOf(HttpStatus.UNAUTHORIZED.value())
+                        )
+                );
 
         if (!user.isEnabled()) {
-            throw new CustomMessageException("Please verify your email before logging in.",
+            throw new CustomMessageException("Please verify email",
                     String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
         if (Constant.BLK.equals(user.getStatus())) {
-            throw new CustomMessageException("Account is locked. Please contact support.",
+            throw new CustomMessageException("Account locked",
                     String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
@@ -222,15 +216,9 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         String accessToken = jwtService.generateToken(userDetails);
+
         refreshTokenRepository.deleteByUser(user);
         String refreshToken = generateAndSaveRefreshToken(user);
-
-        log.info("Login successful for user: {}", user.getUsername());
-
-        String role = user.getRoles().stream()
-                .map(Role::getName)
-                .findFirst()
-                .orElse("USER");
 
         return AuthenticationResponse.builder()
                 .id(user.getId())
@@ -239,10 +227,14 @@ public class AuthServiceImpl implements AuthService {
                 .tokenType("Bearer")
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .role(role)
+                .role(
+                        user.getRoles().stream()
+                                .map(Role::getName)
+                                .findFirst()
+                                .orElse("USER")
+                )
                 .build();
     }
-
     @Transactional
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
         log.info("Refreshing token...");

@@ -1,6 +1,7 @@
 package com.example.learning_spring_security.Repository;
 
 import com.example.learning_spring_security.Model.Product;
+import com.example.learning_spring_security.Model.ProductAttribute;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +30,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.subCategory.id = :subCategoryId")
     Long countBySubCategoryId(@Param("subCategoryId") Long subCategoryId);
+
 }

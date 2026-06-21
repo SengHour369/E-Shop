@@ -1,11 +1,9 @@
 package com.example.learning_spring_security.ServiceMapper;
 
-import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.OrderDetail;
 import com.example.learning_spring_security.Model.OrderItem;
 import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.dto.Response.OrderItemResponse;
-import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
 import java.math.BigDecimal;
 
@@ -42,9 +40,9 @@ public class OrderItemMapper {
                 .quantity(orderItem.getQuantity())
                 .unitPrice(orderItem.getUnitPrice())
                 .totalPrice(orderItem.getTotalPrice());
-
+          ProductSkuMapper productAttributeMapper = new ProductSkuMapper();
         if (orderItem.getProductSku() != null) {
-            builder.productSku(ProductSkuMapper.toResponse(orderItem.getProductSku()));
+            builder.productSku(productAttributeMapper.toResponse(orderItem.getProductSku()));
             if (orderItem.getProductSku().getProduct() != null) {
                 builder.productName(orderItem.getProductSku().getProduct().getName());
             }

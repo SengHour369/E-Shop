@@ -3,6 +3,7 @@ package com.example.learning_spring_security.ConfigSecurity;
 import com.example.learning_spring_security.Exception.CustomDeniedHandler;
 import com.example.learning_spring_security.JWT.JwtConfig;
 import com.example.learning_spring_security.JWT.JwtService;
+import com.example.learning_spring_security.Repository.UserRepository;
 import com.example.learning_spring_security.Security.UserDetailsService;
 import com.example.learning_spring_security.filter.CustomAuthenticationProvider;
 import com.example.learning_spring_security.filter.JwtAuthenticationFilter;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -37,16 +39,11 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final JwtConfig jwtConfig;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
 

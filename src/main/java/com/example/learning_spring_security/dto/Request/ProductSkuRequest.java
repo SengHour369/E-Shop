@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ import java.util.List;
 @Getter
 @Builder
 public class ProductSkuRequest {
-
+    Long productSkuId;
     @NotBlank(message = "SKU is required")
     private String sku;
     
@@ -53,7 +54,7 @@ public class ProductSkuRequest {
      * @see ProductAttributeRequest
      */
     @JsonProperty("product_attributes")
-    private List<ProductAttributeRequest> productAttributes;
+    private List<ProductAttributeRequest> productAttributes =  new ArrayList<>();
 //    /**
 //     * Optional: Assign existing attributes to this SKU during creation
 //     * Each item specifies which attribute and value to assign

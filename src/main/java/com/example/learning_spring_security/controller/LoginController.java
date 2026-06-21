@@ -78,7 +78,7 @@ public class LoginController {
     }
 
 
-    @PostMapping("/email/login")
+    @PostMapping("/email/username/login")
     public ResponseEntity<AuthenticationResponse> loginByEmail(@Valid @RequestBody Login request) {
         log.info("Login request with criteria type: {}, value: {}",
                 request.CriteriaType(), request.CriteriaValue());
@@ -96,23 +96,6 @@ public class LoginController {
         }
     }
 
-    @PostMapping("/username/login")
-    public ResponseEntity<AuthenticationResponse> loginByUsername(@Valid @RequestBody Login request) {
-        log.info("Login request with criteria type: {}, value: {}",
-                request.CriteriaType(), request.CriteriaValue());
-
-        try {
-            AuthenticationResponse response = authService.authenticate(request);
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Login failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(AuthenticationResponse.builder()
-                            .message(e.getMessage())
-                            .build());
-        }
-    }
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthenticationResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {

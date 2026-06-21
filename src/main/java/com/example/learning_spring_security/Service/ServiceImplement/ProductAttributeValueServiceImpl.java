@@ -9,6 +9,7 @@ import com.example.learning_spring_security.Repository.ProductAttributeValueRepo
 import com.example.learning_spring_security.Service.ServiceStructure.ProductAttributeValueService;
 import com.example.learning_spring_security.ServiceMapper.ProductAttributeValueMapper;
 import com.example.learning_spring_security.dto.Request.ProductAttributeValueRequest;
+import com.example.learning_spring_security.dto.Response.ProductAttributeValueResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,11 +26,11 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
     private final ProductAttributeRepository productAttributeRepository;
 
     @Override
-    public ResponseErrorTemplate createAttributeValue(Long id,ProductAttributeValueRequest request) {
+    public ProductAttributeValueResponse createAttributeValue(Long id, ProductAttributeValueRequest request) {
         ProductAttribute attribute = productAttributeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute not found with id: " + id));
         ProductAttributeValue attributeValue = ProductAttributeValue.builder()
-                .attribute(attribute)
+                .attributeId(attribute.getId())
                 .value(request.getValue())
                 .build();
 
@@ -39,7 +40,7 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseErrorTemplate getAttributeValueById(Long id) {
+    public ProductAttributeValueResponse getAttributeValueById(Long id) {
         ProductAttributeValue attributeValue = attributeValueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute value not found with id: " + id));
         return ProductAttributeValueMapper.toResponse(attributeValue);
@@ -47,7 +48,7 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
 
     @Override
     @Transactional(readOnly = true)
-    public List<ResponseErrorTemplate> getValuesByAttributeId(Long attributeId) {
+    public List<ProductAttributeValueResponse> getValuesByAttributeId(Long attributeId) {
         List<ProductAttributeValue> values = attributeValueRepository.findByAttributeId(attributeId);
         return values.stream()
                 .map(ProductAttributeValueMapper::toResponse)
@@ -55,11 +56,11 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
     }
 
     @Override
-    public ResponseErrorTemplate updateAttributeValue(Long id, ProductAttributeValueRequest request) {
+    public ProductAttributeValueResponse updateAttributeValue(Long id, ProductAttributeValueRequest request) {
         ProductAttributeValue attributeValue = attributeValueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute value not found with id: " + id));
 
-        Long attributeId = attributeValue.getAttribute().getId();
+        Long attributeId = attributeValue.getAttributeId();
 
         if (!attributeValue.getValue().equalsIgnoreCase(request.getValue()) && attributeValueRepository.existsByAttributeIdAndValue(attributeId, request.getValue())) {
             throw new DuplicateResourceException("Attribute value already exists for this attribute");
@@ -79,7 +80,7 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseErrorTemplate getAttributeValueByAttributeAndValue(Long attributeId, String value) {
+    public ProductAttributeValueResponse getAttributeValueByAttributeAndValue(Long attributeId, String value) {
         ProductAttributeValue attributeValue = attributeValueRepository.findByAttributeIdAndValueIgnoreCase(attributeId, value)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute value not found"));
         return ProductAttributeValueMapper.toResponse(attributeValue);

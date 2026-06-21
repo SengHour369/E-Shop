@@ -14,7 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+
 public class ProductAttributeValue {
 
     @Id
@@ -24,12 +24,7 @@ public class ProductAttributeValue {
 
     @Column(nullable = false)
     private String value;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attribute_id", nullable = false)
-    @ToString.Exclude
-    @JsonIgnore
-    private ProductAttribute attribute;
+    private Long attributeId;
 
 }
 

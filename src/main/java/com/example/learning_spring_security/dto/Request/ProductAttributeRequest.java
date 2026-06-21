@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -23,6 +24,6 @@ public class ProductAttributeRequest {
      * @see SkuAttributeAssignmentRequest
      */
     @JsonProperty("attributes")
-    private List<ProductAttributeValueRequest> attributes;
+    private List<ProductAttributeValueRequest> attributes = new ArrayList<>();
 }
 

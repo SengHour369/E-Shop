@@ -1,5 +1,6 @@
 package com.example.learning_spring_security.Repository;
 
+import com.example.learning_spring_security.Model.ProductAttribute;
 import com.example.learning_spring_security.Model.ProductSku;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -37,4 +38,5 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
 
     @Query("SELECT s FROM ProductSku s WHERE s.product.id = :productId AND s.quantity <= s.lowStockThreshold")
     List<ProductSku> findLowStockSkusByProductId(@Param("productId") Long productId);
+
 }

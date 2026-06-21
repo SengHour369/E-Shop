@@ -2,6 +2,7 @@ package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceStructure.ProductAttributeValueService;
 import com.example.learning_spring_security.dto.Request.ProductAttributeValueRequest;
+import com.example.learning_spring_security.dto.Response.ProductAttributeValueResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,10 +33,10 @@ public class ProductAttributeValueController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Attribute value found"),
             @ApiResponse(responseCode = "404", description = "Attribute value not found")
     })
-    public ResponseEntity<ResponseErrorTemplate> getAttributeValueById(
+    public ResponseEntity<ProductAttributeValueResponse> getAttributeValueById(
             @Parameter(description = "Attribute value ID", example = "1")
             @PathVariable Long id) {
-        ResponseErrorTemplate response = productAttributeValueService.getAttributeValueById(id);
+        ProductAttributeValueResponse response = productAttributeValueService.getAttributeValueById(id);
         return ResponseEntity.ok(response);
     }
 
@@ -45,10 +46,10 @@ public class ProductAttributeValueController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Values retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
-    public ResponseEntity<List<ResponseErrorTemplate>> getValuesByAttributeId(
+    public ResponseEntity<List<ProductAttributeValueResponse>> getValuesByAttributeId(
             @Parameter(description = "Attribute ID", example = "1")
             @PathVariable Long attributeId) {
-        List<ResponseErrorTemplate> response = productAttributeValueService.getValuesByAttributeId(attributeId);
+        List<ProductAttributeValueResponse> response = productAttributeValueService.getValuesByAttributeId(attributeId);
         return ResponseEntity.ok(response);
     }
 
@@ -61,11 +62,11 @@ public class ProductAttributeValueController extends BaseController {
             @ApiResponse(responseCode = "404", description = "Attribute value not found"),
             @ApiResponse(responseCode = "409", description = "Attribute value already exists")
     })
-    public ResponseEntity<ResponseErrorTemplate> updateAttributeValue(
+    public ResponseEntity<ProductAttributeValueResponse> updateAttributeValue(
             @Parameter(description = "Attribute value ID", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody ProductAttributeValueRequest request) {
-        ResponseErrorTemplate response = productAttributeValueService.updateAttributeValue(
+        ProductAttributeValueResponse response = productAttributeValueService.updateAttributeValue(
                 id, 
                 request);
         return ResponseEntity.ok(response);
@@ -91,12 +92,12 @@ public class ProductAttributeValueController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Attribute value found"),
             @ApiResponse(responseCode = "404", description = "Attribute value not found")
     })
-    public ResponseEntity<ResponseErrorTemplate> getAttributeValueByAttributeAndValue(
+    public ResponseEntity<ProductAttributeValueResponse> getAttributeValueByAttributeAndValue(
             @Parameter(description = "Attribute ID", example = "1")
             @RequestParam Long attributeId,
             @Parameter(description = "Attribute value", example = "Red")
             @RequestParam String value) {
-        ResponseErrorTemplate response = productAttributeValueService.getAttributeValueByAttributeAndValue(attributeId, value);
+        ProductAttributeValueResponse response = productAttributeValueService.getAttributeValueByAttributeAndValue(attributeId, value);
         return ResponseEntity.ok(response);
     }
 }

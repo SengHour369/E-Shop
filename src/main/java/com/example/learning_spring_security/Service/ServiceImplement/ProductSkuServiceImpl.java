@@ -4,10 +4,12 @@ import com.example.learning_spring_security.Exception.ExceptionService.ResourceN
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.ProductAttribute;
 import com.example.learning_spring_security.Model.ProductSku;
-import com.example.learning_spring_security.Repository.ProductAttributeValueRepository;
+import com.example.learning_spring_security.Repository.ProductAttributeRepository;
 import com.example.learning_spring_security.Repository.ProductRepository;
 import com.example.learning_spring_security.Repository.ProductSkuRepository;
-import com.example.learning_spring_security.Service.ProductSkuService;
+
+import com.example.learning_spring_security.Service.ServiceStructure.ProductSkuService;
+import com.example.learning_spring_security.ServiceMapper.ProductMapper;
 import com.example.learning_spring_security.ServiceMapper.ProductSkuMapper;
 import com.example.learning_spring_security.dto.Request.ProductAttributeRequest;
 
@@ -28,14 +30,11 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     private final ProductSkuRepository productSkuRepository;
     private final ProductRepository productRepository;
     private  final ProductAttributeServiceImpl  productAttributeServiceImpl;
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional
     public ProductSku createSku(Long productId, ProductSkuRequest request) {
-        // 1. Check SKU uniqueness
-        if (productSkuRepository.existsBySku(request.getSku())) {
-            throw new ResourceNotFoundException("SKU already exists: " + request.getSku());
-        }
 
         // 2. Fetch the parent product
         Product product = productRepository.findById(productId)
@@ -50,6 +49,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         }
 
         // 5. Save
+
         ProductSku saved = productSkuRepository.save(sku);
 
         for (ProductAttributeRequest productAttributeRequest : request.getProductAttributes()) {
@@ -75,12 +75,6 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         // 3. Update entity fields using mapper
         ProductSkuMapper.updateEntity(existing, request);
 
-        // 4. Handle default flag: if setting this SKU as default, clear others
-        if (Boolean.TRUE.equals(request.getIsDefault())) {
-            clearExistingDefaultSku(existing.getProduct().getId());
-            // explicitly set after clearing (though updateEntity already set it, but ensure)
-            existing.setIsDefault(true);
-        }
 
         // 5. Save
         ProductSku updated = productSkuRepository.save(existing);

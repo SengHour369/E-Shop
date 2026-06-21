@@ -10,6 +10,7 @@ import com.example.learning_spring_security.Service.ServiceStructure.ProductAttr
 import com.example.learning_spring_security.ServiceMapper.ProductAttributeMapper;
 import com.example.learning_spring_security.dto.Request.ProductAttributeRequest;
 import com.example.learning_spring_security.dto.Request.ProductAttributeValueRequest;
+import com.example.learning_spring_security.dto.Response.ProductAttributeResponse;
 import com.example.learning_spring_security.dto.Response.ProductSkuResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +29,13 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     private final ProductSkuRepository productSkuRepository;
 
     @Override
-    public ResponseErrorTemplate createAttribute(Long id, ProductAttributeRequest request) {
+    public ProductAttributeResponse createAttribute(Long id, ProductAttributeRequest request) {
         ProductSku productSku = productSkuRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product SKU not found with id: " + id));
 
-        ProductAttribute attribute = ProductAttributeMapper.toEntity(request.getName());
-        attribute.setProductSku(productSku);
+        ProductAttribute attribute = ProductAttributeMapper.toEntity(request.getName(),productSku);
         ProductAttribute savedAttribute = productAttributeRepository.save(attribute);
-        if (request.getAttributes() != null || !request.getAttributes().isEmpty()) {
+        if (request.getAttributes() != null ) {
             for( ProductAttributeValueRequest productAttributeValueRequest : request.getAttributes()){
                 this.productAttributeValueServiceImpl.createAttributeValue(savedAttribute.getId(),productAttributeValueRequest);
             }
@@ -45,7 +45,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseErrorTemplate getAttributeById(Long id) {
+    public ProductAttributeResponse getAttributeById(Long id) {
         ProductAttribute attribute = productAttributeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute not found with id: " + id));
         return ProductAttributeMapper.toResponse(attribute);
@@ -53,7 +53,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseErrorTemplate getAttributeByName(String name) {
+    public ProductAttributeResponse getAttributeByName(String name) {
         ProductAttribute attribute = productAttributeRepository.findByNameIgnoreCase(name)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute not found with name: " + name));
         return ProductAttributeMapper.toResponse(attribute);
@@ -61,7 +61,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ResponseErrorTemplate> getAllAttributes() {
+    public List<ProductAttributeResponse> getAllAttributes() {
         List<ProductAttribute> attributes = productAttributeRepository.findAllOrderByName();
         return attributes.stream()
                 .map(ProductAttributeMapper::toResponse)
@@ -69,7 +69,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     }
 
     @Override
-    public ResponseErrorTemplate updateAttribute(Long id, ProductAttributeRequest request) {
+    public ProductAttributeResponse updateAttribute(Long id, ProductAttributeRequest request) {
         ProductAttribute attribute = productAttributeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute not found with id: " + id));
 
@@ -81,6 +81,8 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
         ProductAttribute updatedAttribute = productAttributeRepository.save(attribute);
         return ProductAttributeMapper.toResponse(updatedAttribute);
     }
+
+
 
     @Override
     public void deleteAttribute(Long id) {

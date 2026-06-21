@@ -6,8 +6,10 @@ import com.example.learning_spring_security.Exception.CustomMessageException;
 import com.example.learning_spring_security.Model.Role;
 import com.example.learning_spring_security.Model.User;
 import com.example.learning_spring_security.Repository.UserRepository;
+import com.example.learning_spring_security.Security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -16,6 +18,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
 
@@ -23,33 +27,45 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 public class CustomAuthenticationProvider implements AuthenticationProvider {
-
-    private final UserRepository userRepository;
-
-    @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.info("Authentication income {}", authentication);
-        final String username = authentication.getName();
-        final String password = Objects.requireNonNull(authentication.getCredentials()).toString();
-
-        Optional<User> user;
-        try {
-            user = userRepository.findByUsernameOrEmailAndStatus(username, Constant.ACT);
-        }catch (Exception ex) {
-            log.error("{}", ex.getLocalizedMessage());
-            throw new CustomMessageException("User not found.", String.valueOf(HttpStatus.UNAUTHORIZED.value()));
-        }
-        if(user.isEmpty()){
-            throw new CustomMessageException("User not found.", String.valueOf(HttpStatus.UNAUTHORIZED.value()));
-        }
-        final List<GrantedAuthority> grantedAuthorities = grantedAuthorities(user.get().getRoles().stream().toList());
-        final Authentication authz = new UsernamePasswordAuthenticationToken(username, password, grantedAuthorities);
-
-        log.info("Authentication out come {}", authz);
-        return authz;
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
+    private final UserRepository userRepository;
+    @Override
+    public Authentication authenticate(Authentication authentication)
+            throws AuthenticationException {
 
+        String username = authentication.getName();
+        String password = authentication.getCredentials().toString();
+
+        User user = userRepository
+                .findByUsernameOrEmailAndStatus(username, Constant.ACT)
+                .orElseThrow(() ->
+                        new CustomMessageException("User not found", "401"));
+
+        // 🔥 PASSWORD VALIDATION (IMPORTANT)
+        if (!passwordEncoder().matches(password, user.getPassword())) {
+            throw new CustomMessageException("Invalid password", "401");
+        }
+
+        List<GrantedAuthority> authorities =
+                grantedAuthorities(user.getRoles().stream().toList());
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(
+                user.getUsername(),
+                user.getEmail(),
+                user.getPassword(),
+                authorities
+        );
+
+        return new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                authorities
+        );
+    }
     @Override
     public boolean supports(Class<?> authentication) {
         return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);

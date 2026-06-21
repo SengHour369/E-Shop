@@ -1,9 +1,12 @@
 package com.example.learning_spring_security.ServiceMapper;
 
 import com.example.learning_spring_security.Model.Product;
+import com.example.learning_spring_security.Model.ProductAttribute;
 import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.dto.Request.ProductSkuRequest;
 import com.example.learning_spring_security.dto.Response.ProductSkuResponse;
+
+import java.util.List;
 
 public class ProductSkuMapper {
 
@@ -26,6 +29,8 @@ public class ProductSkuMapper {
                 .description(sku.getDescription())
                 .price(sku.getPrice())
                 .quantity(sku.getQuantity())
+                .lowStockThreshold(sku.getLowStockThreshold())
+                .isDefault(sku.getIsDefault())
                 .build();
     }
 
@@ -34,8 +39,6 @@ public class ProductSkuMapper {
         sku.setDescription(request.getDescription());
         sku.setPrice(request.getPrice());
         sku.setQuantity(request.getQuantity());
-//        sku.setColor(request.getColor());
-//        sku.setSize(request.getSize());
         if (request.getLowStockThreshold() != null) sku.setLowStockThreshold(request.getLowStockThreshold());
         if (request.getIsDefault() != null) sku.setIsDefault(request.getIsDefault());
     }

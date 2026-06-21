@@ -24,7 +24,7 @@ public class ProductSku extends BaseEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(unique = true, nullable = false)
+    @Column( nullable = false)
     private String sku;
 
     private String description;
@@ -44,6 +44,4 @@ public class ProductSku extends BaseEntity {
     private List<CartItem> cartItems = new ArrayList<>();
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
-    @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ProductAttribute> productAttributes = new ArrayList<>();
 }

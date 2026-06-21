@@ -2,16 +2,15 @@ package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceStructure.ProductAttributeService;
 import com.example.learning_spring_security.dto.Request.ProductAttributeRequest;
+import com.example.learning_spring_security.dto.Response.ProductAttributeResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,10 +31,10 @@ public class ProductAttributeController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Attribute found"),
             @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
-    public ResponseEntity<ResponseErrorTemplate> getAttributeById(
+    public ResponseEntity<ProductAttributeResponse> getAttributeById(
             @Parameter(description = "Attribute ID", example = "1")
             @PathVariable Long id) {
-        ResponseErrorTemplate response = productAttributeService.getAttributeById(id);
+        ProductAttributeResponse response = productAttributeService.getAttributeById(id);
         return ResponseEntity.ok(response);
     }
 
@@ -45,35 +44,35 @@ public class ProductAttributeController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Attribute found"),
             @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
-    public ResponseEntity<ResponseErrorTemplate> getAttributeByName(
+    public ResponseEntity<ProductAttributeResponse> getAttributeByName(
             @Parameter(description = "Attribute name", example = "Color")
             @PathVariable String name) {
-        ResponseErrorTemplate response = productAttributeService.getAttributeByName(name);
+        ProductAttributeResponse response = productAttributeService.getAttributeByName(name);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
     @Operation(summary = "Get all attributes", description = "Retrieve all product attributes")
-    public ResponseEntity<List<ResponseErrorTemplate>> getAllAttributes() {
-        List<ResponseErrorTemplate> response = productAttributeService.getAllAttributes();
+    public ResponseEntity<List<ProductAttributeResponse>> getAllAttributes() {
+        List<ProductAttributeResponse> response = productAttributeService.getAllAttributes();
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Update attribute", description = "Update an existing attribute (Admin only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Attribute updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Attribute not found"),
-            @ApiResponse(responseCode = "409", description = "Attribute name already exists")
-    })
-    public ResponseEntity<ResponseErrorTemplate> updateAttribute(
-            @Parameter(description = "Attribute ID", example = "1")
-            @PathVariable Long id,
-            @Valid @RequestBody ProductAttributeRequest request) {
-        ResponseErrorTemplate response = productAttributeService.updateAttribute(id, request);
-        return ResponseEntity.ok(response);
-    }
+//    @PutMapping("/{id}")
+//    @PreAuthorize("hasAuthority('ADMIN')")
+//    @Operation(summary = "Update attribute", description = "Update an existing attribute (Admin only)")
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "200", description = "Attribute updated successfully"),
+//            @ApiResponse(responseCode = "404", description = "Attribute not found"),
+//            @ApiResponse(responseCode = "409", description = "Attribute name already exists")
+//    })
+//    public ResponseEntity<ProductAttributeResponse> updateAttribute(
+//            @Parameter(description = "Attribute ID", example = "1")
+//            @PathVariable Long id,
+//            @Valid @RequestBody ProductAttributeRequest request) {
+//        ProductAttributeResponse response = productAttributeService.updateAttribute(id, request);
+//        return ResponseEntity.ok(response);
+//    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
