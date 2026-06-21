@@ -16,12 +16,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender emailSender;
 
-    @Value("${app.base-url:http://localhost:8080}")
+    private final JavaMailSender emailSender;
+
+    @Value("${app.base-url:http://e-shop-1-m034.onrender.com}")
     private String baseUrl;
-
     @Value("${spring.mail.username}")
     private String fromEmail;
 
