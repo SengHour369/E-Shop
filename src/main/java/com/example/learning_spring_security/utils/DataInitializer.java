@@ -68,4 +68,7 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("Admin user already exists");
         }
     }
+    
+
+
 }

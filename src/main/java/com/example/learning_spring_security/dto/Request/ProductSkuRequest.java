@@ -46,6 +46,8 @@ public class ProductSkuRequest {
     
     @JsonProperty("is_default")
     private Boolean isDefault = false;
+    private Boolean OperatorProductAttribute = false;
+
 
     /**
      * Optional: Create new attributes inline during SKU creation

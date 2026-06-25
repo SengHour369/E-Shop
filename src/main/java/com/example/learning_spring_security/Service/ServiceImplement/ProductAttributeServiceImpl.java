@@ -79,6 +79,17 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
 
         ProductAttributeMapper.updateEntity(attribute, request.getName());
         ProductAttribute updatedAttribute = productAttributeRepository.save(attribute);
+
+        if (request.getAttributes() != null && !request.getAttributes().isEmpty()) {
+            for (com.example.learning_spring_security.dto.Request.ProductAttributeValueRequest valueRequest : request.getAttributes()) {
+                if (valueRequest.getId() != null) {
+                    productAttributeValueServiceImpl.updateAttributeValue(valueRequest.getId(), valueRequest);
+                } else {
+                    productAttributeValueServiceImpl.createAttributeValue(updatedAttribute.getId(), valueRequest);
+                }
+            }
+        }
+
         return ProductAttributeMapper.toResponse(updatedAttribute);
     }
 
@@ -91,6 +102,5 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
         productAttributeRepository.delete(attribute);
     }
 }
-
 
 

@@ -68,6 +68,7 @@ public class ProductMapper {
                 .price(sku.getPrice())
                 .quantity(sku.getQuantity())
                 .isDefault(sku.getIsDefault())
+                .OperatorProductAttribute(sku.getOperatorProductAttribute())
                 .ProductAttributeResponse(attributeResponses)
                 .build();
     }

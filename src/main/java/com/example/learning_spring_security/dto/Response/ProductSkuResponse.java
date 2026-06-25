@@ -20,6 +20,7 @@ public class ProductSkuResponse {
     private Integer lowStockThreshold;
     @com.fasterxml.jackson.annotation.JsonProperty("is_default")
     private Boolean isDefault;
+    private Boolean OperatorProductAttribute = false;
 
     // Optional: attributes assigned to this SKU
     @JsonProperty("attributes")

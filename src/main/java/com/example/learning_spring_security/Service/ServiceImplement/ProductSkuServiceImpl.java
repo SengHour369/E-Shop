@@ -62,22 +62,27 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     @Override
     @Transactional
     public ProductSku updateSku(Long skuId, ProductSkuRequest request) {
-        // 1. Fetch existing SKU
         ProductSku existing = productSkuRepository.findById(skuId)
                 .orElseThrow(() -> new ResourceNotFoundException("SKU not found with id: " + skuId));
 
-        // 2. Check SKU uniqueness if changed
         if (!existing.getSku().equals(request.getSku()) &&
                 productSkuRepository.existsBySku(request.getSku())) {
             throw new ResourceNotFoundException("SKU already exists: " + request.getSku());
         }
 
-        // 3. Update entity fields using mapper
         ProductSkuMapper.updateEntity(existing, request);
-
-
-        // 5. Save
         ProductSku updated = productSkuRepository.save(existing);
+
+        if (request.getProductAttributes() != null && !request.getProductAttributes().isEmpty()) {
+            for (com.example.learning_spring_security.dto.Request.ProductAttributeRequest attributeRequest : request.getProductAttributes()) {
+                if (attributeRequest.getId() != null) {
+                    productAttributeServiceImpl.updateAttribute(attributeRequest.getId(), attributeRequest);
+                } else {
+                    productAttributeServiceImpl.createAttribute(updated.getId(), attributeRequest);
+                }
+            }
+        }
+
         log.info("Updated SKU: {}", updated.getSku());
         return updated;
     }

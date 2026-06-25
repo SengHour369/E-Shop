@@ -60,7 +60,6 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public ResponseErrorTemplate create(Register userRequest) {
         log.info("Starting registration for user: {}", userRequest.username());
-
         this.userRequestValidation(userRequest);
         List<String> role = List.of("USER");
         List<Role> roles = roleRepository.findAllByNameIn(role);
@@ -456,35 +455,4 @@ public class AuthServiceImpl implements AuthService {
         log.info("Password changed for user: {}", user.getUsername());
     }
 
-    public UserDetailsImpl loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("Loading user by username: {}", username);
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-
-        return new UserDetailsImpl(
-                user.getUsername(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
-        );
-    }
-
-    public UserDetailsImpl loadUserByEmail(String email) throws UsernameNotFoundException {
-        log.info("Loading user by email: {}", email);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-
-        return new UserDetailsImpl(
-                user.getUsername(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
-        );
-    }
 }

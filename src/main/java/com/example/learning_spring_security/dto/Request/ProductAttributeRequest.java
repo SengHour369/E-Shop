@@ -14,6 +14,8 @@ import java.util.List;
 @Builder
 public class ProductAttributeRequest {
 
+    private Long id;
+
     @NotBlank(message = "Attribute name is required")
     private String name;
 

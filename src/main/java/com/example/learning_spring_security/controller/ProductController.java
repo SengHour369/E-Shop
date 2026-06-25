@@ -122,7 +122,7 @@ public class ProductController extends BaseController {
             @RequestParam(required = false, defaultValue = "true") Boolean is_active,
             @RequestParam Long sub_category_id,
             @RequestParam(required = false) String skus,
-         //  @RequestBody ProductRequest productRequest,
+            //  @RequestBody ProductRequest productRequest,
             @RequestParam(value = "files") List<MultipartFile> files) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProductRequest request = new ProductRequest();
@@ -130,19 +130,19 @@ public class ProductController extends BaseController {
         request.setDescription(description);
         request.setIsActive(is_active);
         request.setSubCategoryId(sub_category_id);
-        
+
         if (skus != null && !skus.isEmpty()) {
-            List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList = 
-                mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
-                    List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
+            List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList =
+                    mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
+                            List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
             request.setSkus(skuList);
         }
-        
+
         ResponseErrorTemplate response = productService.createProduct(request, files);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/id", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/update", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Update product", description = "Update an existing product via JSON (Admin only)")
     public ResponseEntity<ResponseErrorTemplate> updateProductJson(
@@ -152,7 +152,7 @@ public class ProductController extends BaseController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Update product with files", description = "Update an existing product with optional files (Admin only)")
     public ResponseEntity<ResponseErrorTemplate> updateProduct(
@@ -169,14 +169,14 @@ public class ProductController extends BaseController {
         request.setDescription(description);
         request.setIsActive(is_active);
         request.setSubCategoryId(sub_category_id);
-        
+
         if (skus != null && !skus.isEmpty()) {
-            List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList = 
-                mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
-                    List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
+            List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList =
+                    mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
+                            List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
             request.setSkus(skuList);
         }
-        
+
         ResponseErrorTemplate response = productService.updateProduct(id, request, files);
         return ResponseEntity.ok(response);
     }

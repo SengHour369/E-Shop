@@ -1,3 +1,5 @@
+
+
 package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceStructure.CategoryService;
@@ -11,8 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+        import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -59,6 +63,14 @@ public class CategoryController extends BaseController {
             @RequestParam Long id,
             @Valid @RequestBody CategoryRequest request) {
         ResponseErrorTemplate response = categoryService.updateCategory(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/id/icon", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseErrorTemplate> uploadCategoryIcon(
+            @RequestParam Long id,
+            @RequestParam("file") MultipartFile file) {
+        ResponseErrorTemplate response = categoryService.uploadCategoryIcon(id, file);
         return ResponseEntity.ok(response);
     }
 

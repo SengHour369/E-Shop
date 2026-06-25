@@ -22,7 +22,7 @@ public class CategoryMapper {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
-
+                .icon(category.getIcon())
                 .build();
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, categoryResponse);
     }

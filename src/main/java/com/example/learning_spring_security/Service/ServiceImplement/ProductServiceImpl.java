@@ -44,15 +44,15 @@ public class ProductServiceImpl implements ProductService {
     public ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files) throws Exception {
 
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
-                        .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
         List<Image> imageUrls = List.of();
         if (files == null || files.isEmpty()) {
             throw new Exception("file in image is empty");
         }
-            imageUrls = files.stream()
-                    .map(imageService::uploadImage)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+        imageUrls = files.stream()
+                .map(imageService::uploadImage)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
         Product product = ProductMapper.toEntity(request, subCategory);
         product.setImage(imageUrls);
@@ -141,16 +141,25 @@ public class ProductServiceImpl implements ProductService {
         if (files != null && !files.isEmpty()) {
             List<Image> newImageUrls = files.stream()
                     .map(imageService::uploadImage)
-                    .filter(url -> url != null)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             product.setImage(newImageUrls);
-            if (newImageUrls != null) {
-                newImageUrls.forEach(img -> img.setProduct(product));
-            }
+            newImageUrls.forEach(img -> img.setProduct(product));
         }
 
         ProductMapper.updateEntity(product, request, subCategory);
         Product updatedProduct = productRepository.save(product);
+
+        if (request.getSkus() != null && !request.getSkus().isEmpty()) {
+            for (ProductSkuRequest skuRequest : request.getSkus()) {
+                if (skuRequest.getProductSkuId() != null) {
+                    productSkuService.updateSku(skuRequest.getProductSkuId(), skuRequest);
+                } else {
+                    productSkuService.createSku(updatedProduct.getId(), skuRequest);
+                }
+            }
+        }
+
         log.info("Product updated: id={}, name={}", updatedProduct.getId(), updatedProduct.getName());
         return productMapper.toResponse(updatedProduct);
     }

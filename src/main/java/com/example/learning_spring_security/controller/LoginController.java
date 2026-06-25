@@ -80,8 +80,8 @@ public class LoginController {
 
     @PostMapping("/email/username/login")
     public ResponseEntity<AuthenticationResponse> loginByEmail(@Valid @RequestBody Login request) {
-        log.info("Login request with criteria type: {}, value: {}",
-                request.CriteriaType(), request.CriteriaValue());
+        log.info("Login request with criteria type: {}, value: {}"
+                , request.CriteriaValue());
 
         try {
             AuthenticationResponse response = authService.authenticate(request);
