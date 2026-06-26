@@ -65,13 +65,13 @@ public class SecurityConfig {
                         ).permitAll()
 
 
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/active").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/subcategory/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/category/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/subcategories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/active").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/search").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/subcategory/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/category/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/subcategories/**").permitAll()
 
 
                         .requestMatchers("/api/v1/user/**").authenticated()
@@ -85,14 +85,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/inventory/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/v1/attributes/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/v1/attribute-values/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/products/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/categories/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/categories/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/**").hasAuthority("ADMIN")
-
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
