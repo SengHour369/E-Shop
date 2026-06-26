@@ -226,6 +226,27 @@ public class OrderServiceImpl implements OrderService {
         return OrderMapper.toResponse(cancelled);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getOrderDetailByUserId(Long userId, Long orderId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
+        OrderDetail order = orderRepository.findByIdAndUserIdWithFullDetail(orderId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId + " for user: " + userId));
+        return OrderMapper.toResponse(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ResponseErrorTemplate> getOrderDetailHistory(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
+        return orderRepository.findOrderDetailHistory(userId, status, startDate, endDate, pageable)
+                .map(OrderMapper::toResponse);
+    }
+
     private String generateOrderNumber() {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }

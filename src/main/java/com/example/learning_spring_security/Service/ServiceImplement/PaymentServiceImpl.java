@@ -16,7 +16,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -84,6 +88,30 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment updatedPayment = paymentRepository.save(payment);
         return PaymentMapper.toResponse(updatedPayment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> getPaymentsByUserId(Long userId) {
+        return paymentRepository.findByOrderDetailUserId(userId)
+                .stream()
+                .map(PaymentMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PaymentResponse> getPaymentHistory(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        return paymentRepository.findPaymentHistory(userId, status, startDate, endDate, pageable)
+                .map(PaymentMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaymentResponse getPaymentDetailByUserId(Long userId, Long paymentId) {
+        Payment payment = paymentRepository.findByIdAndOrderDetailUserId(paymentId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + paymentId + " for user: " + userId));
+        return PaymentMapper.toResponse(payment);
     }
 
     private String generateTransactionId() {

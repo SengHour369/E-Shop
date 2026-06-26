@@ -5,6 +5,7 @@ import com.example.learning_spring_security.dto.Response.OrderResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.time.LocalDateTime;
 
 public interface OrderService {
     ResponseErrorTemplate createOrderFromCart(Long userId, OrderRequest request);
@@ -14,6 +15,9 @@ public interface OrderService {
     Page<ResponseErrorTemplate> getAllOrders(Pageable pageable);
     ResponseErrorTemplate updateOrderStatus(Long id, String status);
     ResponseErrorTemplate cancelOrder(Long id, Long userId);
+
+    ResponseErrorTemplate getOrderDetailByUserId(Long userId, Long orderId);
+    Page<ResponseErrorTemplate> getOrderDetailHistory(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     // Bakong Payment Integration Methods
     ResponseErrorTemplate createOrderWithBakongPayment(Long userId, OrderRequest request);

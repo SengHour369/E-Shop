@@ -10,9 +10,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -46,6 +49,25 @@ public class OrderController extends BaseController {
     public ResponseEntity<ResponseErrorTemplate> getOrderByNumber(@RequestParam String orderNumber) {
         ResponseErrorTemplate order = orderService.getOrderByNumber(orderNumber);
         return ResponseEntity.ok(order);
+    }
+
+    @PostMapping("/user/detail")
+    public ResponseEntity<ResponseErrorTemplate> getOrderDetailByUser(
+            @RequestParam Long userId,
+            @RequestParam Long orderId) {
+        ResponseErrorTemplate order = orderService.getOrderDetailByUserId(userId, orderId);
+        return ResponseEntity.ok(order);
+    }
+
+    @PostMapping("/user/history")
+    public ResponseEntity<Page<ResponseErrorTemplate>> getOrderDetailHistory(
+            @RequestParam Long userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @PageableDefault(size = 10, sort = "orderDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<ResponseErrorTemplate> orders = orderService.getOrderDetailHistory(userId, status, startDate, endDate, pageable);
+        return ResponseEntity.ok(orders);
     }
 
     @PostMapping("/user/from-cart")

@@ -80,7 +80,7 @@ public class LoginController {
 
     @PostMapping("/email/username/login")
     public ResponseEntity<AuthenticationResponse> loginByEmail(@Valid @RequestBody Login request) {
-        log.info("Login request with criteria type: {}, value: {}"
+        log.info("Login request with criteria type: {}"
                 , request.CriteriaValue());
 
         try {

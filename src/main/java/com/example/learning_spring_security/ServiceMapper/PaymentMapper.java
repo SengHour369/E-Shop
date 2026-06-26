@@ -22,15 +22,20 @@ public class PaymentMapper {
     }
 
     public static PaymentResponse toResponse(Payment payment) {
-                 return PaymentResponse.builder()
+        PaymentResponse.PaymentResponseBuilder builder = PaymentResponse.builder()
                 .id(payment.getId())
                 .paymentMethod(payment.getPaymentMethod())
                 .paymentDate(payment.getPaymentDate())
                 .amount(payment.getAmount())
                 .status(payment.getStatus())
                 .transactionId(payment.getTransactionId())
-                .paymentProvider(payment.getPaymentProvider())
-                .build();
+                .paymentProvider(payment.getPaymentProvider());
 
+        if (payment.getOrderDetail() != null) {
+            builder.orderId(payment.getOrderDetail().getId())
+                    .orderNumber(payment.getOrderDetail().getOrderNumber());
+        }
+
+        return builder.build();
     }
 }

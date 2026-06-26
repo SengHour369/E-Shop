@@ -54,4 +54,24 @@ public interface OrderRepository extends JpaRepository<OrderDetail, Long> {
 
     @Query("SELECT o FROM OrderDetail o WHERE o.user.id = :userId ORDER BY o.orderDate DESC")
     List<OrderDetail> findRecentOrdersByUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT DISTINCT o FROM OrderDetail o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.productSku sku " +
+            "LEFT JOIN FETCH sku.product " +
+            "LEFT JOIN FETCH o.payment " +
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "WHERE o.id = :orderId AND o.user.id = :userId")
+    Optional<OrderDetail> findByIdAndUserIdWithFullDetail(@Param("orderId") Long orderId, @Param("userId") Long userId);
+
+    @Query("SELECT o FROM OrderDetail o WHERE o.user.id = :userId " +
+            "AND (:status IS NULL OR o.status = :status) " +
+            "AND (:startDate IS NULL OR o.orderDate >= :startDate) " +
+            "AND (:endDate IS NULL OR o.orderDate <= :endDate)")
+    Page<OrderDetail> findOrderDetailHistory(
+            @Param("userId") Long userId,
+            @Param("status") String status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable);
 }

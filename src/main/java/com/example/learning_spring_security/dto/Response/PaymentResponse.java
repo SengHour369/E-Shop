@@ -13,6 +13,12 @@ import java.time.LocalDateTime;
 public class PaymentResponse {
     private Long id;
 
+    @JsonProperty("order_id")
+    private Long orderId;
+
+    @JsonProperty("order_number")
+    private String orderNumber;
+
     @JsonProperty("payment_method")
     private String paymentMethod;
 
