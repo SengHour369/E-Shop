@@ -39,13 +39,14 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
+        System.out.println("username: " + username);
+        System.out.println("password: " + password);
 
         User user = userRepository
                 .findByUsernameOrEmailAndStatus(username, Constant.ACT)
                 .orElseThrow(() ->
                         new CustomMessageException("User not found", "401"));
 
-        // 🔥 PASSWORD VALIDATION (IMPORTANT)
         if (!passwordEncoder().matches(password, user.getPassword())) {
             throw new CustomMessageException("Invalid password", "401");
         }
@@ -62,7 +63,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         return new UsernamePasswordAuthenticationToken(
                 userDetails,
-                null,
+                password,
                 authorities
         );
     }

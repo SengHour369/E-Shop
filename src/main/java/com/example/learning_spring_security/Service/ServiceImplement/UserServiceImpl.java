@@ -4,6 +4,7 @@ import com.example.learning_spring_security.Exception.ExceptionService.ResourceN
 import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.User;
 import com.example.learning_spring_security.Repository.UserRepository;
+import com.example.learning_spring_security.Service.ServiceImages.ImageServiceImpl;
 import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
 import com.example.learning_spring_security.Service.ServiceStructure.UserService;
 import com.example.learning_spring_security.ServiceMapper.UserMapper;
@@ -23,7 +24,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
    final UserRepository userRepository;
-   final ImageService imageService;
+   final ImageServiceImpl imageService;
    final PasswordEncoder passwordEncoder;
 
     @Override

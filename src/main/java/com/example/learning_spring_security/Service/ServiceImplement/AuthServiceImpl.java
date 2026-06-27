@@ -183,13 +183,13 @@ public class AuthServiceImpl implements AuthService {
         String password = input.Password();
 
         log.info("Authenticating user: {}", value);
+        log.info("Password user: {}", password);
 
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(value, password)
                 );
 
-        // 🔥 MUST COME FROM PROVIDER
         UserDetailsImpl userDetails =
                 (UserDetailsImpl) authentication.getPrincipal();
 

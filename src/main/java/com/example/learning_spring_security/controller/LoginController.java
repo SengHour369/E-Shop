@@ -82,6 +82,7 @@ public class LoginController {
     public ResponseEntity<AuthenticationResponse> loginByEmail(@Valid @RequestBody Login request) {
         log.info("Login request with criteria type: {}"
                 , request.CriteriaValue());
+        log.info("Reset password request = {}", request.Password());
 
         try {
             AuthenticationResponse response = authService.authenticate(request);
@@ -124,6 +125,7 @@ public class LoginController {
     @PostMapping("/forgot-password")
     public ResponseEntity<AuthenticationResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         log.info("Forgot password request for email: {}", request.getEmail());
+
         try {
             AuthenticationResponse response = authService.forgotPassword(request);
             return ResponseEntity.ok(response);
