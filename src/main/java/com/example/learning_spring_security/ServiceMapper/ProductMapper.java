@@ -45,6 +45,7 @@ public class ProductMapper {
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
+                .isActive(product.getIsActive())
                 .skus(skuResponses)
                 .Image(product.getImage().stream().map(Image::getUrl)
                         .collect(Collectors.toList()))
