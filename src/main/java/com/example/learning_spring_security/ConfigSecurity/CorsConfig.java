@@ -16,8 +16,9 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedOrigins("https://e-shop-seven-swart.vercel.app/",
-                                "http://localhost:5173/")
+                        .allowedOrigins("https://e-shop-seven-swart.vercel.app",
+                        "https://admin-e-shop-6cfm.vercel.app",
+                                "http://localhost:5173")
                         .allowedHeaders("*")
                         .allowCredentials(true)
                         .exposedHeaders("Authorization");
