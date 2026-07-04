@@ -33,6 +33,23 @@ public class ProductMapper {
     }
 
 
+    public ProductResponse toProductResponse(Product product) {
+        List<ProductSkuResponse> skuResponses =
+                skuRepository.findByProductId(product.getId())
+                        .stream()
+                        .map(this::toSkuResponse)
+                        .toList();
+
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .skus(skuResponses)
+                .Image(product.getImage().stream().map(Image::getUrl)
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
     public ResponseErrorTemplate toResponse(Product product) {
 
         List<ProductSkuResponse> skuResponses =
@@ -45,7 +62,6 @@ public class ProductMapper {
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
-                .isActive(product.getIsActive())
                 .skus(skuResponses)
                 .Image(product.getImage().stream().map(Image::getUrl)
                         .collect(Collectors.toList()))
@@ -67,9 +83,7 @@ public class ProductMapper {
                 .sku(sku.getSku())
                 .description(sku.getDescription())
                 .price(sku.getPrice())
-                .quantity(sku.getQuantity())
                 .isDefault(sku.getIsDefault())
-                .OperatorProductAttribute(sku.getOperatorProductAttribute())
                 .ProductAttributeResponse(attributeResponses)
                 .build();
     }

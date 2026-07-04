@@ -23,7 +23,7 @@ public class ProductRequest {
     @NotNull(message = "Subcategory ID is required")
     @JsonProperty("sub_category_id")
     private Long subCategoryId;
-   @Valid
+
     private List<ProductSkuRequest> skus;
 
 }

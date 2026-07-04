@@ -1,0 +1,35 @@
+package com.example.learning_spring_security.Model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "function_permissions")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FunctionPermission extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "func_id")
+    private Long funcId;
+
+    @Column(name = "func_code", nullable = false, unique = true, length = 50)
+    private String funcCode;
+
+    @Column(name = "func_name", nullable = false, length = 100)
+    private String funcName;
+
+    @Column(name = "description", length = 255)
+    private String description;
+
+    @Column(name = "module", length = 50)
+    private String module;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+}

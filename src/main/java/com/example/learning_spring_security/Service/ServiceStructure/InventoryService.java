@@ -1,14 +1,17 @@
 package com.example.learning_spring_security.Service.ServiceStructure;
 
+import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.dto.Request.InventoryRequest;
 import com.example.learning_spring_security.dto.Request.RestockRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface InventoryService {
 
-    ResponseErrorTemplate createInventory(InventoryRequest request);
+    ResponseErrorTemplate createInventory(Long productSkuId, InventoryRequest request);
 
     ResponseErrorTemplate getInventoryById(Long id);
 
@@ -25,4 +28,11 @@ public interface InventoryService {
     ResponseErrorTemplate adjustQuantity(Long id, InventoryRequest request);
 
     void deleteInventory(Long id);
+    void reduceStock(Long skuId, Long quantity);
+
+    void increaseStock(Long skuId, Long quantity);
+
+    List<ProductSku> getLowStockSkus();
+
+    List<ProductSku> getLowStockSkusByProductId(Long productId);
 }

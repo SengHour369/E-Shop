@@ -30,7 +30,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     private final ProductSkuRepository productSkuRepository;
     private final ProductRepository productRepository;
     private  final ProductAttributeServiceImpl  productAttributeServiceImpl;
-    private final ProductMapper productMapper;
+    private final InventoryServiceImpl inventoryServiceImpl;
 
     @Override
     @Transactional
@@ -43,14 +43,10 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         // 3. Map request to entity
         ProductSku sku = ProductSkuMapper.toEntity(request, product);
 
-        // 4. Handle default SKU logic: only one default per product
-        if (Boolean.TRUE.equals(sku.getIsDefault())) {
-            clearExistingDefaultSku(productId);
-        }
-
         // 5. Save
 
         ProductSku saved = productSkuRepository.save(sku);
+        inventoryServiceImpl.createInventory(saved.getId(), request.getInventory());
 
         for (ProductAttributeRequest productAttributeRequest : request.getProductAttributes()) {
             this.productAttributeServiceImpl.createAttribute(saved.getId(), productAttributeRequest);
@@ -110,61 +106,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         return productSkuRepository.findByProductId(productId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ProductSku getDefaultSkuByProductId(Long productId) {
-        return productSkuRepository.findDefaultSkuByProductId(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("No default SKU found for product id: " + productId));
-    }
 
-    @Override
-    @Transactional
-    public void reduceStock(Long skuId, Long quantity) {
-        int updated = productSkuRepository.reduceStock(skuId, quantity);
-        if (updated == 0) {
-            // Either SKU not found or insufficient stock
-            ProductSku sku = productSkuRepository.findById(skuId)
-                    .orElseThrow(() -> new ResourceNotFoundException("SKU not found with id: " + skuId));
-            if (sku.getQuantity() < quantity) {
-                throw new ResourceNotFoundException("Insufficient stock for SKU: " + sku.getSku() +
-                        ". Available: " + sku.getQuantity() + ", requested: " + quantity);
-            }
-        }
-        log.info("Reduced stock for SKU id {} by {}", skuId, quantity);
-    }
 
-    @Override
-    @Transactional
-    public void increaseStock(Long skuId, Long quantity) {
-        int updated = productSkuRepository.increaseStock(skuId, quantity);
-        if (updated == 0) {
-            throw new ResourceNotFoundException("SKU not found with id: " + skuId);
-        }
-        log.info("Increased stock for SKU id {} by {}", skuId, quantity);
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductSku> getLowStockSkus() {
-        return productSkuRepository.findLowStockSkus();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductSku> getLowStockSkusByProductId(Long productId) {
-        return productSkuRepository.findLowStockSkusByProductId(productId);
-    }
-
-    // --------------------- Helper Methods ---------------------
-
-    /**
-     * Clears the default flag on all other SKUs of the same product.
-     */
-    private void clearExistingDefaultSku(Long productId) {
-        productSkuRepository.findDefaultSkuByProductId(productId)
-                .ifPresent(defaultSku -> {
-                    defaultSku.setIsDefault(false);
-                    productSkuRepository.save(defaultSku);
-                });
-    }
 }

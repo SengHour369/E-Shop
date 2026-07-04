@@ -1,6 +1,7 @@
 package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceStructure.OrderService;
+import com.example.learning_spring_security.dto.Request.GetOrderRequest;
 import com.example.learning_spring_security.dto.Request.OrderRequest;
 import com.example.learning_spring_security.dto.Response.OrderResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
@@ -30,6 +31,10 @@ public class OrderController extends BaseController {
         Page<ResponseErrorTemplate> orders = orderService.getAllOrders(pageable);
         return ResponseEntity.ok(orders);
     }
+    @PostMapping("/get/all") public ResponseEntity<ResponseErrorTemplate> getOrders(
+            @RequestBody GetOrderRequest request)
+    { ResponseErrorTemplate response = orderService.getOrders(request);
+        return ResponseEntity.ok(response); }
 
     @PostMapping("/user/id/")
     public ResponseEntity<Page<ResponseErrorTemplate>> getUserOrders(

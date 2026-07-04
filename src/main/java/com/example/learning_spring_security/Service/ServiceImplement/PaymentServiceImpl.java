@@ -8,11 +8,15 @@ import com.example.learning_spring_security.Repository.OrderRepository;
 import com.example.learning_spring_security.Repository.PaymentRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.PaymentService;
 import com.example.learning_spring_security.ServiceMapper.PaymentMapper;
+import com.example.learning_spring_security.dto.Request.GetPaymentRequest;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
+import com.example.learning_spring_security.dto.Response.PaymentPageResponse;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
-
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,6 +34,85 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getPayments(GetPaymentRequest request) {
+        log.info("getPayments: criteriaType={}, criteriaValue={}, page={}, size={}",
+                request.getCriteriaType(), request.getCriteriaValue(), request.getPage(), request.getSize());
+
+        Pageable pageable = PageRequest.of(
+                request.getPage() - 1,
+                request.getSize(),
+                Sort.by("paymentDate").descending()
+        );
+
+        Integer type = request.getCriteriaType();
+        String value = request.getCriteriaValue();
+
+        Page<Payment> page;
+        String successMsg;
+
+        if (type == null || type == 0 || value == null || value.isBlank()) {
+            page = paymentRepository.findAll(pageable);
+            successMsg = "Retrieved all payments";
+
+        } else if (type == 1) {
+            // by userId
+            page = paymentRepository.findByOrderDetailUserId(Long.parseLong(value), pageable);
+            successMsg = "Retrieved payments by user";
+
+        } else if (type == 2) {
+            // by orderId
+            page = paymentRepository.findByOrderDetailId(Long.parseLong(value), pageable);
+            successMsg = "Retrieved payments by order";
+
+        } else if (type == 3) {
+            // by status
+            page = paymentRepository.findByStatus(value, pageable);
+            successMsg = "Retrieved payments by status";
+
+        } else if (type == 4) {
+            // by paymentMethod
+            page = paymentRepository.findByPaymentMethod(value, pageable);
+            successMsg = "Retrieved payments by payment method";
+
+        } else if (type == 5) {
+            // by userId + status, criteriaValue format: "userId:status"
+            String[] parts = value.split(":");
+            if (parts.length != 2) {
+                throw new com.example.learning_spring_security.Exception.ExceptionService.BadRequestException(
+                        "criteriaValue for type 5 must be 'userId:status'");
+            }
+            page = paymentRepository.findPaymentHistory(
+                    Long.parseLong(parts[0].trim()),
+                    parts[1].trim(),
+                    null, null,
+                    pageable
+            );
+            successMsg = "Retrieved payments by user and status";
+
+        } else {
+            page = paymentRepository.findAll(pageable);
+            successMsg = "Retrieved all payments";
+        }
+
+        List<PaymentResponse> payload = page.getContent()
+                .stream()
+                .map(PaymentMapper::toResponse)
+                .toList();
+
+        PaymentPageResponse pageResponse = PaymentPageResponse.builder()
+                .payload(payload)
+                .totalItems(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .currentPage(page.getNumber() + 1)
+                .pageSize(page.getSize())
+                .build();
+
+        String message = page.isEmpty() ? "No payments found" : successMsg;
+        return ResponseErrorTemplate.success(message, pageResponse);
+    }
 
     @Override
     public PaymentResponse processPayment(Long orderId, PaymentRequest request) {
@@ -54,6 +138,49 @@ public class PaymentServiceImpl implements PaymentService {
         orderRepository.save(order);
 
         return PaymentMapper.toResponse(savedPayment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getPaymentById(Long id) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
+        return ResponseErrorTemplate.success("Payment retrieved successfully", PaymentMapper.toResponse(payment));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getPaymentsByUser(Long userId) {
+        List<PaymentResponse> payments = paymentRepository.findByOrderDetailUserId(userId)
+                .stream()
+                .map(PaymentMapper::toResponse)
+                .toList();
+        return ResponseErrorTemplate.success("Payments retrieved successfully", payments);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getPaymentDetailByUser(Long userId, Long paymentId) {
+        Payment payment = paymentRepository.findByIdAndOrderDetailUserId(paymentId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Payment not found with id: " + paymentId + " for user: " + userId));
+        return ResponseErrorTemplate.success("Payment detail retrieved successfully", PaymentMapper.toResponse(payment));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getPaymentByOrder(Long orderId) {
+        Payment payment = paymentRepository.findByOrderDetailId(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for order id: " + orderId));
+        return ResponseErrorTemplate.success("Payment retrieved successfully", PaymentMapper.toResponse(payment));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getPaymentByTransaction(String transactionId) {
+        Payment payment = paymentRepository.findByTransactionId(transactionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with transaction id: " + transactionId));
+        return ResponseErrorTemplate.success("Payment retrieved successfully", PaymentMapper.toResponse(payment));
     }
 
     @Override

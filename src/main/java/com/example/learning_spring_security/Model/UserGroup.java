@@ -1,19 +1,34 @@
 package com.example.learning_spring_security.Model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+@Entity
 @Getter
 @Setter
-@Entity
-@Table(name = "tt_group")
-public class UserGroup {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "user_groups")
+public class UserGroup extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "group_id")
     private Long groupId;
-    private Long userId;
-    private Long permissionId;
 
+    @Column(name = "group_code", length = 10, unique = true)
+    private String groupCode;
+
+    @Column(name = "group_name")
+    private String groupName;
+
+    @Column(name = "display")
+    private String display;
+
+    @Column(name = "is_active")
+    private Boolean isActive = false;
+
+    @Column(name = "is_delete")
+    private Boolean isDelete = false;
 }

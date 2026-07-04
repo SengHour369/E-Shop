@@ -32,11 +32,6 @@ public class ProductSku extends BaseEntity {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Column(nullable = false)
-    private Long quantity;
-
-    @Column(name = "low_stock_threshold")
-    private Integer lowStockThreshold = 5;
     @Column(name = "is_default")
     private Boolean isDefault = false;
     @Column(name = "operator_product_attribute")

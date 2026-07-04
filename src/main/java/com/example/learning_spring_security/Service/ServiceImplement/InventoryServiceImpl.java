@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,19 +31,19 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public ResponseErrorTemplate createInventory(InventoryRequest request) {
-        if (inventoryRepository.existsByProductSkuId(request.getProductSkuId())) {
-            throw new DuplicateResourceException("Inventory already exists for SKU id: " + request.getProductSkuId());
+    public  ResponseErrorTemplate createInventory(Long productSkuId, InventoryRequest request){
+        if (inventoryRepository.existsByProductSkuId(productSkuId)) {
+            throw new DuplicateResourceException("Inventory already exists for SKU id: " +productSkuId);
         }
 
-        ProductSku productSku = productSkuRepository.findById(request.getProductSkuId())
-                .orElseThrow(() -> new ResourceNotFoundException("ProductSku not found with id: " + request.getProductSkuId()));
+        ProductSku productSku = productSkuRepository.findById(productSkuId)
+                .orElseThrow(() -> new ResourceNotFoundException("ProductSku not found with id: " + productSkuId));
 
         Inventory inventory = InventoryMapper.toEntity(request, productSku);
         inventory.setLastRestockedAt(LocalDateTime.now());
         Inventory saved = inventoryRepository.save(inventory);
 
-        log.info("Inventory created for SKU id={}", request.getProductSkuId());
+        log.info("Inventory created for SKU id={}", productSkuId);
         return InventoryMapper.toWrappedResponse(saved);
     }
 
@@ -121,5 +122,54 @@ public class InventoryServiceImpl implements InventoryService {
         }
         inventoryRepository.deleteById(id);
         log.info("Inventory deleted: id={}", id);
+    }
+
+    @Override
+    @Transactional
+    public void reduceStock(Long productSkuId, Long quantity) {
+        int updated = inventoryRepository.reduceStock(productSkuId, quantity);
+        if (updated == 0) {
+            // Check if SKU exists and has enough stock
+            Inventory inventory = inventoryRepository.findByProductSkuId(productSkuId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for SKU id: " + productSkuId));
+            if (inventory.getQuantity() < quantity) {
+                throw new ResourceNotFoundException("Insufficient stock. Available: " + inventory.getQuantity() +
+                        ", requested: " + quantity);
+            }
+            // If inventory exists but update returned 0, something else went wrong
+            throw new RuntimeException("Unexpected error while reducing stock");
+        }
+        log.info("Reduced stock for SKU id {} by {}", productSkuId, quantity);
+    }
+
+    @Override
+    @Transactional
+    public void increaseStock(Long productSkuId, Long quantity) {
+        int updated = inventoryRepository.increaseStock(productSkuId, quantity);
+        if (updated == 0) {
+            throw new ResourceNotFoundException("Inventory not found for SKU id: " + productSkuId);
+        }
+        log.info("Increased stock for SKU id {} by {}", productSkuId, quantity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductSku> getLowStockSkus() {
+        return inventoryRepository.findLowStockSkus();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductSku> getLowStockSkusByProductId(Long productId) {
+        return inventoryRepository.findLowStockSkusByProductId(productId);
+    }
+
+    // Helper: clear default flag on all other SKUs of the same product
+    private void clearExistingDefaultSku(Long productId) {
+        inventoryRepository.findDefaultSkuByProductId(productId)
+                .ifPresent(defaultSku -> {
+                    defaultSku.setIsDefault(false);
+                    productSkuRepository.save(defaultSku);
+                });
     }
 }

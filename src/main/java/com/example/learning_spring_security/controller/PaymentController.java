@@ -2,6 +2,7 @@ package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceImplement.PaymentServiceImpl;
 import com.example.learning_spring_security.Service.ServiceStructure.PaymentService;
+import com.example.learning_spring_security.dto.Request.GetPaymentRequest;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,10 @@ public class PaymentController extends BaseController {
         PaymentResponse payment = paymentService.getPaymentDetailByUserId(userId, paymentId);
         return ResponseEntity.ok(ResponseErrorTemplate.success("Payment detail retrieved successfully", payment));
     }
-
+    @PostMapping("/get/all") public ResponseEntity<ResponseErrorTemplate> getPayments(
+            @RequestBody GetPaymentRequest request) {
+        ResponseErrorTemplate response = paymentService.getPayments(request);
+        return ResponseEntity.ok(response); }
     @PostMapping("/order/")
     public ResponseEntity<ResponseErrorTemplate> getPaymentByOrder(@RequestParam Long orderId) {
         PaymentResponse payment = paymentService.getPaymentByOrderId(orderId);

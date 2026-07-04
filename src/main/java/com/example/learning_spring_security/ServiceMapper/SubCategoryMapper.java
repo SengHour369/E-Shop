@@ -1,10 +1,14 @@
 package com.example.learning_spring_security.ServiceMapper;
 
 import com.example.learning_spring_security.Constant.Constant;
+import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.SubCategory;
 import com.example.learning_spring_security.dto.Request.SubCategoryRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import com.example.learning_spring_security.dto.Response.SubCategoryResponse;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class SubCategoryMapper {
 
@@ -39,6 +43,53 @@ public class SubCategoryMapper {
 
 
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, response);
+    }
+
+    public static SubCategoryResponse toSubCategoryResponse(SubCategory subCategory) {
+        if (subCategory == null) return null;
+
+        SubCategoryResponse response = SubCategoryResponse.builder()
+                .id(subCategory.getId())
+                .name(subCategory.getName())
+                .description(subCategory.getDescription())
+                .build();
+
+        if (subCategory.getCategory() != null) {
+            response.setCategoryName(subCategory.getCategory().getName());
+        }
+        if (subCategory.getImage() != null) {
+            response.setImage(subCategory.getImage().getUrl());
+        }
+        return response;
+    }
+
+    public static ResponseErrorTemplate toResponseWithProducts(SubCategory subCategory) {
+        if (subCategory == null) return null;
+
+        List<String> productNames = subCategory.getProducts() == null
+                ? List.of()
+                : subCategory.getProducts().stream()
+                .map(Product::getName)
+                .collect(Collectors.toList());
+
+        SubCategoryResponse response = SubCategoryResponse.builder()
+                .id(subCategory.getId())
+                .name(subCategory.getName())
+                .description(subCategory.getDescription())
+                .build();
+
+        if (subCategory.getCategory() != null) {
+            response.setCategoryName(subCategory.getCategory().getName());
+        }
+        if (subCategory.getImage() != null) {
+            response.setImage(subCategory.getImage().getUrl());
+        }
+
+        return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE,
+                new java.util.LinkedHashMap<>() {{
+                    put("sub_category", response);
+                    put("products", productNames);
+                }});
     }
 
     public static void updateEntity(SubCategory subCategory, SubCategoryRequest request) {

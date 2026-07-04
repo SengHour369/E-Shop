@@ -2,6 +2,7 @@ package com.example.learning_spring_security.dto.Request;
 
 import com.example.learning_spring_security.dto.Response.ProductAttributeValueResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -47,6 +48,8 @@ public class ProductSkuRequest {
     @JsonProperty("is_default")
     private Boolean isDefault = false;
     private Boolean OperatorProductAttribute = false;
+    @Valid
+    private InventoryRequest inventory;
 
 
     /**

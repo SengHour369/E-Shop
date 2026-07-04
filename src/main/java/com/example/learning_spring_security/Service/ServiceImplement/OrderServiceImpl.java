@@ -9,7 +9,9 @@ import com.example.learning_spring_security.Service.ServiceStructure.OrderServic
 import com.example.learning_spring_security.ServiceMapper.OrderItemMapper;
 import com.example.learning_spring_security.ServiceMapper.OrderMapper;
 import com.example.learning_spring_security.ServiceMapper.PaymentMapper;
+import com.example.learning_spring_security.dto.Request.GetOrderRequest;
 import com.example.learning_spring_security.dto.Request.OrderRequest;
+import com.example.learning_spring_security.dto.Response.OrderPageResponse;
 import com.example.learning_spring_security.dto.Response.OrderResponse;
 
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
@@ -43,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
     private final ProductSkuRepository productSkuRepository;
+    private final InventoryRepository inventoryRepository;
 
 
     private final BakongService bakongService;
@@ -78,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderItem> orderItems = cart.getCartItems().stream()
                 .map(cartItem -> {
-                    productSkuRepository.reduceStock(cartItem.getProductSku().getId()
+                    inventoryRepository.reduceStock(cartItem.getProductSku().getId()
                             , cartItem.getQuantity());
                     return OrderItemMapper.toEntity(
                             order,
@@ -116,6 +119,89 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return OrderMapper.toResponse(savedOrder);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getOrders(GetOrderRequest request) {
+        log.info("getOrders: criteriaType={}, criteriaValue={}, page={}, size={}",
+                request.getCriteriaType(), request.getCriteriaValue(), request.getPage(), request.getSize());
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                request.getPage() - 1,
+                request.getSize(),
+                org.springframework.data.domain.Sort.by("orderDate").descending()
+        );
+
+        Integer type = request.getCriteriaType();
+        String value = request.getCriteriaValue();
+
+        org.springframework.data.domain.Page<OrderDetail> page;
+        String successMsg;
+
+        if (type == null || type == 0 || value == null || value.isBlank()) {
+            page = orderRepository.findAll(pageable);
+            successMsg = "Retrieved all orders";
+
+        } else if (type == 1) {
+            // by userId
+            page = orderRepository.findByUserId(Long.parseLong(value), pageable);
+            successMsg = "Retrieved orders by user";
+
+        } else if (type == 2) {
+            // by status
+            page = orderRepository.findByStatus(value, pageable);
+            successMsg = "Retrieved orders by status";
+
+        } else if (type == 3) {
+            // by userId + status, criteriaValue format: "userId:status"
+            String[] parts = value.split(":");
+            if (parts.length != 2) {
+                throw new BadRequestException("criteriaValue for type 3 must be 'userId:status'");
+            }
+            page = orderRepository.findOrderDetailHistory(
+                    Long.parseLong(parts[0].trim()),
+                    parts[1].trim(),
+                    null, null,
+                    pageable
+            );
+            successMsg = "Retrieved orders by user and status";
+
+        } else if (type == 4) {
+            // by userId + date range, criteriaValue format: "userId:startDate:endDate"
+            String[] parts = value.split(":");
+            if (parts.length != 3) {
+                throw new BadRequestException("criteriaValue for type 4 must be 'userId:startDate:endDate' (yyyy-MM-ddTHH:mm:ss)");
+            }
+            page = orderRepository.findOrderDetailHistory(
+                    Long.parseLong(parts[0].trim()),
+                    null,
+                    java.time.LocalDateTime.parse(parts[1].trim()),
+                    java.time.LocalDateTime.parse(parts[2].trim()),
+                    pageable
+            );
+            successMsg = "Retrieved orders by user and date range";
+
+        } else {
+            page = orderRepository.findAll(pageable);
+            successMsg = "Retrieved all orders";
+        }
+
+        java.util.List<OrderResponse> payload = page.getContent()
+                .stream()
+                .map(o -> (OrderResponse) OrderMapper.toResponse(o).object())
+                .toList();
+
+        OrderPageResponse pageResponse = OrderPageResponse.builder()
+                .payload(payload)
+                .totalItems(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .currentPage(page.getNumber() + 1)
+                .pageSize(page.getSize())
+                .build();
+
+        String message = page.isEmpty() ? "No orders found" : successMsg;
+        return ResponseErrorTemplate.success(message, pageResponse);
     }
 
     @Override
@@ -163,7 +249,7 @@ public class OrderServiceImpl implements OrderService {
         } else if ("CANCELLED".equals(status) && order.getPayment() != null) {
             order.getPayment().setStatus("REFUNDED");
             order.getOrderItems().forEach(item ->
-                    productSkuRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
+                    inventoryRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
             );
         }
 
@@ -208,7 +294,7 @@ public class OrderServiceImpl implements OrderService {
         if (order.getPayment() != null) {
             order.getPayment().setStatus("REFUNDED");
             order.getOrderItems().forEach(item ->
-                    productSkuRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
+                    inventoryRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
             );
         }
         OrderDetail cancelled = orderRepository.save(order);
@@ -450,7 +536,7 @@ public class OrderServiceImpl implements OrderService {
                 order.setStatus("CANCELLED");
                 payment.setStatus("FAILED");
                 order.getOrderItems().forEach(item ->
-                        productSkuRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
+                        inventoryRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
                 );
                 break;
             case "PENDING":

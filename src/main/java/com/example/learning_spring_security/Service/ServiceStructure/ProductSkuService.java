@@ -17,13 +17,6 @@ public interface ProductSkuService {
 
     List<ProductSku> getSkusByProductId(Long productId);
 
-    ProductSku getDefaultSkuByProductId(Long productId);
 
-    void reduceStock(Long skuId, Long quantity);
 
-    void increaseStock(Long skuId, Long quantity);
-
-    List<ProductSku> getLowStockSkus();
-
-    List<ProductSku> getLowStockSkusByProductId(Long productId);
 }

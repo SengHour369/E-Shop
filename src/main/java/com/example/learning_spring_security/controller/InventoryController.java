@@ -29,8 +29,8 @@ public class InventoryController extends BaseController {
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Create inventory", description = "Create inventory record for a product SKU (Admin only)")
-    public ResponseEntity<ResponseErrorTemplate> createInventory(@Valid @RequestBody InventoryRequest request) {
-        return new ResponseEntity<>(inventoryService.createInventory(request), HttpStatus.CREATED);
+    public ResponseEntity<ResponseErrorTemplate> createInventory(@Valid @RequestBody InventoryRequest request,@RequestParam Long SkuId) {
+        return new ResponseEntity<>(inventoryService.createInventory(SkuId,request), HttpStatus.CREATED);
     }
 
     @PostMapping("/all/")

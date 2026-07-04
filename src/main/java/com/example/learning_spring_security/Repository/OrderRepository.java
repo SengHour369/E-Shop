@@ -50,6 +50,8 @@ public interface OrderRepository extends JpaRepository<OrderDetail, Long> {
 
     List<OrderDetail> findByStatus(String status);
 
+    Page<OrderDetail> findByStatus(String status, Pageable pageable);
+
     List<OrderDetail> findByOrderDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     @Query("SELECT o FROM OrderDetail o WHERE o.user.id = :userId ORDER BY o.orderDate DESC")
