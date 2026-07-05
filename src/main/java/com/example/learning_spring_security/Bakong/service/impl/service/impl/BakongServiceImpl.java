@@ -116,8 +116,9 @@ public class BakongServiceImpl implements BakongService {
     public BakongResponse checkTransactionByMD5(CheckTransactionRequest request) {
         try {
             String bearerToken = bakongTokenService.getToken();
-
             String url = baseUrl.replaceAll("/+$", "") + "/v1/check_transaction_by_md5";
+
+            log.info("Sending md5 to Bakong: {}", request.md5());
 
             String responseBody = restClient.post()
                     .uri(url)
@@ -128,18 +129,15 @@ public class BakongServiceImpl implements BakongService {
                     .retrieve()
                     .body(String.class);
 
-            log.info("Data response from Bakong API: {}", responseBody);
+            log.info("Bakong response: {}", responseBody);
 
-            try {
-                return mapper.readValue(responseBody, BakongResponse.class);
-            } catch (Exception e) {
-                throw new RuntimeException("Invalid upstream response", e);
-            }
+            return mapper.readValue(responseBody, BakongResponse.class);
+
         } catch (Exception e) {
-            log.error("Error checking transaction: {}", e.getMessage());
+            log.error("Error checking transaction: {}", e.getMessage(), e);
             BakongResponse response = new BakongResponse();
-            response.setStatus("ERROR");
-            response.setMessage("Failed to check transaction: " + e.getMessage());
+            response.setResponseCode(-1);
+            response.setResponseMessage("Failed to check transaction: " + e.getMessage());
             return response;
         }
     }

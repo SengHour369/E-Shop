@@ -5,24 +5,20 @@ import com.example.learning_spring_security.dto.Response.UserGroupResponse;
 
 public class UserGroupMapper {
 
-    public static UserGroupResponse toResponse(UserGroup group) {
+    public static UserGroupResponse toResponse(UserGroup ug) {
         return UserGroupResponse.builder()
-                .groupId(group.getGroupId())
-                .groupCode(group.getGroupCode())
-                .groupName(group.getGroupName())
-                .display(group.getDisplay())
-                .isActive(group.getIsActive())
-                .createdAt(group.getCreatedAt())
-                .updatedAt(group.getUpdatedAt())
+                .groupId(ug.getGroupId())
+                .isActive(ug.getIsActive())
+                .createdAt(ug.getCreatedAt())
+                .updatedAt(ug.getUpdatedAt())
                 .build();
     }
 
-    public static UserGroup toEntity(String groupCode, String groupName, String display) {
+    public static UserGroup toEntity(Long userId, Long groupId,String display) {
         return UserGroup.builder()
-                .groupCode(groupCode)
-                .groupName(groupName)
-                .display(display)
-                .isActive(false)
+                .userId(userId)
+                .groupId(groupId)
+                .isActive(true)
                 .isDelete(false)
                 .build();
     }

@@ -1,5 +1,6 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
+import com.example.learning_spring_security.Constant.OrderStatus;
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.*;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,7 +46,6 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
-    private final ProductSkuRepository productSkuRepository;
     private final InventoryRepository inventoryRepository;
 
 
@@ -74,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
                 .user(user)
                 .orderNumber(generateOrderNumber())
                 .orderDate(LocalDateTime.now())
-                .status("PENDING")
+                .status(OrderStatus.PENDING)
                 .totalAmount(cart.getTotalPrice())
                 .shippingAddress(shippingAddress)
                 .build();
@@ -96,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
                 .orderDetail(order)
                 .paymentMethod(request.getPaymentMethod())
                 .amount(order.getTotalAmount())
-                .status("PENDING")
+                .status(OrderStatus.PENDING)
                 .paymentDate(LocalDateTime.now())
                 .build();
 
@@ -244,10 +245,10 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
 
-        if ("DELIVERED".equals(status) && order.getPayment() != null) {
-            order.getPayment().setStatus("COMPLETED");
-        } else if ("CANCELLED".equals(status) && order.getPayment() != null) {
-            order.getPayment().setStatus("REFUNDED");
+        if (OrderStatus.DELIVERED.equals(status) && order.getPayment() != null) {
+            order.getPayment().setStatus(OrderStatus.COMPLETED);
+        } else if (OrderStatus.CANCELLED.equals(status) && order.getPayment() != null) {
+            order.getPayment().setStatus(OrderStatus.REFUNDED);
             order.getOrderItems().forEach(item ->
                     inventoryRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
             );
@@ -257,13 +258,13 @@ public class OrderServiceImpl implements OrderService {
 
         try {
             String customerEmail = updatedOrder.getUser().getEmail();
-            if ("SHIPPED".equals(status)) {
+            if (OrderStatus.SHIPPED.equals(status)) {
                 emailNotificationService.sendOrderShippedEmail(
                         customerEmail,
                         updatedOrder.getOrderNumber(),
                         updatedOrder.getOrderNumber()
                 );
-            } else if ("CANCELLED".equals(status)) {
+            } else if (OrderStatus.CANCELLED.equals(status)) {
                 emailNotificationService.sendOrderCancellationEmail(
                         customerEmail,
                         updatedOrder.getOrderNumber(),
@@ -286,13 +287,13 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("User does not own this order");
         }
 
-        if (!"PENDING".equals(order.getStatus())) {
+        if (!OrderStatus.PENDING.equals(order.getStatus())) {
             throw new BadRequestException("Only pending orders can be cancelled");
         }
 
-        order.setStatus("CANCELLED");
+        order.setStatus(OrderStatus.CANCELLED);
         if (order.getPayment() != null) {
-            order.getPayment().setStatus("REFUNDED");
+            order.getPayment().setStatus(OrderStatus.REFUNDED);
             order.getOrderItems().forEach(item ->
                     inventoryRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
             );
@@ -336,19 +337,14 @@ public class OrderServiceImpl implements OrderService {
     private String generateOrderNumber() {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
-
     @Override
     public ResponseErrorTemplate createOrderWithBakongPayment(Long userId, OrderRequest request) {
         if (!"BAKONG".equalsIgnoreCase(request.getPaymentMethod())) {
             throw new BadRequestException("This method is only for Bakong payments");
         }
 
-
         ResponseErrorTemplate orderResponse = createOrderFromCart(userId, request);
-
-
         OrderResponse orderData = (OrderResponse) orderResponse.object();
-
 
         try {
             BakongRequest bakongRequest = BakongRequest.builder()
@@ -367,44 +363,46 @@ public class OrderServiceImpl implements OrderService {
                     .build();
 
             KHQRResponse<KHQRData> bakongResponse = bakongService.generateQR(bakongRequest);
-            System.out.println("Bakong QR response: " +bakongRequest.amount());
-            System.out.println("Failed to generate QR code: " + bakongResponse.getKHQRStatus().getMessage());
+
             if (bakongResponse != null
                     && bakongResponse.getKHQRStatus() != null
                     && bakongResponse.getKHQRStatus().getCode() == 0) {
 
-                // Update payment with QR code and transaction info
                 OrderDetail order = orderRepository.findByOrderNumber(orderData.getOrderNumber())
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found after creation"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
                 Payment payment = order.getPayment();
-                payment.setTransactionId("BAKONG-" + orderData.getOrderNumber());
-                payment.setPaymentProvider("BAKONG");
+
+                String md5 = bakongResponse.getData().getMd5(); //  REAL KEY
+
+                payment.setPaymentProvider(OrderStatus.BAKONG);
                 payment.setPaymentProviderResponse(bakongResponse.getData().getQr());
-                order.setPayment(payment);
+
+                payment.setTransactionId(md5);
+
                 orderRepository.save(order);
+
                 orderData.setPayment(PaymentMapper.toResponse(payment));
                 orderData.setQrCode(bakongResponse.getData().getQr());
-                orderData.setPaymentUrl("bakong://payment?qr=" + bakongResponse.getData());
+                orderData.setPaymentUrl("bakong://payment?qr=" + bakongResponse.getData().getQr());
             }
 
         } catch (Exception e) {
-            System.err.println("Failed to generate Bakong QR: " + e.getMessage());
+            log.error("Failed to generate Bakong QR: {}", e.getMessage());
         }
 
         return orderResponse;
     }
-
     @Override
     public ResponseErrorTemplate initiateBakongPayment(Long orderId) {
         OrderDetail order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        if (!"BAKONG".equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
+        if (!OrderStatus.BAKONG.equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
             throw new BadRequestException("Order does not use Bakong payment method");
         }
 
-        if (!"PENDING".equals(order.getStatus())) {
+        if (!OrderStatus.PENDING.equals(order.getStatus())) {
             throw new BadRequestException("Order is not in pending status");
         }
 
@@ -429,11 +427,15 @@ public class OrderServiceImpl implements OrderService {
             if (bakongResponse != null
                     && bakongResponse.getKHQRStatus() != null
                     && bakongResponse.getKHQRStatus().getCode() == 0) {
-                // Update payment record
+
                 Payment payment = order.getPayment();
-                payment.setTransactionId("BAKONG-" + order.getOrderNumber());
-                payment.setPaymentProvider("BAKONG");
+
+                String md5 = bakongResponse.getData().getMd5();
+
+                payment.setPaymentProvider("BAqKONG");
                 payment.setPaymentProviderResponse(bakongResponse.getData().getQr());
+
+                payment.setTransactionId(md5);
 
                 orderRepository.save(order);
 
@@ -457,61 +459,57 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    @Override
-    public ResponseErrorTemplate verifyBakongPayment(Long orderId, String transactionId) {
-        OrderDetail order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+    public ResponseErrorTemplate verifyBakongPayment(Long orderId, String md5) {
 
-        if (!"BAKONG".equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
-            throw new BadRequestException("Order does not use Bakong payment method");
+        OrderDetail order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        Payment payment = order.getPayment();
+
+        if (!OrderStatus.BAKONG.equalsIgnoreCase(payment.getPaymentMethod())) {
+            throw new BadRequestException("Not a Bakong payment");
         }
 
-        try {
+        String bakongMd5 = payment.getTransactionId();
 
-            String md5 = transactionId.contains("-") ?
-                    transactionId.split("-")[1] : transactionId;
+        if (bakongMd5 == null || bakongMd5.isBlank()) {
+            bakongMd5 = md5;
+        }
 
-            BakongResponse bakongResponse = bakongService.checkTransactionByMD5(
-                    new CheckTransactionRequest(md5)
-            );
-
-            if ("SUCCESS".equals(bakongResponse.getStatus())) {
-                // Update order and payment status
-                order.setStatus("CONFIRMED");
-                order.getPayment().setStatus("COMPLETED");
-                order.getPayment().setTransactionId(transactionId);
-
-                orderRepository.save(order);
-
-                return ResponseErrorTemplate.builder()
-                        .message("Payment verified successfully")
-                        .object(Map.of(
-                                "orderId", order.getId(),
-                                "orderNumber", order.getOrderNumber(),
-                                "status", "CONFIRMED",
-                                "paymentStatus", "COMPLETED"
-                        ))
-                        .build();
-            } else {
-                return ResponseErrorTemplate.builder()
-                        .message("Payment verification failed")
-                        .object(Map.of(
-                                "orderId", order.getId(),
-                                "status", "PAYMENT_FAILED",
-                                "error", bakongResponse.getMessage()
-                        ))
-                        .build();
-            }
-
-        } catch (Exception e) {
+        if (bakongMd5 == null || bakongMd5.isBlank()) {
             return ResponseErrorTemplate.builder()
-                    .message("Payment verification error")
+                    .message("Missing MD5 for verification")
+                    .object(Map.of("orderId", orderId))
+                    .build();
+        }
+
+        BakongResponse response = bakongService.checkTransactionByMD5(
+                new CheckTransactionRequest(bakongMd5)
+        );
+
+        if (response != null && response.isSuccess() && response.getData() != null) {
+
+            order.setStatus(OrderStatus.CONFIRMED);
+            payment.setStatus(OrderStatus.COMPLETED);
+
+            orderRepository.save(order);
+
+            return ResponseErrorTemplate.builder()
+                    .message("Payment verified successfully")
                     .object(Map.of(
-                            "orderId", order.getId(),
-                            "error", e.getMessage()
+                            "orderId", orderId,
+                            "status", OrderStatus.CONFIRMED
                     ))
                     .build();
         }
+
+        return ResponseErrorTemplate.builder()
+                .message("Payment verification failed")
+                .object(Map.of(
+                        "orderId", orderId,
+                        "status", OrderStatus.FAILED
+                ))
+                .build();
     }
 
     @Override
@@ -519,30 +517,32 @@ public class OrderServiceImpl implements OrderService {
         OrderDetail order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with number: " + orderNumber));
 
-        if (!"BAKONG".equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
+        if (!OrderStatus.BAKONG.equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
             throw new BadRequestException("Order does not use Bakong payment method");
         }
         Payment payment = order.getPayment();
-        payment.setTransactionId(transactionId);
+
+        // Store the real Bakong transaction ID
+        payment.setTransactionId(transactionId);         // keep generic field updated too
 
         switch (status.toUpperCase()) {
             case "SUCCESS":
             case "COMPLETED":
-                order.setStatus("CONFIRMED");
-                payment.setStatus("COMPLETED");
+                order.setStatus(OrderStatus.CONFIRMED);
+                payment.setStatus(OrderStatus.COMPLETED);
                 break;
             case "FAILED":
             case "CANCELLED":
-                order.setStatus("CANCELLED");
-                payment.setStatus("FAILED");
+                order.setStatus(OrderStatus.CANCELLED);
+                payment.setStatus(OrderStatus.FAILED);
                 order.getOrderItems().forEach(item ->
                         inventoryRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
                 );
                 break;
             case "PENDING":
             default:
-                order.setStatus("PENDING");
-                payment.setStatus("PENDING");
+                order.setStatus(OrderStatus.PENDING);
+                payment.setStatus(OrderStatus.PENDING);
                 break;
         }
 

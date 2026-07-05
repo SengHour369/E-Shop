@@ -4,31 +4,24 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "user_groups")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user_groups")
 public class UserGroup extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "group_id")
+    private Long id;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(name = "group_id", nullable = false)
     private Long groupId;
 
-    @Column(name = "group_code", length = 10, unique = true)
-    private String groupCode;
-
-    @Column(name = "group_name")
-    private String groupName;
-
-    @Column(name = "display")
-    private String display;
-
-    @Column(name = "is_active")
-    private Boolean isActive = false;
-
-    @Column(name = "is_delete")
+    private Boolean isActive = true;
     private Boolean isDelete = false;
 }

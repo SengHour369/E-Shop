@@ -27,10 +27,12 @@ public class DataInitializer implements CommandLineRunner {
     private final FunctionPermissionRepository functionPermissionRepository;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
 
-        createRoleIfNotFound("ADMIN");
-        createRoleIfNotFound("USER");
+        List<String> roles = List.of("ADMIN", "MANAGER", "STAFF", "SALES");
+
+        roles.forEach(this::createRoleIfNotFound);
+
         createAdminIfNotFound();
         seedFunctionPermissions();
     }

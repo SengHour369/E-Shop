@@ -7,9 +7,9 @@ import lombok.*;
 @Table(name = "function_permissions")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class FunctionPermission extends BaseEntity {
 
     @Id
@@ -17,19 +17,23 @@ public class FunctionPermission extends BaseEntity {
     @Column(name = "func_id")
     private Long funcId;
 
-    @Column(name = "func_code", nullable = false, unique = true, length = 50)
+    @Column(name = "func_code", unique = true, nullable = false, length = 50)
     private String funcCode;
 
     @Column(name = "func_name", nullable = false, length = 100)
     private String funcName;
 
-    @Column(name = "description", length = 255)
+    @Column(length = 255)
     private String description;
 
-    @Column(name = "module", length = 50)
+    @Column(length = 50)
     private String module;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "is_delete", nullable = false)
+    @Builder.Default
+    private Boolean isDelete = false;
 }

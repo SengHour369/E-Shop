@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "group_permissions")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "group_permissions")
 public class GroupPermission extends BaseEntity {
 
     @Id
@@ -25,4 +25,8 @@ public class GroupPermission extends BaseEntity {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
+
+    @Column(name = "is_delete", nullable = false)
+    @Builder.Default
+    private Boolean isDelete = false;
 }

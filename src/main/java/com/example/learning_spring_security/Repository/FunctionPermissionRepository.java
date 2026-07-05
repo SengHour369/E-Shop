@@ -13,18 +13,21 @@ import java.util.Optional;
 @Repository
 public interface FunctionPermissionRepository extends JpaRepository<FunctionPermission, Long> {
 
-    Optional<FunctionPermission> findByFuncCode(String funcCode);
+    Optional<FunctionPermission> findByFuncCodeAndIsDeleteFalse(String funcCode);
 
-    boolean existsByFuncCode(String funcCode);
+    @Query("SELECT COUNT(f) > 0 FROM FunctionPermission f WHERE f.funcCode = :funcCode AND f.isDelete = false")
+    boolean existsByFuncCode(@Param("funcCode") String funcCode);
 
-    Page<FunctionPermission> findByIsActive(Boolean isActive, Pageable pageable);
+    @Query("SELECT f FROM FunctionPermission f WHERE f.isActive = :isActive AND f.isDelete = false")
+    Page<FunctionPermission> findByIsActive(@Param("isActive") Boolean isActive, Pageable pageable);
 
-    Page<FunctionPermission> findByModule(String module, Pageable pageable);
+    @Query("SELECT f FROM FunctionPermission f WHERE f.module = :module AND f.isDelete = false")
+    Page<FunctionPermission> findByModule(@Param("module") String module, Pageable pageable);
 
-    @Query("SELECT f FROM FunctionPermission f WHERE LOWER(f.funcName) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @Query("SELECT f FROM FunctionPermission f WHERE LOWER(f.funcName) LIKE LOWER(CONCAT('%', :name, '%')) AND f.isDelete = false")
     Page<FunctionPermission> findByFuncNameContaining(@Param("name") String name, Pageable pageable);
 
-    @Query("SELECT f FROM FunctionPermission f WHERE LOWER(f.module) = LOWER(:module) AND f.isActive = :isActive")
+    @Query("SELECT f FROM FunctionPermission f WHERE LOWER(f.module) = LOWER(:module) AND f.isActive = :isActive AND f.isDelete = false")
     Page<FunctionPermission> findByModuleAndIsActive(@Param("module") String module,
                                                      @Param("isActive") Boolean isActive,
                                                      Pageable pageable);

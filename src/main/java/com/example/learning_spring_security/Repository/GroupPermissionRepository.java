@@ -1,36 +1,37 @@
-package com.example.learning_spring_security.Repository;
-
-import com.example.learning_spring_security.Model.GroupPermission;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface GroupPermissionRepository extends JpaRepository<GroupPermission, Long> {
-
-    boolean existsByGroupIdAndFuncId(Long groupId, Long funcId);
-
-    boolean existsByGroupIdAndFuncIdAndIsActive(Long groupId, Long funcId, Boolean isActive);
-
-    // type 0 or null: all
-    Page<GroupPermission> findAll(Pageable pageable);
-
-    // type 1: by groupId
-    Page<GroupPermission> findByGroupId(Long groupId, Pageable pageable);
-
-    // type 2: by funcId
-    Page<GroupPermission> findByFuncId(Long funcId, Pageable pageable);
-
-    // type 3: by groupId + funcId
-    @Query("SELECT p FROM GroupPermission p WHERE p.groupId = :groupId AND p.funcId = :funcId")
-    Page<GroupPermission> findByGroupIdAndFuncId(@Param("groupId") Long groupId, @Param("funcId") Long funcId, Pageable pageable);
-
-    // type 4: by isActive
-    Page<GroupPermission> findByIsActive(Boolean isActive, Pageable pageable);
-
-    // type 5: by groupId + isActive
-    Page<GroupPermission> findByGroupIdAndIsActive(Long groupId, Boolean isActive, Pageable pageable);
-}
+//package com.example.learning_spring_security.Repository;
+//
+//import com.example.learning_spring_security.Model.GroupPermission;
+//import org.springframework.data.domain.Page;
+//import org.springframework.data.domain.Pageable;
+//import org.springframework.data.jpa.repository.JpaRepository;
+//import org.springframework.data.jpa.repository.Query;
+//import org.springframework.data.repository.query.Param;
+//import org.springframework.stereotype.Repository;
+//
+//@Repository
+//public interface GroupPermissionRepository extends JpaRepository<GroupPermission, Long> {
+//
+//    @Query("SELECT COUNT(p) > 0 FROM GroupPermission p WHERE p.groupId = :groupId AND p.funcId = :funcId AND p.isDelete = false")
+//    boolean existsByGroupIdAndFuncId(@Param("groupId") Long groupId, @Param("funcId") Long funcId);
+//
+//    @Query("SELECT COUNT(p) > 0 FROM GroupPermission p WHERE p.groupId = :groupId AND p.funcId = :funcId AND p.isActive = :isActive AND p.isDelete = false")
+//    boolean existsByGroupIdAndFuncIdAndIsActive(@Param("groupId") Long groupId, @Param("funcId") Long funcId, @Param("isActive") Boolean isActive);
+//
+//    @Query("SELECT p FROM GroupPermission p WHERE p.isDelete = false")
+//    Page<GroupPermission> findAll(Pageable pageable);
+//
+//    @Query("SELECT p FROM GroupPermission p WHERE p.groupId = :groupId AND p.isDelete = false")
+//    Page<GroupPermission> findByGroupId(@Param("groupId") Long groupId, Pageable pageable);
+//
+//    @Query("SELECT p FROM GroupPermission p WHERE p.funcId = :funcId AND p.isDelete = false")
+//    Page<GroupPermission> findByFuncId(@Param("funcId") Long funcId, Pageable pageable);
+//
+//    @Query("SELECT p FROM GroupPermission p WHERE p.groupId = :groupId AND p.funcId = :funcId AND p.isDelete = false")
+//    Page<GroupPermission> findByGroupIdAndFuncId(@Param("groupId") Long groupId, @Param("funcId") Long funcId, Pageable pageable);
+//
+//    @Query("SELECT p FROM GroupPermission p WHERE p.isActive = :isActive AND p.isDelete = false")
+//    Page<GroupPermission> findByIsActive(@Param("isActive") Boolean isActive, Pageable pageable);
+//
+//    @Query("SELECT p FROM GroupPermission p WHERE p.groupId = :groupId AND p.isActive = :isActive AND p.isDelete = false")
+//    Page<GroupPermission> findByGroupIdAndIsActive(@Param("groupId") Long groupId, @Param("isActive") Boolean isActive, Pageable pageable);
+//}

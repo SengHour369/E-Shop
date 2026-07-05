@@ -61,18 +61,15 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
-                                "/webjars/**"
+                                "/webjars/**",
+                                "/api/v1/products/**",
+                                "/api/v1/products/active",
+                                "/api/v1/products/search",
+                                "/api/v1/products/subcategory/**",
+                                "/api/v1/products/category/**",
+                                "/api/v1/categories/**",
+                                "/api/v1/subcategories/**"
                         ).permitAll()
-
-
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/active").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/search").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/subcategory/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/category/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/subcategories/**").permitAll()
-
 
                         .requestMatchers("/api/v1/user/**").authenticated()
                         .requestMatchers("/api/v1/cart/**").authenticated()
