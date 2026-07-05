@@ -213,14 +213,19 @@ public class ProductServiceImpl implements ProductService {
         }
 
         if (files != null && !files.isEmpty()) {
-            List<Image> newImageUrls = files.stream()
+
+            List<Image> newImages = files.stream()
                     .map(imageService::uploadImage)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            product.setImage(newImageUrls);
-            newImageUrls.forEach(img -> img.setProduct(product));
-        }
+                    .toList();
 
+            product.getImage().clear();
+
+            for (Image image : newImages) {
+                image.setProduct(product);
+                product.getImage().add(image);
+            }
+        }
         ProductMapper.updateEntity(product, request, subCategory);
         Product updatedProduct = productRepository.save(product);
 

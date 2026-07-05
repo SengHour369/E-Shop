@@ -12,7 +12,6 @@ public class ProductSkuMapper {
 
     public static ProductSku toEntity(ProductSkuRequest request, Product product) {
         return ProductSku.builder()
-                .sku(request.getSku())
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .isDefault(request.getIsDefault() != null ? request.getIsDefault() : false)
@@ -33,7 +32,7 @@ public class ProductSkuMapper {
     }
 
     public static void updateEntity(ProductSku sku, ProductSkuRequest request) {
-        sku.setSku(request.getSku());
+        // Only update SKU if provided (not null/blank)
         sku.setDescription(request.getDescription());
         sku.setPrice(request.getPrice());
         sku.setOperatorProductAttribute(request.getOperatorProductAttribute());

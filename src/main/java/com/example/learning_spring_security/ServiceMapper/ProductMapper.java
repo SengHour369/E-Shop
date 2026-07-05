@@ -11,6 +11,7 @@ import com.example.learning_spring_security.dto.Response.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 @Component
@@ -84,6 +85,8 @@ public class ProductMapper {
                 .description(sku.getDescription())
                 .price(sku.getPrice())
                 .isDefault(sku.getIsDefault())
+                .OperatorProductAttribute(sku.getOperatorProductAttribute())
+
                 .ProductAttributeResponse(attributeResponses)
                 .build();
     }
@@ -106,12 +109,14 @@ public class ProductMapper {
                 .build();
     }
 
-    public static void updateEntity(Product product, ProductRequest request,
+    public static void updateEntity(Product product,
+                                    ProductRequest request,
                                     SubCategory subCategory) {
+
         product.setName(request.getName());
+        product.setImage(product.getImage());
         product.setDescription(request.getDescription());
         product.setIsActive(request.getIsActive());
         product.setSubCategory(subCategory);
-
     }
 }

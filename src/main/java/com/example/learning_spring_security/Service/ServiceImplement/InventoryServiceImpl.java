@@ -41,6 +41,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         Inventory inventory = InventoryMapper.toEntity(request, productSku);
         inventory.setLastRestockedAt(LocalDateTime.now());
+        inventory.setIsDefault(false);
         Inventory saved = inventoryRepository.save(inventory);
 
         log.info("Inventory created for SKU id={}", productSkuId);

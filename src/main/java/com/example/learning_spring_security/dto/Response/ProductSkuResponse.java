@@ -16,8 +16,6 @@ public class ProductSkuResponse {
     private String description;
     private BigDecimal price;
     private Long quantity;
-    @com.fasterxml.jackson.annotation.JsonProperty("low_stock_threshold")
-    private Integer lowStockThreshold;
     @com.fasterxml.jackson.annotation.JsonProperty("is_default")
     private Boolean isDefault;
     private Boolean OperatorProductAttribute = false;

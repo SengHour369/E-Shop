@@ -385,15 +385,34 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/products/create", "host": ["{{baseUrl}}"], "path": ["api","v1","products","create"] },
+            "url": { "raw": "{{baseUrl}}/api/v1/products/create/", "host": ["{{baseUrl}}"], "path": ["api","v1","products","create",""] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "name", "value": "iPhone 15", "type": "text", "description": "Product name (required)" },
+              { "key": "description", "value": "Latest Apple smartphone with advanced features", "type": "text", "description": "Product description (optional)" },
+              { "key": "is_active", "value": "true", "type": "text", "description": "Active status (optional, default true)" },
+              { "key": "sub_category_id", "value": "1", "type": "text", "description": "Subcategory ID (required)" },
+              { "key": "skus", "value": "[{\"sku\":null,\"description\":\"Black - 128GB\",\"price\":999.99,\"quantity\":50,\"is_default\":true,\"low_stock_threshold\":5,\"inventory\":{\"quantity\":50,\"warehouse_location\":\"Warehouse A\"},\"product_attributes\":[{\"name\":\"Color\",\"attributes\":[{\"value\":\"Black\"}]},{\"name\":\"Storage\",\"attributes\":[{\"value\":\"128GB\"}]}]},{\"sku\":null,\"description\":\"White - 256GB\",\"price\":1099.99,\"quantity\":30,\"is_default\":false,\"low_stock_threshold\":5,\"inventory\":{\"quantity\":30,\"warehouse_location\":\"Warehouse A\"},\"product_attributes\":[{\"name\":\"Color\",\"attributes\":[{\"value\":\"White\"}]},{\"name\":\"Storage\",\"attributes\":[{\"value\":\"256GB\"}]}]}]", "type": "text", "description": "SKUs JSON array (optional) - Leave sku as null for auto-generation" },
+              { "key": "quantity", "value": "", "type": "text", "disabled": true, "description": "Default inventory quantity for SKUs without inventory (optional)" },
+              { "key": "warehouseLocation", "value": "", "type": "text", "disabled": true, "description": "Default warehouse location for SKUs without inventory (optional)" },
+              { "key": "files", "type": "file", "src": "", "description": "Product images (required)" }
+            ]}
+          }
+        },
+        {
+          "name": "Create Product - Auto SKU Generation Example",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/create/", "host": ["{{baseUrl}}"], "path": ["api","v1","products","create",""] },
             "body": { "mode": "formdata", "formdata": [
               { "key": "name", "value": "iPhone 15", "type": "text" },
-              { "key": "description", "value": "Apple iPhone 15", "type": "text" },
+              { "key": "description", "value": "Premium iPhone with advanced technology", "type": "text" },
               { "key": "is_active", "value": "true", "type": "text" },
               { "key": "sub_category_id", "value": "1", "type": "text" },
-              { "key": "skus", "value": "[{\"sku\":\"IPH15-BLK-128\",\"price\":999.99,\"quantity\":50,\"is_default\":true,\"product_attributes\":[{\"name\":\"Color\",\"attributes\":[{\"value\":\"Black\"}]}]}]", "type": "text" },
-              { "key": "files", "type": "file", "src": "" }
-            ]}
+              { "key": "skus", "value": "[{\"sku\":null,\"description\":\"Blue - 128GB\",\"price\":999.99,\"quantity\":40,\"is_default\":false,\"low_stock_threshold\":10,\"inventory\":{\"quantity\":40,\"warehouse_location\":\"Warehouse B - Shelf B1\"},\"product_attributes\":[{\"name\":\"Color\",\"attributes\":[{\"value\":\"Blue\"}]},{\"name\":\"Storage\",\"attributes\":[{\"value\":\"128GB\"}]}]}]", "type": "text" },
+              { "key": "files", "type": "file", "src": "", "disabled": true, "description": "Product images" }
+            ]},
+            "description": "Demonstrates automatic SKU generation. When sku is null, the system generates: ELEC-IPH15-BLU-128 (Category-Product-Color-Storage)"
           }
         },
         {
@@ -401,8 +420,8 @@
           "request": {
             "method": "PUT",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/products/update?id=1", "host": ["{{baseUrl}}"], "path": ["api","v1","products","update"], "query": [{"key":"id","value":"1"}] },
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"iPhone 15 Updated\",\n  \"description\": \"Updated description\",\n  \"is_active\": true,\n  \"sub_category_id\": 1,\n  \"skus\": [\n    {\n      \"productSkuId\": 1,\n      \"sku\": \"IPH15-BLK-128\",\n      \"price\": 949.99,\n      \"quantity\": 60,\n      \"is_default\": true,\n      \"product_attributes\": [\n        {\n          \"id\": 1,\n          \"name\": \"Color\",\n          \"attributes\": [\n            { \"id\": 1, \"value\": \"Space Black\" }\n          ]\n        }\n      ]\n    },\n    {\n      \"sku\": \"IPH15-WHT-256\",\n      \"price\": 1099.99,\n      \"quantity\": 30,\n      \"is_default\": false,\n      \"product_attributes\": [\n        {\n          \"name\": \"Color\",\n          \"attributes\": [\n            { \"value\": \"White\" }\n          ]\n        }\n      ]\n    }\n  ]\n}" }
+            "url": { "raw": "{{baseUrl}}/api/v1/products/update/?id=1", "host": ["{{baseUrl}}"], "path": ["api","v1","products","update",""], "query": [{"key":"id","value":"1"}] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"iPhone 15 Updated\",\n  \"description\": \"Updated flagship smartphone\",\n  \"is_active\": true,\n  \"sub_category_id\": 1,\n  \"skus\": [\n    {\n      \"productSkuId\": 1,\n      \"sku\": null,\n      \"description\": \"Space Black - 128GB\",\n      \"price\": 949.99,\n      \"quantity\": 60,\n      \"is_default\": true,\n      \"low_stock_threshold\": 10,\n      \"operatorProductAttribute\": false,\n      \"inventory\": {\n        \"quantity\": 60,\n        \"warehouse_location\": \"Warehouse A - Shelf A1\"\n      },\n      \"product_attributes\": [\n        {\n          \"id\": 1,\n          \"name\": \"Color\",\n          \"attributes\": [\n            { \"id\": 1, \"value\": \"Space Black\" }\n          ]\n        },\n        {\n          \"id\": 2,\n          \"name\": \"Storage\",\n          \"attributes\": [\n            { \"id\": 3, \"value\": \"128GB\" }\n          ]\n        }\n      ]\n    },\n    {\n      \"sku\": null,\n      \"description\": \"Blue - 256GB\",\n      \"price\": 1099.99,\n      \"quantity\": 40,\n      \"is_default\": false,\n      \"low_stock_threshold\": 10,\n      \"operatorProductAttribute\": false,\n      \"inventory\": {\n        \"quantity\": 40,\n        \"warehouse_location\": \"Warehouse B - Shelf B1\"\n      },\n      \"product_attributes\": [\n        {\n          \"name\": \"Color\",\n          \"attributes\": [\n            { \"value\": \"Blue\" }\n          ]\n        },\n        {\n          \"name\": \"Storage\",\n          \"attributes\": [\n            { \"value\": \"256GB\" }\n          ]\n        }\n      ]\n    }\n  ]\n}" }
           }
         },
         {
@@ -410,31 +429,35 @@
           "request": {
             "method": "PUT",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/products/update?id=1", "host": ["{{baseUrl}}"], "path": ["api","v1","products","update"], "query": [{"key":"id","value":"1"}] },
+            "url": { "raw": "{{baseUrl}}/api/v1/products/update/?id=1", "host": ["{{baseUrl}}"], "path": ["api","v1","products","update",""], "query": [{"key":"id","value":"1"}] },
             "body": { "mode": "formdata", "formdata": [
-              { "key": "name", "value": "iPhone 15 Updated", "type": "text" },
-              { "key": "description", "value": "Updated description", "type": "text" },
-              { "key": "is_active", "value": "true", "type": "text" },
-              { "key": "sub_category_id", "value": "1", "type": "text" },
-              { "key": "skus", "value": "[{\"productSkuId\":1,\"sku\":\"IPH15-BLK-128\",\"price\":949.99,\"quantity\":60,\"is_default\":true,\"product_attributes\":[{\"id\":1,\"name\":\"Color\",\"attributes\":[{\"id\":1,\"value\":\"Space Black\"}]}]}]", "type": "text" },
-              { "key": "files", "type": "file", "src": "" }
+              { "key": "name", "value": "iPhone 15 Updated", "type": "text", "description": "Product name (required)" },
+              { "key": "description", "value": "Updated flagship smartphone", "type": "text", "description": "Product description (optional)" },
+              { "key": "is_active", "value": "true", "type": "text", "description": "Active status (optional, default true)" },
+              { "key": "sub_category_id", "value": "1", "type": "text", "description": "Subcategory ID (required)" },
+              { "key": "skus", "value": "[{\"productSkuId\":1,\"sku\":null,\"description\":\"Space Black - 128GB\",\"price\":949.99,\"quantity\":60,\"is_default\":true,\"low_stock_threshold\":10,\"operatorProductAttribute\":false,\"inventory\":{\"quantity\":60,\"warehouse_location\":\"Warehouse A - Shelf A1\"},\"product_attributes\":[{\"id\":1,\"name\":\"Color\",\"attributes\":[{\"id\":1,\"value\":\"Space Black\"}]},{\"id\":2,\"name\":\"Storage\",\"attributes\":[{\"id\":3,\"value\":\"128GB\"}]}]},{\"sku\":null,\"description\":\"Blue - 256GB\",\"price\":1099.99,\"quantity\":40,\"is_default\":false,\"low_stock_threshold\":10,\"operatorProductAttribute\":false,\"inventory\":{\"quantity\":40,\"warehouse_location\":\"Warehouse B - Shelf B1\"},\"product_attributes\":[{\"name\":\"Color\",\"attributes\":[{\"value\":\"Blue\"}]},{\"name\":\"Storage\",\"attributes\":[{\"value\":\"256GB\"}]}]}]", "type": "text", "description": "SKUs JSON array (optional)" },
+              { "key": "quantity", "value": "", "type": "text", "disabled": true, "description": "Default inventory quantity for SKUs without inventory (optional)" },
+              { "key": "warehouseLocation", "value": "", "type": "text", "disabled": true, "description": "Default warehouse location for SKUs without inventory (optional)" },
+              { "key": "files", "type": "file", "src": "", "disabled": true, "description": "Product images (optional for update)" }
             ]}
           }
         },
         {
           "name": "Update Product Status",
           "request": {
-            "method": "PATCH",
+            "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/products/id/status?id=1&isActive=false", "host": ["{{baseUrl}}"], "path": ["api","v1","products","id","status"], "query": [{"key":"id","value":"1"},{"key":"isActive","value":"false"}] }
+            "url": { "raw": "{{baseUrl}}/api/v1/products/update/status/?id=1&isActive=true", "host": ["{{baseUrl}}"], "path": ["api","v1","products","update","status",""], "query": [{"key":"id","value":"1"},{"key":"isActive","value":"true"}] },
+            "description": "Update product active/inactive status"
           }
         },
         {
           "name": "Delete Product",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/products/delete?id=1", "host": ["{{baseUrl}}"], "path": ["api","v1","products","delete"], "query": [{"key":"id","value":"1"}] }
+            "url": { "raw": "{{baseUrl}}/api/v1/products/delete/?id=1", "host": ["{{baseUrl}}"], "path": ["api","v1","products","delete",""], "query": [{"key":"id","value":"1"}] },
+            "description": "Delete a product by ID"
           }
         }
       ]

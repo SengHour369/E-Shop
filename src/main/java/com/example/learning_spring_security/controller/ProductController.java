@@ -1,6 +1,5 @@
 package com.example.learning_spring_security.controller;
 
-import com.example.learning_spring_security.Model.Inventory;
 import com.example.learning_spring_security.Service.ServiceStructure.ProductService;
 import com.example.learning_spring_security.dto.Request.GetProductRequest;
 import com.example.learning_spring_security.dto.Request.ProductRequest;
@@ -39,24 +38,22 @@ public class ProductController extends BaseController {
             @RequestParam(required = false, defaultValue = "true") Boolean is_active,
             @RequestParam Long sub_category_id,
             @RequestParam(required = false) String skus,
-            @RequestParam Long Quantity,
-            @RequestParam(required = false)  String warehouseLocation,
             @RequestParam(value = "files") List<MultipartFile> files) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        Inventory inventory = new Inventory();
-        inventory.setQuantity(Quantity);
-        inventory.setWarehouseLocation(warehouseLocation);
         ProductRequest request = new ProductRequest();
         request.setName(name);
         request.setDescription(description);
         request.setIsActive(is_active);
         request.setSubCategoryId(sub_category_id);
+
         if (skus != null && !skus.isEmpty()) {
             List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList =
                     mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
                             List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
+
             request.setSkus(skuList);
         }
+
         ResponseErrorTemplate response = productService.createProduct(request, files);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -70,17 +67,19 @@ public class ProductController extends BaseController {
             @RequestParam(required = false, defaultValue = "true") Boolean is_active,
             @RequestParam Long sub_category_id,
             @RequestParam(required = false) String skus,
-            @RequestParam(value = "files", required = false) List<MultipartFile> files) throws Exception {
+            @RequestParam(value = "files") List<MultipartFile> files) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProductRequest request = new ProductRequest();
         request.setName(name);
         request.setDescription(description);
         request.setIsActive(is_active);
         request.setSubCategoryId(sub_category_id);
+
         if (skus != null && !skus.isEmpty()) {
             List<com.example.learning_spring_security.dto.Request.ProductSkuRequest> skuList =
                     mapper.readValue(skus, mapper.getTypeFactory().constructCollectionType(
                             List.class, com.example.learning_spring_security.dto.Request.ProductSkuRequest.class));
+
             request.setSkus(skuList);
         }
         ResponseErrorTemplate response = productService.updateProduct(id, request, files);

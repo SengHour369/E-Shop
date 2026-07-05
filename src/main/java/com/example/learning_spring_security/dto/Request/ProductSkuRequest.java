@@ -25,19 +25,14 @@ import java.util.List;
 @Builder
 public class ProductSkuRequest {
     Long productSkuId;
-    @NotBlank(message = "SKU is required")
-    private String sku;
-    
+
     private String description;
     
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
     private BigDecimal price;
     
-//    private String color;
-//
-//    private String size;
-    
+
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;
@@ -60,14 +55,6 @@ public class ProductSkuRequest {
      */
     @JsonProperty("product_attributes")
     private List<ProductAttributeRequest> productAttributes =  new ArrayList<>();
-//    /**
-//     * Optional: Assign existing attributes to this SKU during creation
-//     * Each item specifies which attribute and value to assign
-//     *
-//     * @see VariantAttributeRequest
-//     */
-//    @JsonProperty("variant_attributes")
-//    private List<VariantAttributeRequest> variantAttributes;
 
 
 }
