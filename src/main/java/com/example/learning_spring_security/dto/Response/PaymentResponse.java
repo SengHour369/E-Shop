@@ -26,10 +26,15 @@ public class PaymentResponse {
     private LocalDateTime paymentDate;
 
     private BigDecimal amount;
+    private String currency;
     private String status;
 
     @JsonProperty("transaction_id")
     private String transactionId;
+
+    private String code;
+
+    private String codeOrder;
 
     @JsonProperty("payment_provider")
     private String paymentProvider;

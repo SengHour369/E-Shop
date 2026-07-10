@@ -18,20 +18,20 @@ import java.util.regex.Pattern;
 
 /**
  * Dynamic SKU Generator Utility for generating unique Stock Keeping Unit codes.
- * 
+ *
  * The SKU generator supports multiple strategies:
  * 1. Product Code Only: PROD-00001 (sequential)
  * 2. Category-Product Code: ELEC-IPH-00001
  * 3. Attribute-Based: IPH15-BLU-128 (product code with attribute values)
  * 4. Full Pattern: ELEC-IPH15-BLU-128GB
- * 
+ *
  * Example:
  * - Product: "iPhone 15"
  * - Category: "Electronics"
  * - SubCategory: "Smartphones"
  * - Attributes: Color (Blue), Storage (128GB)
  * - Generated SKU: ELEC-IPH15-BLU-128
- * 
+ *
  * @author E-Shop Team
  */
 @Slf4j
@@ -44,7 +44,7 @@ public class SkuGeneratorUtil {
 
     /**
      * Generate SKU using full product and attribute information.
-     * 
+     *
      * @param product Product entity
      * @param request ProductSkuRequest with attributes
      * @return Generated SKU code (e.g., "ELEC-IPH15-BLU-128")
@@ -56,13 +56,13 @@ public class SkuGeneratorUtil {
                 .maxProductCodeLength(5)
                 .delimiter(DELIMITER)
                 .build();
-        
+
         return generateSkuWithConfig(product, request, config);
     }
 
     /**
      * Generate SKU with custom configuration.
-     * 
+     *
      * @param product Product entity
      * @param request ProductSkuRequest
      * @param config Customization configuration
@@ -70,7 +70,7 @@ public class SkuGeneratorUtil {
      */
     public String generateSkuWithConfig(Product product, ProductSkuRequest request, SkuConfig config) {
         StringBuilder skuBuilder = new StringBuilder();
-        
+
         // 1. Add category code if requested
         if (config.isIncludeCategory() && product.getSubCategory() != null) {
             String categoryCode = extractCategoryCode(product.getSubCategory(), config);
@@ -78,11 +78,11 @@ public class SkuGeneratorUtil {
                 skuBuilder.append(categoryCode).append(config.getDelimiter());
             }
         }
-        
+
         // 2. Add product code
         String productCode = extractProductCode(product.getName(), config);
         skuBuilder.append(productCode);
-        
+
         // 3. Add attribute codes if requested
         if (config.isIncludeAttributes() && request != null && request.getProductAttributes() != null) {
             List<String> attributeCodes = extractAttributeCodes(request.getProductAttributes(), config);
@@ -90,7 +90,7 @@ public class SkuGeneratorUtil {
                 skuBuilder.append(config.getDelimiter()).append(attrCode);
             }
         }
-        
+
         log.debug("Generated base SKU: {}", skuBuilder);
         return skuBuilder.toString();
     }
@@ -98,7 +98,7 @@ public class SkuGeneratorUtil {
     /**
      * Generate SKU with attribute details as a map.
      * Useful when you want to track which attributes were used.
-     * 
+     *
      * @param product Product entity
      * @param request ProductSkuRequest
      * @return SKU with component breakdown
@@ -110,7 +110,7 @@ public class SkuGeneratorUtil {
                 .maxProductCodeLength(5)
                 .delimiter(DELIMITER)
                 .build();
-        
+
         return generateSkuComponentsWithConfig(product, request, config);
     }
 
@@ -119,25 +119,25 @@ public class SkuGeneratorUtil {
      */
     public SkuComponents generateSkuComponentsWithConfig(Product product, ProductSkuRequest request, SkuConfig config) {
         SkuComponents.SkuComponentsBuilder builder = SkuComponents.builder();
-        
+
         // Category code
         String categoryCode = null;
         if (config.isIncludeCategory() && product.getSubCategory() != null) {
             categoryCode = extractCategoryCode(product.getSubCategory(), config);
             builder.categoryCode(categoryCode);
         }
-        
+
         // Product code
         String productCode = extractProductCode(product.getName(), config);
         builder.productCode(productCode);
-        
+
         // Attribute codes
         Map<String, String> attributeCodes = new LinkedHashMap<>();
         if (config.isIncludeAttributes() && request != null && request.getProductAttributes() != null) {
             attributeCodes = extractAttributeCodesAsMap(request.getProductAttributes(), config);
             builder.attributeCodes(attributeCodes);
         }
-        
+
         // Build final SKU
         StringBuilder sku = new StringBuilder();
         if (categoryCode != null && !categoryCode.isEmpty()) {
@@ -149,7 +149,7 @@ public class SkuGeneratorUtil {
                 sku.append(config.getDelimiter()).append(code);
             }
         }
-        
+
         builder.finalSku(sku.toString());
         return builder.build();
     }
@@ -162,12 +162,12 @@ public class SkuGeneratorUtil {
         if (subCategory == null || subCategory.getCategory() == null) {
             return null;
         }
-        
+
         String categoryName = subCategory.getCategory().getName();
         if (categoryName == null || categoryName.trim().isEmpty()) {
             return null;
         }
-        
+
         // Remove special characters and uppercase
         String cleaned = categoryName.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         int maxLen = Math.min(config.getMaxCategoryCodeLength(), cleaned.length());
@@ -181,27 +181,27 @@ public class SkuGeneratorUtil {
      */
     private String extractProductCode(String name, SkuConfig config) {
         String normalized = name == null ? "" : name;
-        
+
         // Remove special characters and uppercase
         String cleaned = normalized.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         if (cleaned.isEmpty()) {
             return config.getDefaultPrefix();
         }
-        
+
         // Try to extract letters + trailing digits pattern
         Pattern trailingDigitsPattern = Pattern.compile("([A-Z]{1,})(\\d+)$");
         Matcher matcher = trailingDigitsPattern.matcher(cleaned);
-        
+
         if (matcher.find()) {
             String letters = matcher.group(1);
             String digits = matcher.group(2);
-            
+
             // Limit letters to max length
             int maxLetters = config.getMaxProductCodeLength() - Math.min(digits.length(), 3);
-            String limitedLetters = letters.length() > maxLetters 
-                    ? letters.substring(0, Math.max(1, maxLetters)) 
+            String limitedLetters = letters.length() > maxLetters
+                    ? letters.substring(0, Math.max(1, maxLetters))
                     : letters;
-            
+
             return limitedLetters + digits;
         } else {
             // No trailing digits, just truncate
@@ -216,26 +216,26 @@ public class SkuGeneratorUtil {
      */
     private List<String> extractAttributeCodes(List<ProductAttributeRequest> attributes, SkuConfig config) {
         List<String> codes = new ArrayList<>();
-        
+
         if (attributes == null || attributes.isEmpty()) {
             return codes;
         }
-        
+
         for (ProductAttributeRequest attr : attributes) {
             if (attr.getName() == null || attr.getAttributes() == null || attr.getAttributes().isEmpty()) {
                 continue;
             }
-            
+
             String attrName = attr.getName().toLowerCase();
             ProductAttributeValueRequest firstValue = attr.getAttributes().get(0);
             String value = firstValue != null ? firstValue.getValue() : null;
-            
+
             if (value == null || value.isEmpty()) {
                 continue;
             }
-            
+
             String code = null;
-            
+
             // Color attributes
             if (attrName.contains("color")) {
                 code = extractColorCode(value, config);
@@ -256,12 +256,12 @@ public class SkuGeneratorUtil {
             else {
                 code = extractGenericAttributeCode(value, config);
             }
-            
+
             if (code != null && !code.isEmpty()) {
                 codes.add(code);
             }
         }
-        
+
         return codes;
     }
 
@@ -270,26 +270,26 @@ public class SkuGeneratorUtil {
      */
     private Map<String, String> extractAttributeCodesAsMap(List<ProductAttributeRequest> attributes, SkuConfig config) {
         Map<String, String> codes = new LinkedHashMap<>();
-        
+
         if (attributes == null || attributes.isEmpty()) {
             return codes;
         }
-        
+
         for (ProductAttributeRequest attr : attributes) {
             if (attr.getName() == null || attr.getAttributes() == null || attr.getAttributes().isEmpty()) {
                 continue;
             }
-            
+
             String attrName = attr.getName().toLowerCase();
             ProductAttributeValueRequest firstValue = attr.getAttributes().get(0);
             String value = firstValue != null ? firstValue.getValue() : null;
-            
+
             if (value == null || value.isEmpty()) {
                 continue;
             }
-            
+
             String code = null;
-            
+
             if (attrName.contains("color")) {
                 code = extractColorCode(value, config);
             }
@@ -305,12 +305,12 @@ public class SkuGeneratorUtil {
             else {
                 code = extractGenericAttributeCode(value, config);
             }
-            
+
             if (code != null && !code.isEmpty()) {
                 codes.put(attrName, code);
             }
         }
-        
+
         return codes;
     }
 
@@ -321,7 +321,7 @@ public class SkuGeneratorUtil {
     private String extractColorCode(String value, SkuConfig config) {
         String cleaned = value.replaceAll("[^A-Za-z]", "").toUpperCase();
         if (cleaned.isEmpty()) return null;
-        
+
         int maxLen = Math.min(config.getMaxAttributeCodeLength(), cleaned.length());
         return cleaned.substring(0, maxLen);
     }
@@ -336,7 +336,7 @@ public class SkuGeneratorUtil {
         if (digitMatcher.find()) {
             return digitMatcher.group(1);
         }
-        
+
         // Fallback to generic extraction
         return extractGenericAttributeCode(value, config);
     }
@@ -348,12 +348,12 @@ public class SkuGeneratorUtil {
     private String extractSizeCode(String value, SkuConfig config) {
         String cleaned = value.replaceAll("[^A-Za-z]", "").toUpperCase();
         if (cleaned.isEmpty()) return null;
-        
+
         // For single letters, return as is
         if (cleaned.length() == 1) {
             return cleaned;
         }
-        
+
         // For multi-letter sizes, take first 2 chars
         int maxLen = Math.min(2, config.getMaxAttributeCodeLength());
         return cleaned.substring(0, maxLen);
@@ -366,7 +366,7 @@ public class SkuGeneratorUtil {
     private String extractBrandCode(String value, SkuConfig config) {
         String cleaned = value.replaceAll("[^A-Za-z]", "").toUpperCase();
         if (cleaned.isEmpty()) return null;
-        
+
         int maxLen = Math.min(config.getMaxAttributeCodeLength(), cleaned.length());
         return cleaned.substring(0, maxLen);
     }
@@ -378,7 +378,7 @@ public class SkuGeneratorUtil {
     private String extractGenericAttributeCode(String value, SkuConfig config) {
         String cleaned = value.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         if (cleaned.isEmpty()) return null;
-        
+
         int maxLen = Math.min(config.getMaxAttributeCodeLength(), cleaned.length());
         return cleaned.substring(0, maxLen);
     }
@@ -411,19 +411,19 @@ public class SkuGeneratorUtil {
     public static class SkuConfig {
         private boolean includeCategory = true;
         private boolean includeAttributes = true;
-        
+
         @Builder.Default
         private int maxProductCodeLength = 5;
-        
+
         @Builder.Default
         private int maxCategoryCodeLength = 4;
-        
+
         @Builder.Default
         private int maxAttributeCodeLength = 3;
-        
+
         @Builder.Default
         private String delimiter = "-";
-        
+
         @Builder.Default
         private String defaultPrefix = "PRD";
     }
@@ -451,4 +451,3 @@ public class SkuGeneratorUtil {
         }
     }
 }
-

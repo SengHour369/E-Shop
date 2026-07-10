@@ -4,10 +4,16 @@ import com.example.learning_spring_security.Model.OrderDetail;
 import com.example.learning_spring_security.Model.OrderItem;
 import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.dto.Response.OrderItemResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
+@Component
+@RequiredArgsConstructor
 public class OrderItemMapper {
+
+    private final ProductMapper productMapper;
 
     public static OrderItem toEntity(OrderDetail order, ProductSku productSku, Long quantity) {
         if (order == null || productSku == null || quantity == null) {
@@ -30,7 +36,7 @@ public class OrderItemMapper {
                 .build();
     }
 
-    public static OrderItemResponse toResponse(OrderItem orderItem) {
+    public OrderItemResponse toResponse(OrderItem orderItem) {
         if (orderItem == null) {
             return null;
         }
@@ -40,9 +46,8 @@ public class OrderItemMapper {
                 .quantity(orderItem.getQuantity())
                 .unitPrice(orderItem.getUnitPrice())
                 .totalPrice(orderItem.getTotalPrice());
-          ProductSkuMapper productAttributeMapper = new ProductSkuMapper();
         if (orderItem.getProductSku() != null) {
-            builder.productSku(productAttributeMapper.toResponse(orderItem.getProductSku()));
+            builder.productSku(productMapper.toSkuResponse(orderItem.getProductSku()));
             if (orderItem.getProductSku().getProduct() != null) {
                 builder.productName(orderItem.getProductSku().getProduct().getName());
             }

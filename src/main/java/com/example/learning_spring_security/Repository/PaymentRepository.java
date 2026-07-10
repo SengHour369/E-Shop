@@ -38,9 +38,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findByOrderDetailUserId(Long userId, Pageable pageable);
 
     @Query("SELECT p FROM Payment p WHERE p.orderDetail.user.id = :userId " +
-            "AND (:status IS NULL OR p.status = :status) " +
-            "AND (:startDate IS NULL OR p.paymentDate >= :startDate) " +
-            "AND (:endDate IS NULL OR p.paymentDate <= :endDate)")
+            "AND (CAST(:status AS string) IS NULL OR p.status = :status) " +
+            "AND (CAST(:startDate AS LocalDateTime) IS NULL OR p.paymentDate >= :startDate) " +
+            "AND (CAST(:endDate AS LocalDateTime) IS NULL OR p.paymentDate <= :endDate)")
     Page<Payment> findPaymentHistory(
             @Param("userId") Long userId,
             @Param("status") String status,
@@ -50,4 +50,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'COMPLETED' AND p.paymentDate BETWEEN :startDate AND :endDate")
     Optional<Double> getTotalCompletedPaymentsBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    boolean existsByCode(String code);
 }

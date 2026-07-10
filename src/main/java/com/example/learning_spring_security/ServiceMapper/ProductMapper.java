@@ -2,6 +2,7 @@ package com.example.learning_spring_security.ServiceMapper;
 
 import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.*;
+import com.example.learning_spring_security.Repository.InventoryRepository;
 import com.example.learning_spring_security.Repository.ProductAttributeRepository;
 import com.example.learning_spring_security.Repository.ProductAttributeValueRepository;
 import com.example.learning_spring_security.Repository.ProductSkuRepository;
@@ -20,6 +21,7 @@ public class ProductMapper {
     private final ProductSkuRepository skuRepository;
     private final ProductAttributeRepository attributeRepository;
     private final ProductAttributeValueRepository valueRepository;
+    private final InventoryRepository inventoryRepository;
 
     public static Product toEntity(ProductRequest request, SubCategory subCategory) {
 
@@ -48,6 +50,7 @@ public class ProductMapper {
                 .skus(skuResponses)
                 .Image(product.getImage().stream().map(Image::getUrl)
                         .collect(Collectors.toList()))
+                .isActive(product.getIsActive())
                 .build();
     }
 
@@ -66,6 +69,7 @@ public class ProductMapper {
                 .skus(skuResponses)
                 .Image(product.getImage().stream().map(Image::getUrl)
                         .collect(Collectors.toList()))
+                .isActive(product.getIsActive())
                 .build();
 
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, p);
@@ -79,6 +83,10 @@ public class ProductMapper {
                         .map(this::toAttributeResponse)
                         .toList();
 
+        Long quantity = inventoryRepository.findByProductSkuId(sku.getId())
+                .map(Inventory::getQuantity)
+                .orElse(null);
+
         return ProductSkuResponse.builder()
                 .id(sku.getId())
                 .sku(sku.getSku())
@@ -86,7 +94,8 @@ public class ProductMapper {
                 .price(sku.getPrice())
                 .isDefault(sku.getIsDefault())
                 .OperatorProductAttribute(sku.getOperatorProductAttribute())
-
+                .quantity(quantity)
+                .imageUrl(sku.getImage() != null ? sku.getImage().getUrl() : null)
                 .ProductAttributeResponse(attributeResponses)
                 .build();
     }

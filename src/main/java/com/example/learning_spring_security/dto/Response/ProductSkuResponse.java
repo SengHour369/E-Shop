@@ -20,6 +20,9 @@ public class ProductSkuResponse {
     private Boolean isDefault;
     private Boolean OperatorProductAttribute = false;
 
+    @JsonProperty("image_url")
+    private String imageUrl;
+
     // Optional: attributes assigned to this SKU
     @JsonProperty("attributes")
     private List<ProductAttributeResponse> ProductAttributeResponse;

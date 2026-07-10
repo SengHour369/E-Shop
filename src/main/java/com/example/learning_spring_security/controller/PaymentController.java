@@ -24,7 +24,7 @@ public class PaymentController extends BaseController {
 
     private final PaymentServiceImpl paymentService;
 
-    @PostMapping("/user/all")
+    @PostMapping("/user/id")
     public ResponseEntity<ResponseErrorTemplate> getPaymentsByUser(@RequestParam Long userId) {
         List<PaymentResponse> payments = paymentService.getPaymentsByUserId(userId);
         return ResponseEntity.ok(ResponseErrorTemplate.success("Payments retrieved successfully", payments));

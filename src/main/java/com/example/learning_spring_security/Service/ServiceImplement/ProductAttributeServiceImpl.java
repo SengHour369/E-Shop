@@ -102,5 +102,3 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
         productAttributeRepository.delete(attribute);
     }
 }
-
-

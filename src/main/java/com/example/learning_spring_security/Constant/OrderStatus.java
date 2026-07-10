@@ -13,5 +13,16 @@ public interface OrderStatus {
     String CONFIRMED = "CONFIRMED";
     String CANCELED = "CANCELED";
     String BAKONG =  "BAKONG";
+    String ABA = "ABA";
+    String ACLEDA = "ACLEDA";
 
+
+
+//    Transaction Status មានន័យ៖
+//    Status	Meaning Khmer
+//    PENDING	កំពុងរង់ចាំការទូទាត់
+//    SUCCESS	ទូទាត់បានជោគជ័យ
+//    FAILED	ទូទាត់បរាជ័យ
+//    CANCELLED	បានលុបចោល
+//    REFUNDED	បានសងប្រាក់វិញ
 }

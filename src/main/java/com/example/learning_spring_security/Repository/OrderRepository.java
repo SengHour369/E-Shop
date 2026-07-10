@@ -1,6 +1,7 @@
 package com.example.learning_spring_security.Repository;
 
 import com.example.learning_spring_security.Model.OrderDetail;
+import com.example.learning_spring_security.dto.Response.OrderStatusSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -67,13 +68,28 @@ public interface OrderRepository extends JpaRepository<OrderDetail, Long> {
     Optional<OrderDetail> findByIdAndUserIdWithFullDetail(@Param("orderId") Long orderId, @Param("userId") Long userId);
 
     @Query("SELECT o FROM OrderDetail o WHERE o.user.id = :userId " +
-            "AND (:status IS NULL OR o.status = :status) " +
-            "AND (:startDate IS NULL OR o.orderDate >= :startDate) " +
-            "AND (:endDate IS NULL OR o.orderDate <= :endDate)")
+            "AND (CAST(:status AS string) IS NULL OR o.status = :status) " +
+            "AND (CAST(:startDate AS LocalDateTime) IS NULL OR o.orderDate >= :startDate) " +
+            "AND (CAST(:endDate AS LocalDateTime) IS NULL OR o.orderDate <= :endDate)")
     Page<OrderDetail> findOrderDetailHistory(
             @Param("userId") Long userId,
             @Param("status") String status,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable);
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.OrderStatusSummaryResponse(
+            COUNT(o),
+            SUM(CASE WHEN o.status = 'PENDING' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN o.status = 'CONFIRMED' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN o.status = 'PROCESSING' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN o.status = 'SHIPPED' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN o.status = 'DELIVERED' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN o.status = 'FAILED' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN o.status = 'REFUNDED' THEN 1 ELSE 0 END)
+        )
+        FROM OrderDetail o
+        """)
+    OrderStatusSummaryResponse getOrderStatusSummary();
 }

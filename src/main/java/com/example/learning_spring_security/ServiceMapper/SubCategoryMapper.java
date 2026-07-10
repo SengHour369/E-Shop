@@ -20,6 +20,8 @@ public class SubCategoryMapper {
         return SubCategory.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .status(true)
+                .deleted(false)
                 .build();
     }
 
@@ -32,6 +34,7 @@ public class SubCategoryMapper {
                 .id(subCategory.getId())
                 .name(subCategory.getName())
                 .description(subCategory.getDescription())
+                .Status(subCategory.getStatus())
                 .build();
 
         if (subCategory.getCategory() != null) {
@@ -52,6 +55,7 @@ public class SubCategoryMapper {
                 .id(subCategory.getId())
                 .name(subCategory.getName())
                 .description(subCategory.getDescription())
+                .Status(true)
                 .build();
 
         if (subCategory.getCategory() != null) {

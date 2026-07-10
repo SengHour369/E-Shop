@@ -18,8 +18,10 @@ import jakarta.validation.Valid;
 import kh.gov.nbc.bakong_khqr.BakongKHQR;
 import kh.gov.nbc.bakong_khqr.model.KHQRCurrency;
 import kh.gov.nbc.bakong_khqr.model.KHQRData;
+import kh.gov.nbc.bakong_khqr.model.KHQRDeepLinkData;
 import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
 import kh.gov.nbc.bakong_khqr.model.MerchantInfo;
+import kh.gov.nbc.bakong_khqr.model.SourceInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,12 @@ public class BakongServiceImpl implements BakongService {
     private String bakongAccountId;
     @Value("${bakong.base-url}")
     private String baseUrl;
+    @Value("${bakong.app-name}")
+    private String appName;
+    @Value("${bakong.app-icon-url}")
+    private String appIconUrl;
+    @Value("${app.base-url}")
+    private String appDeepLinkCallback;
 
     private final RestClient restClient;
     private final ObjectMapper mapper;
@@ -140,6 +148,18 @@ public class BakongServiceImpl implements BakongService {
             response.setResponseMessage("Failed to check transaction: " + e.getMessage());
             return response;
         }
+    }
+
+    @Override
+    public KHQRResponse<KHQRDeepLinkData> generateDeepLink(String qr) {
+        String url = baseUrl.replaceAll("/+$", "") + "/v1/generate_deeplink_by_qr";
+
+        SourceInfo sourceInfo = new SourceInfo();
+        sourceInfo.setAppName(appName);
+        sourceInfo.setAppIconUrl(appIconUrl);
+        sourceInfo.setAppDeepLinkCallback(appDeepLinkCallback);
+
+        return BakongKHQR.generateDeepLink(url, qr, sourceInfo);
     }
 
     /**

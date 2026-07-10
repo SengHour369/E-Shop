@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String Email);
     @Query("SELECT u FROM User u WHERE (LOWER(u.username) = LOWER(:credential) OR LOWER(u.email) = LOWER(:credential)) AND (u.deleted IS NULL OR u.deleted = False) AND u.status = :status")
     Optional<User> findByUsernameOrEmailAndStatus(@Param("credential") String credential, @Param("status") String status);
-        Optional<User> findByVerificationCode(String verificationCode);
+    Optional<User> findByVerificationCode(String verificationCode);
     @Query("""
             SELECT u FROM User u
             WHERE (u.deleted IS NULL OR u.deleted = False)

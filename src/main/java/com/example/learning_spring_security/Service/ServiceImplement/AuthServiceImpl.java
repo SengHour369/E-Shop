@@ -2,6 +2,7 @@ package com.example.learning_spring_security.Service.ServiceImplement;
 
 import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Exception.CustomMessageException;
+import com.example.learning_spring_security.JWT.JwtService;
 import com.example.learning_spring_security.Model.RefreshToken;
 import com.example.learning_spring_security.Model.PasswordResetToken;
 import com.example.learning_spring_security.Model.Role;
@@ -21,7 +22,6 @@ import com.example.learning_spring_security.dto.Request.Register;
 import com.example.learning_spring_security.dto.Response.RegisterResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import com.example.learning_spring_security.dto.Request.VerifyUserDto;
-import com.example.learning_spring_security.JWT.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,6 +95,15 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    /**
+     * @param username
+     * @return
+     */
+    @Override
+    public Optional<Long> findById(String username) {
+        return Optional.empty();
+    }
+
     @Transactional
     public AuthenticationResponse verifyUser(VerifyUserDto input) {
         log.info("verifyUser() called for email: {}", input.getEmail());
@@ -135,8 +143,25 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         log.info("Email verified successfully for: {}", user.getEmail());
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(
+                user.getUsername(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getName()))
+                        .collect(Collectors.toList())
+        );
+
+        String accessToken = jwtService.generateToken(userDetails);
+
+        refreshTokenRepository.deleteByUser(user);
+        String refreshToken = generateAndSaveRefreshToken(user);
+
         return AuthenticationResponse.builder()
                 .id(user.getId())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .email(user.getEmail())
                 .username(user.getUsername())
@@ -176,6 +201,7 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRoles().stream().map(Role::getName).findFirst().orElse("USER"))
                 .build();
     }
+
     @Transactional
     public AuthenticationResponse authenticate(Login input) {
 
@@ -234,6 +260,7 @@ public class AuthServiceImpl implements AuthService {
                 )
                 .build();
     }
+
     @Transactional
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
         log.info("Refreshing token...");
@@ -386,14 +413,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void userRequestValidation(Register userRequest) {
-        if(ObjectUtils.isEmpty(userRequest.password())) {
+        if (ObjectUtils.isEmpty(userRequest.password())) {
             throw new CustomMessageException("Password can't be blank or null",
                     String.valueOf(HttpStatus.BAD_REQUEST));
         }
 
         Optional<User> user = userRepository.findFirstByUsernameOrEmail(userRequest.username(),
                 userRequest.email());
-        if(user.isPresent()){
+        if (user.isPresent()) {
             throw new CustomMessageException("Username or Email already exists.",
                     String.valueOf(HttpStatus.BAD_REQUEST));
         }
@@ -403,7 +430,7 @@ public class AuthServiceImpl implements AuthService {
         return RegisterResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .password("********")
+                .password(user.getPassword())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
@@ -411,48 +438,4 @@ public class AuthServiceImpl implements AuthService {
                 .created(user.getCreatedAt())
                 .build();
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Long> findById(String username) {
-        Optional<User> user = userRepository.findByUsername(username);
-        return user.map(User::getId);
-    }
-
-    public Optional<User> findUserByUsername(String usernameOrEmail) {
-        log.info("Finding user by username or email: {}", usernameOrEmail);
-        return userRepository.findByUsername(usernameOrEmail);
-    }
-
-    @Override
-    public void requestPasswordReset(String email) {
-    }
-
-    @Override
-    public void resetPassword(String token, String newPassword) {
-    }
-
-    @Override
-    @Transactional
-    public void changePassword(Long userId, String currentPassword, String newPassword) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            throw new CustomMessageException("User not found", String.valueOf(HttpStatus.NOT_FOUND));
-        }
-
-        User user = userOpt.get();
-
-        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new CustomMessageException("Current password is incorrect",
-                    String.valueOf(HttpStatus.BAD_REQUEST));
-        }
-
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-
-        refreshTokenRepository.deleteByUser(user);
-
-        log.info("Password changed for user: {}", user.getUsername());
-    }
-
 }

@@ -37,6 +37,10 @@ public class ProductSku extends BaseEntity {
     @Column(name = "operator_product_attribute")
     private Boolean OperatorProductAttribute = false;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "image_id")
+    private Image image;
+
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CartItem> cartItems = new ArrayList<>();
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

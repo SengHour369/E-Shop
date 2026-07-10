@@ -5,12 +5,18 @@ import com.example.learning_spring_security.Model.OrderDetail;
 import com.example.learning_spring_security.dto.Response.AddressResponse;
 import com.example.learning_spring_security.dto.Response.OrderResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
+@Component
+@RequiredArgsConstructor
 public class OrderMapper {
 
-    public static ResponseErrorTemplate toResponse(OrderDetail order) {
+    private final OrderItemMapper orderItemMapper;
+
+    public ResponseErrorTemplate toResponse(OrderDetail order) {
         if (order == null) return null;
 
         AddressResponse shippingAddress = null;
@@ -36,7 +42,7 @@ public class OrderMapper {
                 .customerEmail(order.getUser() != null ? order.getUser().getEmail() : null)
                 .shippingAddress(shippingAddress)
                 .items(order.getOrderItems().stream()
-                        .map(OrderItemMapper::toResponse)
+                        .map(orderItemMapper::toResponse)
                         .collect(Collectors.toList()))
                 .payment(order.getPayment() != null ? PaymentMapper.toResponse(order.getPayment()) : null)
                 .createdAt(order.getCreatedAt())

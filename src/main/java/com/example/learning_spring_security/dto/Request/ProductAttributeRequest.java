@@ -28,4 +28,3 @@ public class ProductAttributeRequest {
     @JsonProperty("attributes")
     private List<ProductAttributeValueRequest> attributes = new ArrayList<>();
 }
-

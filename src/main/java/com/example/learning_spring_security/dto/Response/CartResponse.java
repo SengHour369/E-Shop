@@ -19,6 +19,7 @@ public class CartResponse {
     @JsonProperty("total_items")
     private Integer totalItems;
 
+
     private List<CartItemResponse> items;
 
 }

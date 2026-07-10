@@ -1,5 +1,7 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
+import com.example.learning_spring_security.Constant.CancelReason;
+import com.example.learning_spring_security.Constant.CancelStatus;
 import com.example.learning_spring_security.Constant.OrderStatus;
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
@@ -12,26 +14,27 @@ import com.example.learning_spring_security.ServiceMapper.OrderMapper;
 import com.example.learning_spring_security.ServiceMapper.PaymentMapper;
 import com.example.learning_spring_security.dto.Request.GetOrderRequest;
 import com.example.learning_spring_security.dto.Request.OrderRequest;
-import com.example.learning_spring_security.dto.Response.OrderPageResponse;
-import com.example.learning_spring_security.dto.Response.OrderResponse;
+import com.example.learning_spring_security.dto.Response.*;
 
-import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import com.example.learning_spring_security.Bakong.service.impl.dto.BakongRequest;
 import com.example.learning_spring_security.Bakong.service.impl.dto.BakongResponse;
 import com.example.learning_spring_security.Bakong.service.impl.service.BakongService;
 import com.example.learning_spring_security.Bakong.service.impl.dto.CheckTransactionRequest;
+import com.example.learning_spring_security.utils.PaymentCodeGenerator;
 import kh.gov.nbc.bakong_khqr.model.KHQRData;
+import kh.gov.nbc.bakong_khqr.model.KHQRDeepLinkData;
 import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,10 +50,17 @@ public class OrderServiceImpl implements OrderService {
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
     private final InventoryRepository inventoryRepository;
+    private final PaymentCodeGenerator paymentCodeGenerator;
+    private final OrderCancelationRepository orderCancelationRepository;
 
 
     private final BakongService bakongService;
     private final EmailNotificationService emailNotificationService;
+    private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
+
+    @Value("${app.exchange-rate.usd-to-khr}")
+    private double usdToKhrRate;
 
     @Override
     @Transactional
@@ -97,6 +107,7 @@ public class OrderServiceImpl implements OrderService {
                 .orderDetail(order)
                 .paymentMethod(request.getPaymentMethod())
                 .amount(order.getTotalAmount())
+                .currency(resolveCurrency(request.getCurrency()))
                 .status(OrderStatus.PENDING)
                 .paymentDate(LocalDateTime.now())
                 .build();
@@ -119,7 +130,13 @@ public class OrderServiceImpl implements OrderService {
             log.warn("Failed to send order confirmation email for order {}: {}", savedOrder.getOrderNumber(), e.getMessage());
         }
 
-        return OrderMapper.toResponse(savedOrder);
+        ResponseErrorTemplate orderResponse = orderMapper.toResponse(savedOrder);
+
+        if (isKhqrPaymentMethod(request.getPaymentMethod())) {
+            return pushToBakong(orderResponse);
+        }
+
+        return orderResponse;
     }
 
     @Override
@@ -190,7 +207,7 @@ public class OrderServiceImpl implements OrderService {
 
         java.util.List<OrderResponse> payload = page.getContent()
                 .stream()
-                .map(o -> (OrderResponse) OrderMapper.toResponse(o).object())
+                .map(o -> (OrderResponse) orderMapper.toResponse(o).object())
                 .toList();
 
         OrderPageResponse pageResponse = OrderPageResponse.builder()
@@ -210,7 +227,7 @@ public class OrderServiceImpl implements OrderService {
     public ResponseErrorTemplate getOrderById(Long id) {
         OrderDetail order = orderRepository.findByIdWithFullDetail(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
-        return OrderMapper.toResponse(order);
+        return orderMapper.toResponse(order);
     }
 
     @Override
@@ -218,7 +235,7 @@ public class OrderServiceImpl implements OrderService {
     public ResponseErrorTemplate getOrderByNumber(String orderNumber) {
         OrderDetail order = orderRepository.findByOrderNumberWithFullDetail(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with number: " + orderNumber));
-        return OrderMapper.toResponse(order);
+        return orderMapper.toResponse(order);
     }
 
     @Override
@@ -228,14 +245,14 @@ public class OrderServiceImpl implements OrderService {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
         return orderRepository.findByUserId(userId, pageable)
-                .map(OrderMapper::toResponse);
+                .map(orderMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getAllOrders(Pageable pageable) {
         return orderRepository.findAll(pageable)
-                .map(OrderMapper::toResponse);
+                .map(orderMapper::toResponse);
     }
 
     @Override
@@ -275,10 +292,11 @@ public class OrderServiceImpl implements OrderService {
             log.warn("Failed to send status update email for order {}: {}", updatedOrder.getOrderNumber(), e.getMessage());
         }
 
-        return OrderMapper.toResponse(updatedOrder);
+        return orderMapper.toResponse(updatedOrder);
     }
 
     @Override
+    @Transactional
     public ResponseErrorTemplate cancelOrder(Long id, Long userId) {
         OrderDetail order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
@@ -300,6 +318,21 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderDetail cancelled = orderRepository.save(order);
 
+        orderCancelationRepository.save(OrderCancelation.builder()
+                .orderId(cancelled.getId())
+                .orderNo(cancelled.getOrderNumber())
+                .customerId(cancelled.getUser().getId())
+                .customerName(cancelled.getUser().getFullName())
+                .cancelReason(CancelReason.CUSTOMER_REQUESTED)
+                .cancelStatus(CancelStatus.CANCELED)
+                .cancelSource("CUSTOMER")
+                .cancelDate(LocalDateTime.now())
+                .amount(cancelled.getTotalAmount())
+                .currency("USD")
+                .remark("Cancelled by customer")
+                .createdBy(cancelled.getUser().getUsername())
+                .build());
+
         try {
             emailNotificationService.sendOrderCancellationEmail(
                     cancelled.getUser().getEmail(),
@@ -310,7 +343,7 @@ public class OrderServiceImpl implements OrderService {
             log.warn("Failed to send cancellation email for order {}: {}", cancelled.getOrderNumber(), e.getMessage());
         }
 
-        return OrderMapper.toResponse(cancelled);
+        return orderMapper.toResponse(cancelled);
     }
 
     @Override
@@ -321,7 +354,7 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderDetail order = orderRepository.findByIdAndUserIdWithFullDetail(orderId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId + " for user: " + userId));
-        return OrderMapper.toResponse(order);
+        return orderMapper.toResponse(order);
     }
 
     @Override
@@ -331,25 +364,87 @@ public class OrderServiceImpl implements OrderService {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
         return orderRepository.findOrderDetailHistory(userId, status, startDate, endDate, pageable)
-                .map(OrderMapper::toResponse);
+                .map(orderMapper::toResponse);
     }
 
     private String generateOrderNumber() {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
+
+    /**
+     * Product prices are stored in USD. Default to USD when the client doesn't choose,
+     * and reject anything KHQR can't express.
+     */
+    private String resolveCurrency(String currency) {
+        if (currency == null || currency.isBlank()) {
+            return "USD";
+        }
+        String normalized = currency.trim().toUpperCase();
+        if (!"USD".equals(normalized) && !"KHR".equals(normalized)) {
+            throw new BadRequestException("Unsupported currency: " + currency + ". Only USD or KHR are supported.");
+        }
+        return normalized;
+    }
+
+    /**
+     * Payment amounts are tracked in USD; KHQR needs the amount expressed in whichever
+     * currency the payer chose, so convert to KHR using the configured exchange rate.
+     */
+    private double toBakongAmount(BigDecimal usdAmount, String currency) {
+        if ("KHR".equals(currency)) {
+            return usdAmount.multiply(BigDecimal.valueOf(usdToKhrRate))
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .doubleValue();
+        }
+        return usdAmount.doubleValue();
+    }
+
+    /**
+     * ABA and ACLEDA don't have separate merchant integrations here — a KHQR code generated
+     * via Bakong is the national interbank standard, so any KHQR-compatible bank app
+     * (ABA Mobile, ACLEDA app, etc.) can already scan/open it. Treat them as the same rail.
+     */
+    private boolean isKhqrPaymentMethod(String paymentMethod) {
+        return OrderStatus.BAKONG.equalsIgnoreCase(paymentMethod)
+                || OrderStatus.ABA.equalsIgnoreCase(paymentMethod)
+                || OrderStatus.ACLEDA.equalsIgnoreCase(paymentMethod);
+    }
+
+    private String resolveBakongDeepLink(String qr) {
+        try {
+            KHQRResponse<KHQRDeepLinkData> deepLinkResponse = bakongService.generateDeepLink(qr);
+            if (deepLinkResponse != null
+                    && deepLinkResponse.getKHQRStatus() != null
+                    && deepLinkResponse.getKHQRStatus().getCode() == 0
+                    && deepLinkResponse.getData() != null) {
+                return deepLinkResponse.getData().getShortLink();
+            }
+            log.warn("Bakong deeplink generation returned a non-success status: {}", deepLinkResponse);
+        } catch (Exception e) {
+            log.warn("Failed to generate Bakong deeplink: {}", e.getMessage(), e);
+        }
+        return null;
+    }
     @Override
     public ResponseErrorTemplate createOrderWithBakongPayment(Long userId, OrderRequest request) {
-        if (!"BAKONG".equalsIgnoreCase(request.getPaymentMethod())) {
-            throw new BadRequestException("This method is only for Bakong payments");
+        if (!isKhqrPaymentMethod(request.getPaymentMethod())) {
+            throw new BadRequestException("This method is only for Bakong/ABA/ACLEDA (KHQR) payments");
         }
 
-        ResponseErrorTemplate orderResponse = createOrderFromCart(userId, request);
+        return createOrderFromCart(userId, request);
+    }
+
+    private ResponseErrorTemplate pushToBakong(ResponseErrorTemplate orderResponse) {
         OrderResponse orderData = (OrderResponse) orderResponse.object();
 
         try {
+            OrderDetail pendingOrder = orderRepository.findByOrderNumber(orderData.getOrderNumber())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+            String currency = pendingOrder.getPayment().getCurrency();
+
             BakongRequest bakongRequest = BakongRequest.builder()
-                    .currency("KHR")
-                    .amount(orderData.getTotalAmount().doubleValue())
+                    .currency(currency)
+                    .amount(toBakongAmount(orderData.getTotalAmount(), currency))
                     .merchantName("E_Shop")
                     .merchantCity("PHNOM_PENH")
                     .merchantId("ESHOP001")
@@ -368,38 +463,52 @@ public class OrderServiceImpl implements OrderService {
                     && bakongResponse.getKHQRStatus() != null
                     && bakongResponse.getKHQRStatus().getCode() == 0) {
 
-                OrderDetail order = orderRepository.findByOrderNumber(orderData.getOrderNumber())
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-
-                Payment payment = order.getPayment();
+                Payment payment = pendingOrder.getPayment();
 
                 String md5 = bakongResponse.getData().getMd5(); //  REAL KEY
 
                 payment.setPaymentProvider(OrderStatus.BAKONG);
                 payment.setPaymentProviderResponse(bakongResponse.getData().getQr());
+                payment.setCode(paymentCodeGenerator.generatePaymentCode());
+                payment.setCodeOrder(generateOrderNumber());
 
                 payment.setTransactionId(md5);
 
-                orderRepository.save(order);
+                orderRepository.save(pendingOrder);
 
                 orderData.setPayment(PaymentMapper.toResponse(payment));
                 orderData.setQrCode(bakongResponse.getData().getQr());
-                orderData.setPaymentUrl("bakong://payment?qr=" + bakongResponse.getData().getQr());
+                orderData.setPaymentUrl(resolveBakongDeepLink(bakongResponse.getData().getQr()));
+            } else {
+                log.error("Bakong QR generation returned a non-success status for order {}: {}",
+                        orderData.getOrderNumber(), bakongResponse);
+                return ResponseErrorTemplate.builder()
+                        .message("Order created, but Bakong QR generation failed. Retry payment via POST /api/v1/orders/bakong/initiate?orderId=" + orderData.getId())
+                        .code(orderResponse.code())
+                        .object(orderData)
+                        .build();
             }
 
         } catch (Exception e) {
-            log.error("Failed to generate Bakong QR: {}", e.getMessage());
+            log.error("Failed to generate Bakong QR for order {}: {}", orderData.getOrderNumber(), e.getMessage(), e);
+            return ResponseErrorTemplate.builder()
+                    .message("Order created, but Bakong QR generation failed: " + e.getMessage()
+                            + ". Retry payment via POST /api/v1/orders/bakong/initiate?orderId=" + orderData.getId())
+                    .code(orderResponse.code())
+                    .object(orderData)
+                    .build();
         }
 
         return orderResponse;
     }
     @Override
+    @Transactional
     public ResponseErrorTemplate initiateBakongPayment(Long orderId) {
         OrderDetail order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        if (!OrderStatus.BAKONG.equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
-            throw new BadRequestException("Order does not use Bakong payment method");
+        if (!isKhqrPaymentMethod(order.getPayment().getPaymentMethod())) {
+            throw new BadRequestException("Order does not use a Bakong/ABA/ACLEDA (KHQR) payment method");
         }
 
         if (!OrderStatus.PENDING.equals(order.getStatus())) {
@@ -407,9 +516,11 @@ public class OrderServiceImpl implements OrderService {
         }
 
         try {
+            String currency = order.getPayment().getCurrency();
+
             BakongRequest bakongRequest = BakongRequest.builder()
-                    .currency("KHR")
-                    .amount(order.getTotalAmount().doubleValue())
+                    .currency(currency)
+                    .amount(toBakongAmount(order.getTotalAmount(), currency))
                     .merchantName("E_Shop")
                     .merchantCity("PHNOM PENH")
                     .merchantId("ESHOP001")
@@ -445,7 +556,7 @@ public class OrderServiceImpl implements OrderService {
                                 "orderId", order.getId(),
                                 "orderNumber", order.getOrderNumber(),
                                 "qrCode", bakongResponse.getData().getQr(),
-                                "paymentUrl", "bakong://payment?qr=" +bakongResponse.getData().getQr(),
+                                "paymentUrl", resolveBakongDeepLink(bakongResponse.getData().getQr()),
                                 "amount", order.getTotalAmount(),
                                 "expiresIn", "15 minutes"
                         ))
@@ -459,6 +570,8 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    @Transactional
     public ResponseErrorTemplate verifyBakongPayment(Long orderId, String md5) {
 
         OrderDetail order = orderRepository.findById(orderId)
@@ -466,8 +579,16 @@ public class OrderServiceImpl implements OrderService {
 
         Payment payment = order.getPayment();
 
-        if (!OrderStatus.BAKONG.equalsIgnoreCase(payment.getPaymentMethod())) {
-            throw new BadRequestException("Not a Bakong payment");
+        if (!isKhqrPaymentMethod(payment.getPaymentMethod())) {
+            throw new BadRequestException("Not a Bakong/ABA/ACLEDA (KHQR) payment");
+        }
+
+        // Already confirmed by a previous call — don't re-verify or re-save.
+        if (OrderStatus.CONFIRMED.equals(order.getStatus())) {
+            return ResponseErrorTemplate.builder()
+                    .message("Payment already verified")
+                    .object(Map.of("orderId", orderId, "status", OrderStatus.CONFIRMED))
+                    .build();
         }
 
         String bakongMd5 = payment.getTransactionId();
@@ -513,13 +634,27 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public ResponseErrorTemplate processBakongPaymentCallback(String orderNumber, String transactionId, String status) {
         OrderDetail order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with number: " + orderNumber));
 
-        if (!OrderStatus.BAKONG.equalsIgnoreCase(order.getPayment().getPaymentMethod())) {
-            throw new BadRequestException("Order does not use Bakong payment method");
+        if (!isKhqrPaymentMethod(order.getPayment().getPaymentMethod())) {
+            throw new BadRequestException("Order does not use a Bakong/ABA/ACLEDA (KHQR) payment method");
         }
+
+        // Gateway retried a callback we already applied — don't reprocess (e.g. double stock restock).
+        if (OrderStatus.CONFIRMED.equals(order.getStatus()) || OrderStatus.CANCELLED.equals(order.getStatus())) {
+            return ResponseErrorTemplate.builder()
+                    .message("Callback already processed for this order")
+                    .object(Map.of(
+                            "orderNumber", orderNumber,
+                            "orderStatus", order.getStatus(),
+                            "paymentStatus", order.getPayment().getStatus()
+                    ))
+                    .build();
+        }
+
         Payment payment = order.getPayment();
 
         // Store the real Bakong transaction ID
@@ -557,5 +692,37 @@ public class OrderServiceImpl implements OrderService {
                         "paymentStatus", payment.getStatus()
                 ))
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public ResponseErrorTemplate getOrderStatusSummary() {
+
+        OrderStatusSummaryResponse response =
+                orderRepository.getOrderStatusSummary();
+
+        return ResponseErrorTemplate.success(
+                "Order status summary retrieved successfully",
+                response
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getOrderItemsByOrderId(Long orderId) {
+
+        OrderDetail order = orderRepository.findByIdWithFullDetail(orderId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        List<OrderItemResponse> items = order.getOrderItems()
+                .stream()
+                .map(orderItemMapper::toResponse)
+                .toList();
+
+        return ResponseErrorTemplate.success(
+                "Order items retrieved successfully",
+                items
+        );
     }
 }

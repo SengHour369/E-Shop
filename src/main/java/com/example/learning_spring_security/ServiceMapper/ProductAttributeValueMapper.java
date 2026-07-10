@@ -26,4 +26,3 @@ public class ProductAttributeValueMapper {
         attributeValue.setValue(value);
     }
 }
-

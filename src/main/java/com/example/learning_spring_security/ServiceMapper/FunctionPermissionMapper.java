@@ -18,9 +18,10 @@ public class FunctionPermissionMapper {
                 .build();
     }
 
-    public static FunctionPermission toEntity(String funcCode, String funcName,
+    public static FunctionPermission toEntity(Long funcId, String funcCode, String funcName,
                                               String description, String module) {
         return FunctionPermission.builder()
+                .funcId(funcId)
                 .funcCode(funcCode)
                 .funcName(funcName)
                 .description(description)

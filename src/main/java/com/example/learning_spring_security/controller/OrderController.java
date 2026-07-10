@@ -129,4 +129,21 @@ public class OrderController extends BaseController {
         ResponseErrorTemplate response = orderService.processBakongPaymentCallback(orderNumber, transactionId, status);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ResponseErrorTemplate> getOrderSummary() {
+
+        return ResponseEntity.ok(
+                orderService.getOrderStatusSummary()
+        );
+    }
+
+    @PostMapping("/items")
+    public ResponseEntity<ResponseErrorTemplate> getOrderItems(
+            @RequestParam Long orderId) {
+
+        return ResponseEntity.ok(
+                orderService.getOrderItemsByOrderId(orderId)
+        );
+    }
 }

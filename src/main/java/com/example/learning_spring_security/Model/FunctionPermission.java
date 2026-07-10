@@ -13,7 +13,6 @@ import lombok.*;
 public class FunctionPermission extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "func_id")
     private Long funcId;
 

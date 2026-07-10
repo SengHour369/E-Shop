@@ -1,12 +1,8 @@
 package com.example.learning_spring_security.utils;
 
 import com.example.learning_spring_security.Constant.Constant;
-import com.example.learning_spring_security.Model.FunctionPermission;
-import com.example.learning_spring_security.Model.Role;
-import com.example.learning_spring_security.Model.User;
-import com.example.learning_spring_security.Repository.FunctionPermissionRepository;
-import com.example.learning_spring_security.Repository.RoleRepository;
-import com.example.learning_spring_security.Repository.UserRepository;
+import com.example.learning_spring_security.Model.*;
+import com.example.learning_spring_security.Repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,19 +20,25 @@ public class DataInitializer implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final GroupRepository groupRepository;
     private final FunctionPermissionRepository functionPermissionRepository;
 
+    private final GroupPermissionRepository groupPermissionRepository;
+    private final UserGroupRepository userGroupRepository;
     @Override
     public void run(String... args) {
 
         List<String> roles = List.of("ADMIN", "MANAGER", "STAFF", "SALES");
-
         roles.forEach(this::createRoleIfNotFound);
-
+        seedGroups();
         createAdminIfNotFound();
         seedFunctionPermissions();
-    }
 
+        seedAdminGroupPermissions();
+
+        createAdminIfNotFound();
+    }
     private void createRoleIfNotFound(String roleName) {
         if (!roleRepository.existsByName(roleName)) {
             Role role = Role.builder()
@@ -78,10 +80,53 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
     }
+    private void seedGroups() {
+
+        List<Group> groups = List.of(
+
+                buildGroup("ADM", "Administrator",
+                        "System administrator group"),
+
+                buildGroup("MNG", "Manager",
+                        "Manager group"),
+
+                buildGroup("STF", "Staff",
+                        "Staff group"),
+
+                buildGroup("SAL", "Sales",
+                        "Sales group")
+        );
+
+        groups.forEach(group -> {
+            if (!groupRepository.existsByGroupCode(group.getGroupCode())) {
+                groupRepository.save(group);
+                System.out.println("Group seeded: " + group.getGroupCode());
+            }
+        });
+    }
+    private Group buildGroup(
+            String groupCode,
+            String name,
+            String description) {
+
+        Group group = Group.builder()
+                .groupCode(groupCode)
+                .name(name)
+                .description(description)
+                .status(Constant.ACT)
+                .isActive(true)
+                .isDelete(false)
+                .build();
+
+        group.setCreatedAt(LocalDateTime.now());
+
+        return group;
+    }
 
     private FunctionPermission buildFunction(Long funcId, String funcCode, String funcName,
                                              String description, String module) {
         FunctionPermission fn = FunctionPermission.builder()
+                .funcId(funcId)
                 .funcCode(funcCode)
                 .funcName(funcName)
                 .description(description)
@@ -118,6 +163,71 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("Admin user created with ID: " + savedAdmin.getId() + ", email: " + savedAdmin.getEmail());
         } else {
             System.out.println("Admin user already exists");
+        }
+    }
+    private void seedAdminGroupPermissions() {
+
+        Group adminGroup = groupRepository
+                .findByGroupCode("ADM")
+                .orElseThrow(() ->
+                        new RuntimeException("Administrator group not found"));
+
+        List<FunctionPermission> functions =
+                functionPermissionRepository.findAll();
+
+        for (FunctionPermission function : functions) {
+
+            boolean exists =
+                    groupPermissionRepository.existsByGroupIdAndFuncId(
+                            adminGroup.getId(),
+                            function.getFuncId());
+
+            if (!exists) {
+
+                GroupPermission permission = GroupPermission.builder()
+                        .groupId(adminGroup.getId())
+                        .funcId(function.getFuncId())
+                        .isActive(true)
+                        .isDelete(false)
+                        .build();
+
+                permission.setCreatedAt(LocalDateTime.now());
+
+                groupPermissionRepository.save(permission);
+
+                System.out.println(
+                        "Assigned "
+                                + function.getFuncCode()
+                                + " -> ADM");
+            }
+        }
+    }
+    private void assignAdminToGroup(User admin) {
+
+        Group adminGroup = groupRepository
+                .findByGroupCode("ADM")
+                .orElseThrow(() ->
+                        new RuntimeException("Administrator group not found"));
+
+        boolean exists =
+                userGroupRepository.existsByUserIdAndGroupId(
+                        admin.getId(),
+                        adminGroup.getId());
+
+        if (!exists) {
+
+            UserGroup userGroup = UserGroup.builder()
+                    .userId(admin.getId())
+                    .groupId(adminGroup.getId())
+                    .isActive(true)
+                    .isDelete(false)
+                    .build();
+
+            userGroup.setCreatedAt(LocalDateTime.now());
+
+            userGroupRepository.save(userGroup);
+
+            System.out.println("Admin assigned to ADM group.");
         }
     }
 }

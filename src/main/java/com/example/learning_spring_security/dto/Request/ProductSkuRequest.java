@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * ProductSkuRequest DTO
- * 
+ *
  * Related classes in this package:
  * - {@link ProductAttributeRequest} - For creating new attributes inline
  * - {@link SkuAttributeAssignmentRequest} - Lightweight attribute assignment
@@ -27,19 +27,19 @@ public class ProductSkuRequest {
     Long productSkuId;
 
     private String description;
-    
+
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
     private BigDecimal price;
-    
+
 
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;
-    
+
     @JsonProperty("low_stock_threshold")
     private Integer lowStockThreshold = 5;
-    
+
     @JsonProperty("is_default")
     private Boolean isDefault = false;
     private Boolean OperatorProductAttribute = false;
@@ -50,7 +50,7 @@ public class ProductSkuRequest {
     /**
      * Optional: Create new attributes inline during SKU creation
      * These will be created and assigned to this SKU
-     * 
+     *
      * @see ProductAttributeRequest
      */
     @JsonProperty("product_attributes")

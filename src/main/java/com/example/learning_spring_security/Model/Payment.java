@@ -20,6 +20,7 @@ public class Payment  extends BaseEntity{
 
     @OneToOne(mappedBy = "payment")
     private OrderDetail orderDetail;
+    private String code;
 
     @Column(name = "payment_method", nullable = false)
     private String paymentMethod; // CREDIT_CARD, PAYPAL, COD, etc.
@@ -29,6 +30,11 @@ public class Payment  extends BaseEntity{
 
     @Column(nullable = false)
     private BigDecimal amount;
+
+    @Column(name = "currency")
+    private String currency;
+
+    private String codeOrder;
 
     private String status; // PENDING, COMPLETED, FAILED, REFUNDED
 

@@ -15,6 +15,9 @@ public interface FunctionPermissionRepository extends JpaRepository<FunctionPerm
 
     Optional<FunctionPermission> findByFuncCodeAndIsDeleteFalse(String funcCode);
 
+    @Query("SELECT COALESCE(MAX(f.funcId), 0) FROM FunctionPermission f")
+    Long findMaxFuncId();
+
     @Query("SELECT COUNT(f) > 0 FROM FunctionPermission f WHERE f.funcCode = :funcCode AND f.isDelete = false")
     boolean existsByFuncCode(@Param("funcCode") String funcCode);
 

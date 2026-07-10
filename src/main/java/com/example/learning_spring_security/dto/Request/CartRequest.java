@@ -14,7 +14,7 @@ public class CartRequest {
 
     @NotNull(message = "Product  ID is required")
     @JsonProperty("product_id")
-    private Long productId;
+    private Long productSkuId;
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Long quantity;

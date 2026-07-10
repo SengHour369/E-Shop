@@ -38,7 +38,8 @@ public class ProductController extends BaseController {
             @RequestParam(required = false, defaultValue = "true") Boolean is_active,
             @RequestParam Long sub_category_id,
             @RequestParam(required = false) String skus,
-            @RequestParam(value = "files") List<MultipartFile> files) throws Exception {
+            @RequestParam(value = "files") List<MultipartFile> files,
+            @RequestParam(value = "sku_images", required = false) List<MultipartFile> sku_images) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProductRequest request = new ProductRequest();
         request.setName(name);
@@ -54,7 +55,7 @@ public class ProductController extends BaseController {
             request.setSkus(skuList);
         }
 
-        ResponseErrorTemplate response = productService.createProduct(request, files);
+        ResponseErrorTemplate response = productService.createProduct(request, files, sku_images);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -67,7 +68,8 @@ public class ProductController extends BaseController {
             @RequestParam(required = false, defaultValue = "true") Boolean is_active,
             @RequestParam Long sub_category_id,
             @RequestParam(required = false) String skus,
-            @RequestParam(value = "files") List<MultipartFile> files) throws Exception {
+            @RequestParam(value = "files") List<MultipartFile> files,
+            @RequestParam(value = "sku_images", required = false) List<MultipartFile> sku_images) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProductRequest request = new ProductRequest();
         request.setName(name);
@@ -82,7 +84,7 @@ public class ProductController extends BaseController {
 
             request.setSkus(skuList);
         }
-        ResponseErrorTemplate response = productService.updateProduct(id, request, files);
+        ResponseErrorTemplate response = productService.updateProduct(id, request, files, sku_images);
         return ResponseEntity.ok(response);
     }
 
@@ -91,7 +93,7 @@ public class ProductController extends BaseController {
     public ResponseEntity<ResponseErrorTemplate> updateProductJson(
             @RequestParam Long id,
             @Valid @RequestBody ProductRequest request) throws Exception {
-        ResponseErrorTemplate response = productService.updateProduct(id, request, null);
+        ResponseErrorTemplate response = productService.updateProduct(id, request, null, null);
         return ResponseEntity.ok(response);
     }
 

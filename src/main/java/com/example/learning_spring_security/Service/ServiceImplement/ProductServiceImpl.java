@@ -43,7 +43,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files) throws Exception {
+    public ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception {
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
 
@@ -65,9 +65,10 @@ public class ProductServiceImpl implements ProductService {
         Product savedProduct = productRepository.save(product);
 
         if (request.getSkus() != null && !request.getSkus().isEmpty()) {
-
-            for(ProductSkuRequest productSkuRequest : request.getSkus()) {
-                this.productSkuService.createSku(savedProduct.getId(), productSkuRequest);
+            List<ProductSkuRequest> skus = request.getSkus();
+            for (int i = 0; i < skus.size(); i++) {
+                MultipartFile skuImage = skuImages != null && i < skuImages.size() ? skuImages.get(i) : null;
+                this.productSkuService.createSku(savedProduct.getId(), skus.get(i), skuImage);
             }
         }
 
@@ -93,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
 
         // ── Single-item lookups (no pagination needed) ──────────────
         if (type == 5) { // by ID — returns single product
-            Product product = productRepository.findById(Long.parseLong(value))
+            Product product = productRepository.findByIdNotDeleted(Long.parseLong(value))
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + value));
             return ResponseErrorTemplate.success("Product retrieved successfully",
                     productMapper.toProductResponse(product));
@@ -110,7 +111,7 @@ public class ProductServiceImpl implements ProductService {
         String successMsg;
 
         if (type == null || type == 0 || value == null || value.isBlank()) {
-            page = productRepository.findAll(pageable);
+            page = productRepository.findAllNotDeleted(pageable);
             successMsg = "Retrieved all products";
         } else if (type == 1) { // by name (fuzzy)
             page = productRepository.searchProducts(value, pageable);
@@ -125,7 +126,7 @@ public class ProductServiceImpl implements ProductService {
             page = productRepository.findByIsActiveTrue(pageable);
             successMsg = "Retrieved active products";
         } else {
-            page = productRepository.findAll(pageable);
+            page = productRepository.findAllNotDeleted(pageable);
             successMsg = "Retrieved all products";
         }
 
@@ -149,7 +150,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getProductById(Long id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         return productMapper.toResponse(product);
     }
@@ -165,7 +166,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
+        return productRepository.findAllNotDeleted(pageable)
                 .map(productMapper::toResponse);
     }
 
@@ -202,7 +203,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files) throws Exception {
+    public ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
@@ -230,11 +231,14 @@ public class ProductServiceImpl implements ProductService {
         Product updatedProduct = productRepository.save(product);
 
         if (request.getSkus() != null && !request.getSkus().isEmpty()) {
-            for (ProductSkuRequest skuRequest : request.getSkus()) {
+            List<ProductSkuRequest> skus = request.getSkus();
+            for (int i = 0; i < skus.size(); i++) {
+                ProductSkuRequest skuRequest = skus.get(i);
+                MultipartFile skuImage = skuImages != null && i < skuImages.size() ? skuImages.get(i) : null;
                 if (skuRequest.getProductSkuId() != null) {
-                    productSkuService.updateSku(skuRequest.getProductSkuId(), skuRequest);
+                    productSkuService.updateSku(skuRequest.getProductSkuId(), skuRequest, skuImage);
                 } else {
-                    productSkuService.createSku(updatedProduct.getId(), skuRequest);
+                    productSkuService.createSku(updatedProduct.getId(), skuRequest, skuImage);
                 }
             }
         }
@@ -245,10 +249,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Product not found with id: " + id);
-        }
-        productRepository.deleteById(id);
+        Product product = productRepository.findByIdNotDeleted(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        product.setDeleted(true);
+        productRepository.save(product);
     }
 
     @Override

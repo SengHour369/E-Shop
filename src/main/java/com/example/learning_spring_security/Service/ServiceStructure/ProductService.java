@@ -13,8 +13,8 @@ public interface ProductService {
     ResponseErrorTemplate getProducts(GetProductRequest request);
     ResponseErrorTemplate getProductById(Long id);
     ResponseErrorTemplate getProductWithSkus(Long id);
-    ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files) throws Exception;
-    ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files) throws Exception;
+    ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception;
+    ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception;
     ResponseErrorTemplate updateProductStatus(Long id, Boolean isActive);
     void deleteProduct(Long id);
 

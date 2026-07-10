@@ -26,4 +26,5 @@ public class PaymentRequest {
 
     @JsonProperty("payment_provider")
     private String paymentProvider;
+
 }

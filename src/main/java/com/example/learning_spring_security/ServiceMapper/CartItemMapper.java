@@ -5,12 +5,15 @@ import com.example.learning_spring_security.Model.CartItem;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.dto.Response.CartItemResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 @Service
+@RequiredArgsConstructor
 public class CartItemMapper {
 
+    private final ProductMapper productMapper;
     public static CartItem toEntity(Cart cart, ProductSku productSku, Long quantity) {
         BigDecimal totalPrice = productSku.getPrice().multiply(BigDecimal.valueOf(quantity));
 
@@ -22,15 +25,15 @@ public class CartItemMapper {
                 .build();
     }
 
-    public static CartItemResponse toResponse(CartItem cartItem) {
+    public  CartItemResponse toResponse(CartItem cartItem) {
         ProductSku productSku = cartItem.getProductSku();
         Product  product = productSku.getProduct();
-        ProductSkuMapper productSkuMapper = new ProductSkuMapper();
+
         return CartItemResponse.builder()
                 .id(cartItem.getId())
                 .image(String.valueOf(product.getImage()))
                 .name(product.getName())
-                .productSku(ProductSkuMapper.toResponse(cartItem.getProductSku()))
+                .productSku(productMapper.toSkuResponse(cartItem.getProductSku()))
                 .quantity(cartItem.getQuantity())
                 .totalPrice(cartItem.getTotalPrice())
                 .build();

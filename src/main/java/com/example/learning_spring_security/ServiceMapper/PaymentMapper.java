@@ -1,10 +1,9 @@
 package com.example.learning_spring_security.ServiceMapper;
 
-import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.Payment;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
-import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
+
 
 import java.time.LocalDateTime;
 
@@ -27,8 +26,11 @@ public class PaymentMapper {
                 .paymentMethod(payment.getPaymentMethod())
                 .paymentDate(payment.getPaymentDate())
                 .amount(payment.getAmount())
+                .currency(payment.getCurrency())
                 .status(payment.getStatus())
                 .transactionId(payment.getTransactionId())
+                .code(payment.getCode())
+                .codeOrder(payment.getCodeOrder())
                 .paymentProvider(payment.getPaymentProvider());
 
         if (payment.getOrderDetail() != null) {

@@ -15,4 +15,5 @@ public class SubCategoryResponse {
     private String image;
     @JsonProperty("category_name")
     private String categoryName;
+    private Boolean Status;
 }

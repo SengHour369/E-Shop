@@ -67,7 +67,7 @@ public class ProductAttributeValueController extends BaseController {
             @PathVariable Long id,
             @Valid @RequestBody ProductAttributeValueRequest request) {
         ProductAttributeValueResponse response = productAttributeValueService.updateAttributeValue(
-                id, 
+                id,
                 request);
         return ResponseEntity.ok(response);
     }
@@ -101,4 +101,3 @@ public class ProductAttributeValueController extends BaseController {
         return ResponseEntity.ok(response);
     }
 }
-

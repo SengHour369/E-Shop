@@ -25,6 +25,7 @@ public class Product  extends BaseEntity{
     private List<Image> image = new ArrayList<>();
     @Column(name = "is_active")
     private Boolean isActive = true;
+    private Boolean deleted = false;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id")
     private SubCategory subCategory;

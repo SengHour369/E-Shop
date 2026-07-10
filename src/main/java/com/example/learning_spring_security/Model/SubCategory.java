@@ -4,7 +4,6 @@ package com.example.learning_spring_security.Model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,4 +30,8 @@ public class SubCategory extends BaseEntity{
 
     @OneToMany(mappedBy = "subCategory", fetch = FetchType.LAZY)
     private List<Product> products = new ArrayList<>();
+
+    private Boolean status;
+
+    private Boolean deleted = false;
 }

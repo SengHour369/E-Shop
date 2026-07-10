@@ -1,6 +1,8 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
+import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
+import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.ProductAttribute;
 import com.example.learning_spring_security.Model.ProductSku;
@@ -8,6 +10,7 @@ import com.example.learning_spring_security.Repository.ProductAttributeRepositor
 import com.example.learning_spring_security.Repository.ProductRepository;
 import com.example.learning_spring_security.Repository.ProductSkuRepository;
 
+import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
 import com.example.learning_spring_security.Service.ServiceStructure.ProductSkuService;
 import com.example.learning_spring_security.ServiceMapper.ProductMapper;
 import com.example.learning_spring_security.ServiceMapper.ProductSkuMapper;
@@ -20,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,10 +38,11 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     private final InventoryServiceImpl inventoryServiceImpl;
     private final com.example.learning_spring_security.Repository.InventoryRepository inventoryRepository;
     private final SkuGeneratorUtil skuGeneratorUtil;
+    private final ImageService imageService;
 
     @Override
     @Transactional
-    public ProductSku createSku(Long productId, ProductSkuRequest request) {
+    public ProductSku createSku(Long productId, ProductSkuRequest request, MultipartFile image) {
 
         // 2. Fetch the parent product
         Product product = productRepository.findById(productId)
@@ -48,16 +53,22 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
         // 4. Generate SKU if not provided and ensure uniqueness
 
-            String base = skuGeneratorUtil.generateSku(product, request);
+        String base = skuGeneratorUtil.generateSku(product, request);
 
-           sku.setSku(base);
+        sku.setSku(base);
+
+        if (image != null && !image.isEmpty()) {
+            sku.setImage(uploadSkuImage(image));
+        }
         // 5. Save
 
         ProductSku saved = productSkuRepository.save(sku);
-        inventoryServiceImpl.createInventory(saved.getId(), request.getInventory());
+        if (request.getOperatorProductAttribute() != null && request.getOperatorProductAttribute()) {
+            inventoryServiceImpl.createInventory(saved.getId(), request.getInventory());
 
-        for (ProductAttributeRequest productAttributeRequest : request.getProductAttributes()) {
-            this.productAttributeServiceImpl.createAttribute(saved.getId(), productAttributeRequest);
+            for (ProductAttributeRequest productAttributeRequest : request.getProductAttributes()) {
+                this.productAttributeServiceImpl.createAttribute(saved.getId(), productAttributeRequest);
+            }
         }
         log.info("Created SKU: {} for product ID: {}", saved.getSku(), productId);
         return saved;
@@ -65,7 +76,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     @Override
     @Transactional
-    public ProductSku updateSku(Long skuId, ProductSkuRequest request) {
+    public ProductSku updateSku(Long skuId, ProductSkuRequest request, MultipartFile image) {
         ProductSku existing = productSkuRepository.findById(skuId)
                 .orElseThrow(() -> new ResourceNotFoundException("SKU not found with id: " + skuId));
 
@@ -77,6 +88,11 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         String base = skuGeneratorUtil.generateSku(product, request);
 
         existing.setSku(base);
+
+        if (image != null && !image.isEmpty()) {
+            existing.setImage(uploadSkuImage(image));
+        }
+
         ProductSku updated = productSkuRepository.save(existing);
 
         if (request.getProductAttributes() != null && !request.getProductAttributes().isEmpty()) {
@@ -128,12 +144,20 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         return productSkuRepository.findByProductId(productId);
     }
 
+    private Image uploadSkuImage(MultipartFile file) {
+        Image uploaded = imageService.uploadImage(file);
+        if (uploaded == null) {
+            throw new BadRequestException("Failed to upload SKU image");
+        }
+        return uploaded;
+    }
+
     /**
      * Generate a base SKU using the product name and provided attribute values.
      * Now delegated to {@link SkuGeneratorUtil} for dynamic and extensible generation.
-     * 
+     *
      * Example: Product name "iPhone 15", Color "Blue", Storage "128GB" -> IPH15-BLU-128
-     * 
+     *
      * @deprecated Use {@link SkuGeneratorUtil#generateSku(Product, ProductSkuRequest)} instead
      */
     @Deprecated

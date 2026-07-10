@@ -5,6 +5,8 @@ import com.example.learning_spring_security.dto.Request.OrderRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 
 public interface OrderService {
@@ -27,4 +29,8 @@ public interface OrderService {
     ResponseErrorTemplate initiateBakongPayment(Long orderId);
     ResponseErrorTemplate verifyBakongPayment(Long orderId, String transactionId);
     ResponseErrorTemplate processBakongPaymentCallback(String orderNumber, String transactionId, String status);
+
+    @Transactional(readOnly = true)
+    ResponseErrorTemplate getOrderStatusSummary();
+    ResponseErrorTemplate getOrderItemsByOrderId(Long orderId);
 }
