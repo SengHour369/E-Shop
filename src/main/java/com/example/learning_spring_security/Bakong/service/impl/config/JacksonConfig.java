@@ -9,11 +9,11 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class JacksonConfig {
 
-    @Bean
-    @Primary
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
+//    @Bean
+//    @Primary
+//    public ObjectMapper objectMapper() {
+//        return new ObjectMapper();
+//    }
 
     @Bean
     public RestClient restClient() {
