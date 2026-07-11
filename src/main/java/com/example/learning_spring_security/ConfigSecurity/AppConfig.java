@@ -64,4 +64,5 @@ public class AppConfig implements WebMvcConfigurer {
     public RestClient restClient() {
         return RestClient.create();
     }
+
 }
