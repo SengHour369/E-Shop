@@ -3,14 +3,8 @@ package com.example.learning_spring_security.Service.ServiceImplement;
 import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Exception.CustomMessageException;
 import com.example.learning_spring_security.JWT.JwtService;
-import com.example.learning_spring_security.Model.RefreshToken;
-import com.example.learning_spring_security.Model.PasswordResetToken;
-import com.example.learning_spring_security.Model.Role;
-import com.example.learning_spring_security.Model.User;
-import com.example.learning_spring_security.Repository.PasswordResetTokenRepository;
-import com.example.learning_spring_security.Repository.RefreshTokenRepository;
-import com.example.learning_spring_security.Repository.RoleRepository;
-import com.example.learning_spring_security.Repository.UserRepository;
+import com.example.learning_spring_security.Model.*;
+import com.example.learning_spring_security.Repository.*;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import com.example.learning_spring_security.Service.ServiceStructure.AuthService;
 import com.example.learning_spring_security.dto.Request.Login;
@@ -35,10 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,46 +45,80 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final GroupRepository groupRepository;
+    private final UserGroupRepository userGroupRepository;
+
+    private static final String DEFAULT_ROLE_NAME = "USER";
+    private static final String DEFAULT_GROUP_CODE = "USER_GROUP";
 
     @Override
     @Transactional
     public ResponseErrorTemplate create(Register userRequest) {
         log.info("Starting registration for user: {}", userRequest.username());
         this.userRequestValidation(userRequest);
-        List<String> role = List.of("USER");
-        List<Role> roles = roleRepository.findAllByNameIn(role);
+        // 1. Validate request
+        this.userRequestValidation(userRequest);
 
+        // 2. Ensure default role exists
+        Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME)
+                .orElseGet(() -> {
+                    Role role = new Role();
+                    role.setName(DEFAULT_ROLE_NAME);
+                    return roleRepository.save(role);
+                });
+
+        // 3. Build user entity
         User user = User.builder()
                 .username(userRequest.username())
                 .password(passwordEncoder.encode(userRequest.password()))
                 .fullName(userRequest.fullName())
                 .email(userRequest.email())
-                .roles(roles)
+                .roles(Collections.singletonList(defaultRole))
                 .phone(userRequest.phone())
                 .attempt(0)
                 .status(Constant.ACT)
                 .deleted(false)
                 .enabled(false)
                 .build();
-
         user.setCreatedAt(LocalDateTime.now());
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
 
+        // 4. Save user
         User savedUser = userRepository.save(user);
         log.info("User registered successfully: {}", savedUser.getUsername());
 
-        // Email is sent after save so a mail failure does not roll back the registration
+        // 5. Assign to default group
+        Group defaultGroup = groupRepository.findByGroupCode(DEFAULT_GROUP_CODE)
+                .orElseGet(() -> {
+                    Group group = new Group();
+                    group.setGroupCode(DEFAULT_GROUP_CODE);
+                    group.setName("Default User Group");
+                    group.setIsActive(true);
+                    group.setIsDelete(false);
+                    return groupRepository.save(group);
+                });
+
+        UserGroup userGroup = UserGroup.builder()
+                .userId(savedUser.getId())
+                .groupId(defaultGroup.getId())
+                .isActive(true)
+                .isDelete(false)
+                .build();
+        userGroupRepository.save(userGroup);
+
+        // 6. Send verification email
         sendVerificationEmail(savedUser);
 
+        // 7. Build response
         RegisterResponse registerResponse = userMapper(savedUser);
-
         return ResponseErrorTemplate.builder()
                 .message("User registered successfully. Please check your email to verify your account.")
                 .code(Constant.SUC_CODE)
                 .object(registerResponse)
                 .build();
     }
+
 
     /**
      * @param username

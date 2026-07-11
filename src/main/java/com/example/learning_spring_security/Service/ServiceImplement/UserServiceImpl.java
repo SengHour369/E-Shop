@@ -39,7 +39,7 @@ import java.util.Optional;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class  UserServiceImpl implements UserService {
     final UserRepository userRepository;
     final RoleRepository roleRepository;
     final GroupRepository groupRepository;
