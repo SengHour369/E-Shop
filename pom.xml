@@ -162,6 +162,18 @@
             <version>1.0.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>kh.gov.nbc.bakong_khqr</groupId>
+            <artifactId>sdk-java</artifactId>
+            <version>1.0.0.17</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-runtime</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
     </dependencies>
 
     <build>
