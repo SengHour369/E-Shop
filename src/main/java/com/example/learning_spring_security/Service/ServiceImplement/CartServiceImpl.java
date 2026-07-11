@@ -45,31 +45,30 @@ public class CartServiceImpl implements CartService {
         if (cart.getCartItems() == null) {
             cart.setCartItems(new ArrayList<>());
         }
-        Optional<Product> product = this.productRepository.findById(request.getProductSkuId());
-        if (product.isEmpty()) {
-            log.info("Product not found for product id: {}", request.getProductSkuId());
-            throw new ResourceNotFoundException("Product not found for product id: " + request.getProductSkuId());
 
-        }
-        Optional<ProductSku> productSku = productSkuRepository.findById(product.get().getId());
-        if (productSku.isEmpty()) {
-            log.info("Product sku not found for product id: {}", productSku.get().getId());
-            throw new ResourceNotFoundException("Product sku not found for product id: " + productSku.get().getId());
-        }
-
+           ProductSku productSku = productSkuRepository.findById(request.getProductSkuId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Product SKU not found: " + request.getProductSkuId()));
 
         Optional<CartItem> existingItem = cart.getCartItems().stream()
-                .filter(item -> item.getProductSku().getId().equals(productSku.get()))
+                .filter(item ->
+                        item.getProductSku().getId().equals(productSku.getId()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
-
             CartItem item = existingItem.get();
-            Long newQuantity = item.getQuantity() + request.getQuantity();
-            item.setQuantity(newQuantity);
-            item.setTotalPrice(productSku.get().getPrice().multiply(BigDecimal.valueOf(newQuantity)));
+
+            long quantity = item.getQuantity() + request.getQuantity();
+
+            item.setQuantity(quantity);
+            item.setTotalPrice(
+                    productSku.getPrice().multiply(BigDecimal.valueOf(quantity)));
         } else {
-            CartItem newItem = CartItemMapper.toEntity(cart, productSku.get(), request.getQuantity());
+
+            CartItem newItem =
+                    CartItemMapper.toEntity(cart, productSku, request.getQuantity());
+
             cart.getCartItems().add(newItem);
         }
 
