@@ -9,11 +9,9 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -31,7 +29,6 @@ public class AppConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    @Primary
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -59,10 +56,4 @@ public class AppConfig implements WebMvcConfigurer {
     public Validator validator() {
         return Validation.buildDefaultValidatorFactory().getValidator();
     }
-
-    @Bean
-    public RestClient restClient() {
-        return RestClient.create();
-    }
-
 }
