@@ -28,14 +28,12 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
     @PostMapping(value = "/create")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a user with role(s) and permission group(s) assigned (admin only)")
     public ResponseEntity<ResponseErrorTemplate> createUser(@RequestBody AdminCreateUserRequest request) {
         ResponseErrorTemplate responseErrorTemplate = this.userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseErrorTemplate);
     }
     @PostMapping(value = "/id", consumes = MediaType.ALL_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Change user status for admin")
     public ResponseEntity<ResponseErrorTemplate> updateUserStatus(@RequestParam Long id,
                                                                   @RequestParam String status) {
@@ -51,14 +49,12 @@ public class UserController {
     }
     @GetMapping(value = "/id/user")
     @Operation(summary = " Output By Id user ")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> getUserByIdAllUser(@RequestParam Long id) {
         ResponseErrorTemplate responseErrorTemplate =  this.userService.getUserById(id);
         return ResponseEntity.ok(responseErrorTemplate);
     }
     @PostMapping("/All")
     @Operation(summary = " Output all admin")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ResponseErrorTemplate>> getAllUser() {
         List<ResponseErrorTemplate> responseErrorTemplate =  this.userService.getAllUsers();
         return ResponseEntity.ok(responseErrorTemplate);
@@ -72,14 +68,12 @@ public class UserController {
     }
     @PostMapping(value = "/id/delete")
     @Operation(summary ="delete by admin")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> deleteUser(@RequestParam Long id) {
         this.userService.deleteUser(id);
         return null;
     }
     @PostMapping("/count")
     @Operation(summary = "count user by admin")
-    @PreAuthorize("hasRole('ADMIN')")
     public  ResponseEntity<Long> getAllCountUser() {
         Long responseErrorTemplate = this.userService.countUsers();
         return ResponseEntity.ok(responseErrorTemplate);

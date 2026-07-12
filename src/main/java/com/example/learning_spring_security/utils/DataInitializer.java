@@ -4,6 +4,7 @@ import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.*;
 import com.example.learning_spring_security.Repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
@@ -249,9 +251,6 @@ public class DataInitializer implements CommandLineRunner {
 
         // Grant create and view permissions for categories, subcategories, products
         List<Long> funcIds = List.of(
-                1001L,  // CATEGORY_CREATE
-                1002L,  // SUBCATEGORY_CREATE
-                1003L,  // PRODUCT_CREATE
                 1004L,  // PRODUCT_VIEW
                 1007L,  // CATEGORY_VIEW
                 1008L   // SUBCATEGORY_VIEW
@@ -288,257 +287,43 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    // ---------- Seed API permissions ----------
+    // ---------- Modified seedApiPermissions with helper ----------
     private void seedApiPermissions() {
-        // ── CART ──────────────────────────────────────────────────────────
-        String cartAddPattern = "/api/v1/cart/user/**/items";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", cartAddPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(cartAddPattern)
-                    .funcId(501L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + cartAddPattern + " -> funcId=501");
-        }
+        // Use helper to reduce duplication
+        createApiPermissionIfNotExists("POST", "/api/v1/cart/user/**/items", 501L);
+        createApiPermissionIfNotExists("GET", "/api/v1/cart/user/**", 502L);
+        createApiPermissionIfNotExists("POST", "/api/v1/admin/users", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/user/from-cart/bakong", 701L);
+        createApiPermissionIfNotExists("GET", "/api/v1/orders/**", 702L);
+        createApiPermissionIfNotExists("POST", "/api/v1/bakong/get-qr-image", 801L);
+        createApiPermissionIfNotExists("POST", "/api/v1/addresses/user/**", 901L);
+        createApiPermissionIfNotExists("GET", "/api/v1/addresses/user/**", 902L);
+        createApiPermissionIfNotExists("PUT", "/api/v1/addresses/**", 903L);
+        createApiPermissionIfNotExists("DELETE", "/api/v1/addresses/**", 904L);
+        createApiPermissionIfNotExists("POST", "/api/v1/categories/**", 1001L);
+        createApiPermissionIfNotExists("POST", "/api/v1/subcategories/**", 1002L);
+        createApiPermissionIfNotExists("POST", "/api/v1/products/**", 1003L);
+        createApiPermissionIfNotExists("GET", "/api/v1/products/**", 1004L);
+        createApiPermissionIfNotExists("POST", "/api/v1/products/get/all", 1004L);
+        createApiPermissionIfNotExists("PUT", "/api/v1/products/**", 1005L);
+        createApiPermissionIfNotExists("DELETE", "/api/v1/products/**", 1006L);
+        createApiPermissionIfNotExists("GET", "/api/v1/categories/**", 1007L);
+        createApiPermissionIfNotExists("POST", "/api/v1/categories/get/all", 1007L);
+        createApiPermissionIfNotExists("POST", "/api/v1/categories/id/get/", 1007L);
+        createApiPermissionIfNotExists("GET", "/api/v1/subcategories/**", 1008L);
+        createApiPermissionIfNotExists("POST", "/api/v1/subcategories/get/all", 1008L);
+    }
 
-        String cartViewPattern = "/api/v1/cart/user/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("GET", cartViewPattern)) {
+    private void createApiPermissionIfNotExists(String method, String api, Long funcId) {
+        if (!apiPermissionRepository.existsByMethodAndApi(method, api)) {
             ApiPermission p = ApiPermission.builder()
-                    .method("GET")
-                    .api(cartViewPattern)
-                    .funcId(502L)
+                    .method(method)
+                    .api(api)
+                    .funcId(funcId)
                     .isActive(true)
                     .build();
             apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: GET " + cartViewPattern + " -> funcId=502");
-        }
-
-        // ── ADMIN USER MANAGEMENT ──────────────────────────────────────
-        String adminCreatePattern = "/api/v1/admin/users";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", adminCreatePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(adminCreatePattern)
-                    .funcId(601L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + adminCreatePattern + " -> funcId=601");
-        }
-
-        // ── ORDER ────────────────────────────────────────────────────────
-        String orderCreatePattern = "/api/v1/orders/user/from-cart/bakong";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", orderCreatePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(orderCreatePattern)
-                    .funcId(701L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + orderCreatePattern + " -> funcId=701");
-        }
-
-        String orderViewPattern = "/api/v1/orders/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("GET", orderViewPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("GET")
-                    .api(orderViewPattern)
-                    .funcId(702L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: GET " + orderViewPattern + " -> funcId=702");
-        }
-
-        // ── BAKONG ──────────────────────────────────────────────────────
-        String bakongPattern = "/api/v1/bakong/get-qr-image";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", bakongPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(bakongPattern)
-                    .funcId(801L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + bakongPattern + " -> funcId=801");
-        }
-
-        // ── ADDRESS ──────────────────────────────────────────────────────
-        String addressCreatePattern = "/api/v1/addresses/user/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", addressCreatePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(addressCreatePattern)
-                    .funcId(901L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + addressCreatePattern + " -> funcId=901");
-        }
-
-        String addressViewPattern = "/api/v1/addresses/user/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("GET", addressViewPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("GET")
-                    .api(addressViewPattern)
-                    .funcId(902L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: GET " + addressViewPattern + " -> funcId=902");
-        }
-
-        String addressUpdatePattern = "/api/v1/addresses/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("PUT", addressUpdatePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("PUT")
-                    .api(addressUpdatePattern)
-                    .funcId(903L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: PUT " + addressUpdatePattern + " -> funcId=903");
-        }
-
-        String addressDeletePattern = "/api/v1/addresses/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("DELETE", addressDeletePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("DELETE")
-                    .api(addressDeletePattern)
-                    .funcId(904L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: DELETE " + addressDeletePattern + " -> funcId=904");
-        }
-
-        // ── PRODUCT / CATEGORY / SUBCATEGORY ────────────────────────────
-        // Create (POST) – assigned to ADM, SAL, and USR groups
-        String categoryCreatePattern = "/api/v1/categories/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", categoryCreatePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(categoryCreatePattern)
-                    .funcId(1001L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + categoryCreatePattern + " -> funcId=1001");
-        }
-
-        String subcategoryCreatePattern = "/api/v1/subcategories/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", subcategoryCreatePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(subcategoryCreatePattern)
-                    .funcId(1002L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + subcategoryCreatePattern + " -> funcId=1002");
-        }
-
-        String productCreatePattern = "/api/v1/products/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", productCreatePattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(productCreatePattern)
-                    .funcId(1003L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + productCreatePattern + " -> funcId=1003");
-        }
-
-        // ── VIEW ENDPOINTS (GET + POST queries) ──────────────────────────
-        // Product View (funcId=1004)
-        String productGetPattern = "/api/v1/products/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("GET", productGetPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("GET")
-                    .api(productGetPattern)
-                    .funcId(1004L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: GET " + productGetPattern + " -> funcId=1004");
-        }
-        // POST /api/v1/products/get/all
-        String productListPattern = "/api/v1/products/get/all";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", productListPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(productListPattern)
-                    .funcId(1004L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + productListPattern + " -> funcId=1004");
-        }
-
-        // Category View (funcId=1007)
-        String categoryGetPattern = "/api/v1/categories/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("GET", categoryGetPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("GET")
-                    .api(categoryGetPattern)
-                    .funcId(1007L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: GET " + categoryGetPattern + " -> funcId=1007");
-        }
-        // POST /api/v1/categories/get/all
-        String categoryListPattern = "/api/v1/categories/get/all";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", categoryListPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(categoryListPattern)
-                    .funcId(1007L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + categoryListPattern + " -> funcId=1007");
-        }
-        // POST /api/v1/categories/id/get/
-        String categoryByIdPattern = "/api/v1/categories/id/get/";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", categoryByIdPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(categoryByIdPattern)
-                    .funcId(1007L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + categoryByIdPattern + " -> funcId=1007");
-        }
-
-        // Subcategory View (funcId=1008)
-        String subcategoryGetPattern = "/api/v1/subcategories/**";
-        if (!apiPermissionRepository.existsByMethodAndApi("GET", subcategoryGetPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("GET")
-                    .api(subcategoryGetPattern)
-                    .funcId(1008L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: GET " + subcategoryGetPattern + " -> funcId=1008");
-        }
-        // POST /api/v1/subcategories/get/all
-        String subcategoryListPattern = "/api/v1/subcategories/get/all";
-        if (!apiPermissionRepository.existsByMethodAndApi("POST", subcategoryListPattern)) {
-            ApiPermission p = ApiPermission.builder()
-                    .method("POST")
-                    .api(subcategoryListPattern)
-                    .funcId(1008L)
-                    .isActive(true)
-                    .build();
-            apiPermissionRepository.save(p);
-            System.out.println(" Seeded API Permission: POST " + subcategoryListPattern + " -> funcId=1008");
+            log.info("Seeded API Permission: {} {} -> funcId={}", method, api, funcId);
         }
     }
 }

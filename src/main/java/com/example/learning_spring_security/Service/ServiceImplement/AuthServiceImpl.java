@@ -49,11 +49,8 @@ public class AuthServiceImpl implements AuthService {
 
     // Constants
     private static final String DEFAULT_ROLE_NAME = "USER";
-    private static final String DEFAULT_GROUP_CODE = "USR";
+    private static final String DEFAULT_GROUP_CODE = "USER";
     private static final List<String> DEFAULT_PERMISSION_CODES = Arrays.asList(
-            "USER_PERM_CREATE",
-            "USER_PERM_UPDATE",
-            "USER_PERM_DELETE",
             "CART_ADD_ITEM",
             "ORDER_CREATE",
             "BAKONG_QR",
@@ -363,7 +360,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseGet(() -> {
                     Group group = Group.builder()
                             .groupCode(DEFAULT_GROUP_CODE)
-                            .name("Sales Group")
+                            .name("User Group")
                             .description("Default group for new users")
                             .status(Constant.ACT)
                             .isActive(true)

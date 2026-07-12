@@ -31,7 +31,6 @@ public class CategoryIconController extends BaseController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> uploadIcon(
             @RequestParam String name,
             @RequestParam("file") MultipartFile file) {
@@ -40,7 +39,6 @@ public class CategoryIconController extends BaseController {
     }
 
     @DeleteMapping("/delete")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteIcon(@RequestParam Long id) {
         categoryIconService.deleteIcon(id);
         return ResponseEntity.noContent().build();

@@ -31,7 +31,6 @@ public class ProductController extends BaseController {
     }
 
     @PostMapping(value = "/create/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> createProduct(
             @RequestParam String name,
             @RequestParam(required = false) String description,
@@ -60,7 +59,6 @@ public class ProductController extends BaseController {
     }
 
     @PutMapping(value = "/update/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> updateProduct(
             @RequestParam Long id,
             @RequestParam String name,
@@ -89,7 +87,6 @@ public class ProductController extends BaseController {
     }
 
     @PutMapping(value = "/update/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> updateProductJson(
             @RequestParam Long id,
             @Valid @RequestBody ProductRequest request) throws Exception {
@@ -98,7 +95,6 @@ public class ProductController extends BaseController {
     }
 
     @PostMapping("/update/status/")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> updateProductStatus(
             @RequestParam Long id,
             @RequestParam Boolean isActive) {
@@ -107,7 +103,6 @@ public class ProductController extends BaseController {
     }
 
     @PostMapping("/delete/")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseErrorTemplate> deleteProduct(@RequestParam Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ResponseErrorTemplate.success("Product deleted successfully", null));
