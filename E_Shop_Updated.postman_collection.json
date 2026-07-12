@@ -144,7 +144,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"username\": \"jane\",\n  \"password\": \"S3curePassword!\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"0123456789\",\n  \"full_name\": \"Jane Doe\"\n}"
+              "raw": "{\n "username": "jane",\n "password": "S3curePassword!",\n "email": "jane@example.com",\n "phone": "0123456789",\n "full_name": "Jane Doe"\n}"
             },
             "url": "{{baseUrl}}/api/v1/public/accounts/register",
             "description": "RegisterController - creates a user with role USER only."
@@ -170,7 +170,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"username\": \"jane\",\n  \"password\": \"S3curePassword!\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"0123456789\",\n  \"full_name\": \"Jane Doe\"\n}"
+              "raw": "{\n "username": "jane",\n "password": "S3curePassword!",\n "email": "jane@example.com",\n "phone": "0123456789",\n "full_name": "Jane Doe"\n}"
             },
             "url": "{{baseUrl}}/api/v1/public/register",
             "description": "LoginController - alternate/duplicate registration path, same underlying AuthServiceImpl.create()."
@@ -216,7 +216,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"CriteriaValue\": \"jane@example.com\",\n  \"Password\": \"S3curePassword!\"\n}"
+              "raw": "{\n "CriteriaValue": "jane@example.com",\n "Password": "S3curePassword!"\n}"
             },
             "url": "{{baseUrl}}/api/v1/public/email/username/login",
             "description": "Login is a Java record with capitalized component names (CriteriaValue, Password) - Jackson expects these exact JSON keys."
@@ -242,11 +242,11 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            },
-            "url": "{{baseUrl}}/api/v1/public/refresh"
-          }
+              "raw": "{\n "refreshToken": "{{refreshToken}}"\n}"
         },
+        "url": "{{baseUrl}}/api/v1/public/refresh"
+        }
+      },
         {
           "name": "Logout",
           "request": {
@@ -267,11 +267,11 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            },
-            "url": "{{baseUrl}}/api/v1/public/logout"
-          }
+              "raw": "{\n "refreshToken": "{{refreshToken}}"\n}"
         },
+        "url": "{{baseUrl}}/api/v1/public/logout"
+        }
+      },
         {
           "name": "Forgot Password",
           "request": {
@@ -292,7 +292,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"email\": \"jane@example.com\"\n}"
+              "raw": "{\n "email": "jane@example.com"\n}"
             },
             "url": "{{baseUrl}}/api/v1/public/forgot-password"
           }
@@ -317,7 +317,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"token\": \"<reset-token-from-email>\",\n  \"newPassword\": \"NewS3curePassword!\"\n}"
+              "raw": "{\n "token": "<reset-token-from-email>",\n "newPassword": "NewS3curePassword!"\n}"
             },
             "url": "{{baseUrl}}/api/v1/public/reset-password"
           }
@@ -354,7 +354,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"username\": \"jane\",\n  \"password\": \"S3curePassword!\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"0123456789\",\n  \"full_name\": \"Jane Doe\",\n  \"role_ids\": [{{roleId}}],\n  \"group_ids\": [{{groupId}}],\n  \"permission_ids\": [{{permissionId}}]\n}"
+              "raw": "{\n "username": "jane",\n "password": "S3curePassword!",\n "email": "jane@example.com",\n "phone": "0123456789",\n "full_name": "Jane Doe",\n "role_ids": [{{roleId}}],\n "group_ids": [{{groupId}}],\n "permission_ids": [{{permissionId}}]\n}"
             },
             "url": "{{baseUrl}}/api/v1/user/create",
             "description": "ADMIN only."
@@ -418,10 +418,10 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"email\": \"jane@example.com\",\n  \"password\": \"NewPassword123!\",\n  \"fullName\": \"Jane Doe\",\n  \"phoneNumber\": \"0123456789\",\n  \"birthdate\": \"1995-01-01\"\n}"
+              "raw": "{\n "email": "jane@example.com",\n "password": "NewPassword123!",\n "fullName": "Jane Doe",\n "phoneNumber": "0123456789",\n "birthdate": "1995-01-01"\n}"
             },
             "url": "{{baseUrl}}/api/v1/user/id/update?id={{userId}}",
-            "description": "KNOWN BUG: the controller method uses @PathVariable Long id but the mapping is \"/id/update\" with no {id} placeholder, so this currently fails at request time with MissingPathVariableException regardless of query/path params used. Left as-is here to document current behavior."
+            "description": "KNOWN BUG: the controller method uses @PathVariable Long id but the mapping is "/id/update" with no {id} placeholder, so this currently fails at request time with MissingPathVariableException regardless of query/path params used. Left as-is here to document current behavior."
           }
         },
         {
@@ -483,7 +483,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"address_line1\": \"123 Main St\",\n  \"city\": \"Phnom Penh\",\n  \"zip_code\": \"12000\",\n  \"country\": \"Cambodia\",\n  \"is_default\": true\n}"
+              "raw": "{\n "address_line1": "123 Main St",\n "city": "Phnom Penh",\n "zip_code": "12000",\n "country": "Cambodia",\n "is_default": true\n}"
             },
             "url": "{{baseUrl}}/api/v1/addresses/user/{{userId}}"
           }
@@ -505,7 +505,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"address_line1\": \"456 Main St\",\n  \"city\": \"Phnom Penh\",\n  \"zip_code\": \"12000\",\n  \"country\": \"Cambodia\",\n  \"is_default\": false\n}"
+              "raw": "{\n "address_line1": "456 Main St",\n "city": "Phnom Penh",\n "zip_code": "12000",\n "country": "Cambodia",\n "is_default": false\n}"
             },
             "url": "{{baseUrl}}/api/v1/addresses/{{addressId}}/user/{{userId}}"
           }
@@ -553,7 +553,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"product_id\": {{productId}},\n  \"quantity\": 1\n}"
+              "raw": "{\n "product_id": {{productId}},\n "quantity": 1\n}"
             },
             "url": "{{baseUrl}}/api/v1/cart/user/id/items?userId={{userId}}"
           }
@@ -575,7 +575,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"product_id\": {{productId}},\n  \"quantity\": 2\n}"
+              "raw": "{\n "product_id": {{productId}},\n "quantity": 2\n}"
             },
             "url": "{{baseUrl}}/api/v1/cart/user/id/items/cartItemId?userId={{userId}}&cartItemId={{cartItemId}}"
           }
@@ -644,7 +644,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Electronic devices\",\n  \"icon_id\": {{iconId}}\n}"
+              "raw": "{\n "name": "Electronics",\n "description": "Electronic devices",\n "icon_id": {{iconId}}\n}"
             },
             "url": "{{baseUrl}}/api/v1/categories/create/"
           }
@@ -666,7 +666,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"name\": \"Electronics & Gadgets\",\n  \"description\": \"Electronic devices and accessories\",\n  \"icon_id\": {{iconId}}\n}"
+              "raw": "{\n "name": "Electronics & Gadgets",\n "description": "Electronic devices and accessories",\n "icon_id": {{iconId}}\n}"
             },
             "url": "{{baseUrl}}/api/v1/categories/id/update?id={{categoryId}}"
           }
@@ -773,7 +773,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/subcategories/get/all"
           }
@@ -879,7 +879,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/products/get/all",
             "description": "criteria_type: 0/null=all, 1=name(fuzzy), 2=subCategoryId, 3=categoryId, 4=active only, 5=by id, 6=by id with SKUs."
@@ -915,7 +915,7 @@
                 {
                   "key": "skus",
                   "type": "text",
-                  "value": "[{\"description\":\"Black - 128GB\",\"price\":999.99,\"quantity\":50,\"is_default\":true,\"low_stock_threshold\":5,\"inventory\":{\"quantity\":50,\"warehouse_location\":\"Warehouse A\"},\"product_attributes\":[{\"name\":\"Color\",\"attributes\":[{\"value\":\"Black\"}]},{\"name\":\"Storage\",\"attributes\":[{\"value\":\"128GB\"}]}]}]"
+                  "value": "[{"description":"Black - 128GB","price":999.99,"quantity":50,"is_default","low_stock_threshold":5,"inventory":{"quantity":50,"warehouse_location":"Warehouse A"},"product_attributes":[{"name":"Color","attributes":[{"value":"Black"}]},{"name":"Storage","attributes":[{"value":"128GB"}]}]}]"
                 },
                 {
                   "key": "files",
@@ -969,7 +969,7 @@
                 {
                   "key": "skus",
                   "type": "text",
-                  "value": "[{\"productSkuId\":{{skuId}},\"description\":\"Black - 128GB\",\"price\":1099.99,\"quantity\":40,\"is_default\":true,\"inventory\":{\"quantity\":40,\"warehouse_location\":\"Warehouse A\"}}]"
+                  "value": "[{"productSkuId":{{skuId}},"description":"Black - 128GB","price":1099.99,"quantity":40,"is_default","inventory":{"quantity":40,"warehouse_location":"Warehouse A"}}]"
                 },
                 {
                   "key": "files",
@@ -1005,7 +1005,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"name\": \"iPhone 15 Pro\",\n  \"description\": \"Updated description\",\n  \"is_active\": true,\n  \"sub_category_id\": {{subCategoryId}},\n  \"skus\": [\n    {\n      \"productSkuId\": {{skuId}},\n      \"description\": \"Black - 128GB\",\n      \"price\": 1099.99,\n      \"quantity\": 40,\n      \"is_default\": true,\n      \"inventory\": { \"quantity\": 40, \"warehouse_location\": \"Warehouse A\" }\n    }\n  ]\n}"
+              "raw": "{\n "name": "iPhone 15 Pro",\n "description": "Updated description",\n "is_active": true,\n "sub_category_id": {{subCategoryId}},\n "skus": [\n {\n "productSkuId": {{skuId}},\n "description": "Black - 128GB",\n "price": 1099.99,\n "quantity": 40,\n "is_default": true,\n "inventory": { "quantity": 40, "warehouse_location": "Warehouse A" }\n }\n ]\n}"
             },
             "url": "{{baseUrl}}/api/v1/products/update/?id={{productId}}",
             "description": "ADMIN only. Same route as the multipart update, dispatched by Content-Type. Does not touch images."
@@ -1049,7 +1049,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"quantity\": 50,\n  \"warehouse_location\": \"Warehouse A\"\n}"
+              "raw": "{\n "quantity": 50,\n "warehouse_location": "Warehouse A"\n}"
             },
             "url": "{{baseUrl}}/api/v1/inventory?SkuId={{skuId}}"
           }
@@ -1106,7 +1106,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"quantity\": 20\n}"
+              "raw": "{\n "quantity": 20\n}"
             },
             "url": "{{baseUrl}}/api/v1/inventory/restock?id={{inventoryId}}"
           }
@@ -1128,7 +1128,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"quantity\": 35,\n  \"warehouse_location\": \"Warehouse B\"\n}"
+              "raw": "{\n "quantity": 35,\n "warehouse_location": "Warehouse B"\n}"
             },
             "url": "{{baseUrl}}/api/v1/inventory/exact?id={{inventoryId}}"
           }
@@ -1169,7 +1169,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/orders/get/all"
           }
@@ -1226,7 +1226,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"address_id\": {{addressId}},\n  \"payment_method\": \"CASH_ON_DELIVERY\"\n}"
+              "raw": "{\n "address_id": {{addressId}},\n "payment_method": "CASH_ON_DELIVERY"\n}"
             },
             "url": "{{baseUrl}}/api/v1/orders/user/from-cart?userId={{userId}}"
           }
@@ -1262,7 +1262,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"address_id\": {{addressId}},\n  \"payment_method\": \"BAKONG\"\n}"
+              "raw": "{\n "address_id": {{addressId}},\n "payment_method": "BAKONG"\n}"
             },
             "url": "{{baseUrl}}/api/v1/orders/user/from-cart/bakong?userId={{userId}}"
           }
@@ -1321,7 +1321,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"page\": 1,\n  \"size\": 10,\n  \"return_id\": null,\n  \"order_no\": null,\n  \"customer_name\": null,\n  \"product_name\": null,\n  \"return_type\": null,\n  \"status\": null,\n  \"from_date\": null,\n  \"to_date\": null\n}"
+              "raw": "{\n "page": 1,\n "size": 10,\n "return_id": null,\n "order_no": null,\n "customer_name": null,\n "product_name": null,\n "return_type": null,\n "status": null,\n "from_date": null,\n "to_date": null\n}"
             },
             "url": "{{baseUrl}}/admin/returns/list"
           }
@@ -1350,7 +1350,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"remark\": \"Approved by admin\"\n}"
+              "raw": "{\n "remark": "Approved by admin"\n}"
             },
             "url": "{{baseUrl}}/admin/returns/{{returnId}}/approve"
           }
@@ -1372,7 +1372,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"remark\": \"Rejected by admin\"\n}"
+              "raw": "{\n "remark": "Rejected by admin"\n}"
             },
             "url": "{{baseUrl}}/admin/returns/{{returnId}}/reject"
           }
@@ -1406,7 +1406,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"page\": 1,\n  \"size\": 10,\n  \"orderNo\": null,\n  \"customerName\": null,\n  \"cancelReason\": null,\n  \"cancelStatus\": null,\n  \"fromCancelDate\": null,\n  \"toCancelDate\": null,\n  \"minAmount\": null,\n  \"maxAmount\": null\n}"
+              "raw": "{\n "page": 1,\n "size": 10,\n "orderNo": null,\n "customerName": null,\n "cancelReason": null,\n "cancelStatus": null,\n "fromCancelDate": null,\n "toCancelDate": null,\n "minAmount": null,\n "maxAmount": null\n}"
             },
             "url": "{{baseUrl}}/admin/cancelations/list"
           }
@@ -1454,7 +1454,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/payments/get/all"
           }
@@ -1503,7 +1503,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"order_id\": {{orderId}},\n  \"customer_id\": {{userId}},\n  \"payment_method\": \"RAZORPAY\",\n  \"masked_account\": \"**** 4242\",\n  \"amount\": 19.99,\n  \"currency\": \"USD\",\n  \"remarks\": \"Checkout payment\"\n}"
+              "raw": "{\n "order_id": {{orderId}},\n "customer_id": {{userId}},\n "payment_method": "RAZORPAY",\n "masked_account": "**** 4242",\n "amount": 19.99,\n "currency": "USD",\n "remarks": "Checkout payment"\n}"
             }
           }
         },
@@ -1525,7 +1525,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             }
           }
         },
@@ -1582,7 +1582,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"new_status\": \"SUCCESS\",\n  \"changed_by\": \"SYSTEM\",\n  \"reason\": \"Gateway confirmed payment\"\n}"
+              "raw": "{\n "new_status": "SUCCESS",\n "changed_by": "SYSTEM",\n "reason": "Gateway confirmed payment"\n}"
             }
           }
         }
@@ -1681,7 +1681,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"value\": \"Dark Red\"\n}"
+              "raw": "{\n "value": "Dark Red"\n}"
             },
             "url": "{{baseUrl}}/api/v1/attribute-values/{{attributeValueId}}",
             "description": "ADMIN only."
@@ -1717,7 +1717,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/functions/get/all"
           }
@@ -1773,7 +1773,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/group-permissions/get/all"
           }
@@ -1829,7 +1829,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/user-permissions/get/all"
           }
@@ -1885,7 +1885,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"criteria_type\": 0,\n  \"criteria_value\": null,\n  \"page\": 1,\n  \"size\": 10\n}"
+              "raw": "{\n "criteria_type": 0,\n "criteria_value": null,\n "page": 1,\n "size": 10\n}"
             },
             "url": "{{baseUrl}}/api/v1/user-groups/get/all"
           }
@@ -1943,7 +1943,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"amount\": 10.5,\n  \"currency\": \"USD\",\n  \"billNumber\": \"ORD-00001\"\n}"
+              "raw": "{\n "amount": 10.5,\n "currency": "USD",\n "billNumber": "ORD-00001"\n}"
             },
             "url": "{{baseUrl}}/api/v1/bakong/get-qr-image",
             "description": "Returns image/png bytes on success, or a 400 with a plain-text error message on failure."
@@ -1966,7 +1966,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"md5\": \"d41d8cd98f00b204e9800998ecf8427e\"\n}"
+              "raw": "{\n "md5": "d41d8cd98f00b204e9800998ecf8427e"\n}"
             },
             "url": "{{baseUrl}}/api/v1/bakong/check-transaction"
           }
@@ -1993,7 +1993,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"transactionId\": \"TXN-00001\",\n  \"md5\": \"d41d8cd98f00b204e9800998ecf8427e\",\n  \"billNumber\": \"ORD-00001\",\n  \"amount\": 10.5\n}"
+              "raw": "{\n "transactionId": "TXN-00001",\n "md5": "d41d8cd98f00b204e9800998ecf8427e",\n "billNumber": "ORD-00001",\n "amount": 10.5\n}"
             },
             "url": "{{baseUrl}}/api/webhooks/bakong/payment",
             "description": "This is meant to be called by Bakong's servers, but the endpoint requires authenticated() and there is no signature/HMAC verification of the payload - treat as unfinished/insecure, not production-ready. Field names are placeholders pending Bakong's real payload docs."
@@ -2003,3 +2003,5 @@
     }
   ]
 }
+
+

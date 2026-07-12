@@ -45,21 +45,30 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+
+    // === NEW REPOSITORIES ===
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
+    private final FunctionPermissionRepository functionPermissionRepository;
+    private final UserPermissionRepository userPermissionRepository;
 
+    // === CONSTANTS ===
     private static final String DEFAULT_ROLE_NAME = "USER";
-    private static final String DEFAULT_GROUP_CODE = "USER_GROUP";
+    private static final String DEFAULT_GROUP_CODE = "SAL";   // Existing seeded group
+
+    private static final List<String> DEFAULT_PERMISSION_CODES = Arrays.asList(
+            "USER_PERM_CREATE",
+            "USER_PERM_UPDATE",
+            "USER_PERM_DELETE"
+    );
 
     @Override
     @Transactional
     public ResponseErrorTemplate create(Register userRequest) {
         log.info("Starting registration for user: {}", userRequest.username());
-        this.userRequestValidation(userRequest);
-        // 1. Validate request
-        this.userRequestValidation(userRequest);
+        this.userRequestValidation(userRequest);   // only once
 
-        // 2. Ensure default role exists
+        // 1. Ensure default role exists (will create if missing)
         Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME)
                 .orElseGet(() -> {
                     Role role = new Role();
@@ -67,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
                     return roleRepository.save(role);
                 });
 
-        // 3. Build user entity
+        // 2. Build user entity
         User user = User.builder()
                 .username(userRequest.username())
                 .password(passwordEncoder.encode(userRequest.password()))
@@ -84,20 +93,15 @@ public class AuthServiceImpl implements AuthService {
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
 
-        // 4. Save user
+        // 3. Save user
         User savedUser = userRepository.save(user);
         log.info("User registered successfully: {}", savedUser.getUsername());
 
-        // 5. Assign to default group
+        // 4. Assign to existing group (fail if not found – means your seed didn't run)
         Group defaultGroup = groupRepository.findByGroupCode(DEFAULT_GROUP_CODE)
-                .orElseGet(() -> {
-                    Group group = new Group();
-                    group.setGroupCode(DEFAULT_GROUP_CODE);
-                    group.setName("Default User Group");
-                    group.setIsActive(true);
-                    group.setIsDelete(false);
-                    return groupRepository.save(group);
-                });
+                .orElseThrow(() -> new CustomMessageException(
+                        "Default group '" + DEFAULT_GROUP_CODE + "' not found – run DataInitializer first",
+                        String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())));
 
         UserGroup userGroup = UserGroup.builder()
                 .userId(savedUser.getId())
@@ -106,6 +110,24 @@ public class AuthServiceImpl implements AuthService {
                 .isDelete(false)
                 .build();
         userGroupRepository.save(userGroup);
+        log.info("Assigned user {} to group {}", savedUser.getUsername(), DEFAULT_GROUP_CODE);
+
+        // 5. Assign default permissions (fetched from existing seed)
+        Optional<FunctionPermission> permissions = functionPermissionRepository.findByFuncCodeAndIsDeleteFalse(String.valueOf(DEFAULT_PERMISSION_CODES));
+        if (!permissions.isEmpty()) {
+            List<UserPermission> userPermissions = permissions.stream()
+                    .map(fp -> UserPermission.builder()
+                            .userId(savedUser.getId())
+                            .funcId(fp.getFuncId())
+                            .isActive(true)
+                            .isDelete(false)
+                            .build())
+                    .collect(Collectors.toList());
+            userPermissionRepository.saveAll(userPermissions);
+            log.info("Assigned default permissions to user: {}", savedUser.getUsername());
+        } else {
+            log.warn("Default permissions not found in DB – check DataInitializer");
+        }
 
         // 6. Send verification email
         sendVerificationEmail(savedUser);
@@ -118,7 +140,6 @@ public class AuthServiceImpl implements AuthService {
                 .object(registerResponse)
                 .build();
     }
-
 
     /**
      * @param username

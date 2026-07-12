@@ -94,7 +94,9 @@ public class DataInitializer implements CommandLineRunner {
                         "Staff group"),
 
                 buildGroup("SAL", "Sales",
-                        "Sales group")
+                        "Sales group"),
+                buildGroup("USR",
+                        "Default User Group", "Default group for regular users")
         );
 
         groups.forEach(group -> {

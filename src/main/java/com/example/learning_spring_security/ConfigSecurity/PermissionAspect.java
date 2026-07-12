@@ -4,7 +4,6 @@ import com.example.learning_spring_security.Exception.ExceptionService.ResourceN
 import com.example.learning_spring_security.Model.User;
 import com.example.learning_spring_security.Repository.GroupPermissionRepository;
 import com.example.learning_spring_security.Repository.UserRepository;
-import com.example.learning_spring_security.Security.RequirePermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;

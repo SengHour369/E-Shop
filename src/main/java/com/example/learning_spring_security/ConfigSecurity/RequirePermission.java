@@ -1,4 +1,4 @@
-package com.example.learning_spring_security.Security;
+package com.example.learning_spring_security.ConfigSecurity;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
