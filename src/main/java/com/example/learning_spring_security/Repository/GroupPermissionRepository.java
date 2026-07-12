@@ -34,4 +34,7 @@ public interface GroupPermissionRepository extends JpaRepository<GroupPermission
 
     @Query("SELECT p FROM GroupPermission p WHERE p.groupId = :groupId AND p.isActive = :isActive AND p.isDelete = false")
     Page<GroupPermission> findByGroupIdAndIsActive(@Param("groupId") Long groupId, @Param("isActive") Boolean isActive, Pageable pageable);
+
+
+
 }

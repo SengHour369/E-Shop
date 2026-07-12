@@ -5,9 +5,8 @@ import com.example.learning_spring_security.Exception.ExceptionService.ResourceN
 import com.example.learning_spring_security.Exception.ExceptionService.UnauthorizedException;
 import com.example.learning_spring_security.Model.ApiPermission;
 import com.example.learning_spring_security.Model.User;
-import com.example.learning_spring_security.Repository.ApiPermissionRepository;
-import com.example.learning_spring_security.Repository.UserPermissionRepository;
-import com.example.learning_spring_security.Repository.UserRepository;
+import com.example.learning_spring_security.Model.UserGroup;
+import com.example.learning_spring_security.Repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +18,8 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Arrays;
+import java.util.List;
 
-/**
- * Resolves the funcId required for the current request from {@link ApiPermission}
- * (method + URL pattern) instead of a hardcoded @RequirePermission annotation, then
- * checks it against the authenticated user's {@code UserPermission} rows.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -33,9 +28,10 @@ public class ApiPermissionInterceptor implements HandlerInterceptor {
     private final ApiPermissionRepository apiPermissionRepository;
     private final UserPermissionRepository userPermissionRepository;
     private final UserRepository userRepository;
+    private final UserGroupRepository userGroupRepository;          // inject
+    private final GroupPermissionRepository groupPermissionRepository; // inject
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-
     private static final String SUPER_ADMIN_AUTHORITY = "ADMIN";
 
     @Override
@@ -54,8 +50,6 @@ public class ApiPermissionInterceptor implements HandlerInterceptor {
 
         String username = authentication.getName();
 
-        // Super admin bypasses funcId resolution entirely — works even on endpoints
-        // that have no api_permissions row yet (e.g. newly added modules).
         if (isSuperAdmin(authentication)) {
             log.info("Permission bypass: super admin '{}' [{} {}]", username, method, path);
             return true;
@@ -72,9 +66,27 @@ public class ApiPermissionInterceptor implements HandlerInterceptor {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
-        boolean hasPermission = userPermissionRepository.existsByUserIdAndFuncIdAndIsActive(user.getId(), funcId, true);
+        // ======== ពិនិត្យសិទ្ធិ (ទាំង User Permission និង Group Permission) ========
+        boolean hasPermission = false;
+
+        // ១. ពិនិត្យសិទ្ធិផ្ទាល់របស់អ្នកប្រើ
+        boolean hasUserPermission = userPermissionRepository.existsByUserIdAndFuncIdAndIsActive(user.getId(), funcId, true);
+        if (hasUserPermission) {
+            hasPermission = true;
+        } else {
+            // ២. ពិនិត្យសិទ្ធិពីក្រុមរបស់អ្នកប្រើ
+            List<UserGroup> userGroups = userGroupRepository.findByUserId(user.getId());
+            for (UserGroup ug : userGroups) {
+                boolean hasGroupPermission = groupPermissionRepository.existsByGroupIdAndFuncIdAndIsActive(ug.getGroupId(), funcId, true);
+                if (hasGroupPermission) {
+                    hasPermission = true;
+                    break;
+                }
+            }
+        }
+
         if (!hasPermission) {
-            log.warn("Access denied: user '{}' (id={}) does not have permission for funcId={} [{} {}]",
+            log.warn("Access denied: user '{}' (id={}) does not have direct or group permission for funcId={} [{} {}]",
                     username, user.getId(), funcId, method, path);
             throw new ForbiddenException("You do not have permission to perform this action");
         }

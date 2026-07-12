@@ -13,4 +13,5 @@ public interface ApiPermissionRepository extends JpaRepository<ApiPermission, Lo
 
     @Query("SELECT a FROM ApiPermission a WHERE a.method = :method AND a.isActive = true AND a.isDelete = false")
     List<ApiPermission> findActiveByMethod(@Param("method") String method);
+    boolean existsByMethodAndApi(String method, String api);
 }

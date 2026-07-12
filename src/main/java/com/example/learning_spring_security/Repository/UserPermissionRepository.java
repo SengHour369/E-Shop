@@ -15,8 +15,8 @@ public interface UserPermissionRepository extends JpaRepository<UserPermission, 
     @Query("SELECT COUNT(p) > 0 FROM UserPermission p WHERE p.userId = :userId AND p.funcId = :funcId AND p.isDelete = false")
     boolean existsByUserIdAndFuncId(@Param("userId") Long userId, @Param("funcId") Long funcId);
 
-    @Query("SELECT COUNT(p) > 0 FROM UserPermission p WHERE p.userId = :userId AND p.funcId = :funcId AND p.isActive = :isActive AND p.isDelete = false")
-    boolean existsByUserIdAndFuncIdAndIsActive(@Param("userId") Long userId, @Param("funcId") Long funcId, @Param("isActive") Boolean isActive);
+//    @Query("SELECT COUNT(p) > 0 FROM UserPermission p WHERE p.userId = :userId AND p.funcId = :funcId AND p.isActive = :isActive AND p.isDelete = false")
+//    boolean existsByUserIdAndFuncIdAndIsActive(@Param("userId") Long userId, @Param("funcId") Long funcId, @Param("isActive") Boolean isActive);
 
     // All methods below filter by isDelete = false
     @Query("SELECT p FROM UserPermission p WHERE p.isDelete = false")
@@ -36,4 +36,7 @@ public interface UserPermissionRepository extends JpaRepository<UserPermission, 
 
     @Query("SELECT p FROM UserPermission p WHERE p.userId = :userId AND p.isActive = :isActive AND p.isDelete = false")
     Page<UserPermission> findByUserIdAndIsActive(@Param("userId") Long userId, @Param("isActive") Boolean isActive, Pageable pageable);
+    // សម្រាប់ពិនិត្យសិទ្ធិផ្ទាល់របស់អ្នកប្រើ
+    boolean existsByUserIdAndFuncIdAndIsActive(Long userId, Long funcId, boolean isActive);
+
 }

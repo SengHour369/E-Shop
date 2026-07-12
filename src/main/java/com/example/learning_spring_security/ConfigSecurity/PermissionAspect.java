@@ -2,8 +2,8 @@ package com.example.learning_spring_security.ConfigSecurity;
 
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.User;
-import com.example.learning_spring_security.Repository.GroupPermissionRepository;
-import com.example.learning_spring_security.Repository.UserRepository;
+import com.example.learning_spring_security.Model.UserGroup;
+import com.example.learning_spring_security.Repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;
@@ -14,13 +14,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Slf4j
 @Aspect
 @Component
 @RequiredArgsConstructor
 public class PermissionAspect {
 
-    private final GroupPermissionRepository userPermissionRepository;
+    private final UserPermissionRepository userPermissionRepository;
+    private final UserGroupRepository userGroupRepository;
+    private final GroupPermissionRepository groupPermissionRepository;
     private final UserRepository userRepository;
 
     @Before("@annotation(requirePermission)")
@@ -36,7 +40,24 @@ public class PermissionAspect {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
-        boolean hasPermission = userPermissionRepository.existsByGroupIdAndFuncIdAndIsActive(user.getId(), funcId, true);
+
+        boolean hasPermission = false;
+
+
+        boolean hasUserPermission = userPermissionRepository.existsByUserIdAndFuncIdAndIsActive(user.getId(), funcId, true);
+        if (hasUserPermission) {
+            hasPermission = true;
+        } else {
+
+            List<UserGroup> userGroups = userGroupRepository.findByUserId(user.getId());
+            for (UserGroup ug : userGroups) {
+                boolean hasGroupPermission = groupPermissionRepository.existsByGroupIdAndFuncIdAndIsActive(ug.getGroupId(), funcId, true);
+                if (hasGroupPermission) {
+                    hasPermission = true;
+                    break;
+                }
+            }
+        }
 
         if (!hasPermission) {
             log.warn("Access denied: user '{}' (id={}) does not have permission for funcId={}",

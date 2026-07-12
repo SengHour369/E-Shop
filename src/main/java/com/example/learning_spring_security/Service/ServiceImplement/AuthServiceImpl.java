@@ -7,15 +7,10 @@ import com.example.learning_spring_security.Model.*;
 import com.example.learning_spring_security.Repository.*;
 import com.example.learning_spring_security.Security.UserDetailsImpl;
 import com.example.learning_spring_security.Service.ServiceStructure.AuthService;
-import com.example.learning_spring_security.dto.Request.Login;
-import com.example.learning_spring_security.dto.Request.RefreshTokenRequest;
-import com.example.learning_spring_security.dto.Request.ForgotPasswordRequest;
-import com.example.learning_spring_security.dto.Request.ResetPasswordRequest;
+import com.example.learning_spring_security.dto.Request.*;
 import com.example.learning_spring_security.dto.Response.AuthenticationResponse;
-import com.example.learning_spring_security.dto.Request.Register;
 import com.example.learning_spring_security.dto.Response.RegisterResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
-import com.example.learning_spring_security.dto.Request.VerifyUserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -46,35 +41,36 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
-    // === NEW REPOSITORIES ===
+    // Repositories for groups and permissions
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
     private final FunctionPermissionRepository functionPermissionRepository;
     private final UserPermissionRepository userPermissionRepository;
 
-    // === CONSTANTS ===
+    // Constants
     private static final String DEFAULT_ROLE_NAME = "USER";
-    private static final String DEFAULT_GROUP_CODE = "SAL";   // Existing seeded group
-
+    private static final String DEFAULT_GROUP_CODE = "USR";
     private static final List<String> DEFAULT_PERMISSION_CODES = Arrays.asList(
             "USER_PERM_CREATE",
             "USER_PERM_UPDATE",
-            "USER_PERM_DELETE"
+            "USER_PERM_DELETE",
+            "CART_ADD_ITEM",
+            "ORDER_CREATE",
+            "BAKONG_QR",
+            "ADDRESS_CREATE",
+            "ADDRESS_VIEW",
+            "ADDRESS_UPDATE",
+            "ADDRESS_DELETE"
     );
-
+    // --- Register ---
     @Override
     @Transactional
     public ResponseErrorTemplate create(Register userRequest) {
         log.info("Starting registration for user: {}", userRequest.username());
-        this.userRequestValidation(userRequest);   // only once
+        this.userRequestValidation(userRequest);
 
-        // 1. Ensure default role exists (will create if missing)
-        Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME)
-                .orElseGet(() -> {
-                    Role role = new Role();
-                    role.setName(DEFAULT_ROLE_NAME);
-                    return roleRepository.save(role);
-                });
+        // 1. Ensure default role exists
+        Role defaultRole = getOrCreateDefaultRole();
 
         // 2. Build user entity
         User user = User.builder()
@@ -97,12 +93,8 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
         log.info("User registered successfully: {}", savedUser.getUsername());
 
-        // 4. Assign to existing group (fail if not found – means your seed didn't run)
-        Group defaultGroup = groupRepository.findByGroupCode(DEFAULT_GROUP_CODE)
-                .orElseThrow(() -> new CustomMessageException(
-                        "Default group '" + DEFAULT_GROUP_CODE + "' not found – run DataInitializer first",
-                        String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())));
-
+        // 4. Assign to default group (create if missing)
+        Group defaultGroup = getOrCreateDefaultGroup();
         UserGroup userGroup = UserGroup.builder()
                 .userId(savedUser.getId())
                 .groupId(defaultGroup.getId())
@@ -112,22 +104,8 @@ public class AuthServiceImpl implements AuthService {
         userGroupRepository.save(userGroup);
         log.info("Assigned user {} to group {}", savedUser.getUsername(), DEFAULT_GROUP_CODE);
 
-        // 5. Assign default permissions (fetched from existing seed)
-        Optional<FunctionPermission> permissions = functionPermissionRepository.findByFuncCodeAndIsDeleteFalse(String.valueOf(DEFAULT_PERMISSION_CODES));
-        if (!permissions.isEmpty()) {
-            List<UserPermission> userPermissions = permissions.stream()
-                    .map(fp -> UserPermission.builder()
-                            .userId(savedUser.getId())
-                            .funcId(fp.getFuncId())
-                            .isActive(true)
-                            .isDelete(false)
-                            .build())
-                    .collect(Collectors.toList());
-            userPermissionRepository.saveAll(userPermissions);
-            log.info("Assigned default permissions to user: {}", savedUser.getUsername());
-        } else {
-            log.warn("Default permissions not found in DB – check DataInitializer");
-        }
+        // 5. Assign default permissions (fetch each by code)
+        assignDefaultPermissions(savedUser);
 
         // 6. Send verification email
         sendVerificationEmail(savedUser);
@@ -141,44 +119,26 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    /**
-     * @param username
-     * @return
-     */
-    @Override
-    public Optional<Long> findById(String username) {
-        return Optional.empty();
-    }
-
+    // --- Verify user ---
     @Transactional
     public AuthenticationResponse verifyUser(VerifyUserDto input) {
         log.info("verifyUser() called for email: {}", input.getEmail());
-        log.info("Verification code: {}", input.getVerificationCode());
 
-        Optional<User> optionalUser = userRepository.findByEmail(input.getEmail());
-        if (optionalUser.isEmpty()) {
-            log.error("User not found: {}", input.getEmail());
-            throw new CustomMessageException("User not found",
-                    String.valueOf(HttpStatus.NOT_FOUND.value()));
-        }
-
-        User user = optionalUser.get();
-        log.info("User found: {}", user.getUsername());
+        User user = userRepository.findByEmail(input.getEmail())
+                .orElseThrow(() -> new CustomMessageException("User not found",
+                        String.valueOf(HttpStatus.NOT_FOUND.value())));
 
         if (user.isEnabled()) {
-            log.warn("Account already verified: {}", user.getEmail());
             throw new CustomMessageException("Account is already verified",
                     String.valueOf(HttpStatus.BAD_REQUEST.value()));
         }
 
         if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
-            log.warn("Verification code expired for: {}", user.getEmail());
             throw new CustomMessageException("Verification code has expired. Please request a new one.",
                     String.valueOf(HttpStatus.GONE.value()));
         }
 
         if (!user.getVerificationCode().equals(input.getVerificationCode())) {
-            log.warn("Invalid verification code for: {}", user.getEmail());
             throw new CustomMessageException("Invalid verification code",
                     String.valueOf(HttpStatus.BAD_REQUEST.value()));
         }
@@ -190,42 +150,23 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Email verified successfully for: {}", user.getEmail());
 
-        UserDetailsImpl userDetails = new UserDetailsImpl(
-                user.getUsername(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
-        );
-
+        // Generate tokens
+        UserDetailsImpl userDetails = buildUserDetails(user);
         String accessToken = jwtService.generateToken(userDetails);
-
         refreshTokenRepository.deleteByUser(user);
         String refreshToken = generateAndSaveRefreshToken(user);
 
-        return AuthenticationResponse.builder()
-                .id(user.getId())
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .email(user.getEmail())
-                .username(user.getUsername())
-                .role(user.getRoles().stream().map(Role::getName).findFirst().orElse("USER"))
-                .build();
+        return buildAuthResponse(user, accessToken, refreshToken);
     }
 
+    // --- Resend verification code ---
     @Transactional
     public AuthenticationResponse resendVerificationCode(String email) {
         log.info("Resending verification code to: {}", email);
 
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isEmpty()) {
-            throw new CustomMessageException("User not found",
-                    String.valueOf(HttpStatus.NOT_FOUND.value()));
-        }
-
-        User user = optionalUser.get();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomMessageException("User not found",
+                        String.valueOf(HttpStatus.NOT_FOUND.value())));
 
         if (user.isEnabled()) {
             throw new CustomMessageException("Account is already verified",
@@ -237,8 +178,6 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         sendVerificationEmail(user);
 
-        log.info("Verification code resent to: {}", email);
-
         return AuthenticationResponse.builder()
                 .id(user.getId())
                 .tokenType("Bearer")
@@ -248,33 +187,38 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    // --- Authenticate (Login) ---
     @Transactional
     public AuthenticationResponse authenticate(Login input) {
-
         String value = input.CriteriaValue();
         String password = input.Password();
 
         log.info("Authenticating user: {}", value);
-        log.info("Password user: {}", password);
 
-        Authentication authentication =
-                authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(value, password)
-                );
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(value, password)
+            );
+        } catch (Exception e) {
+            // Increment attempt count on failure (optional)
+            userRepository.findByUsernameOrEmailAndStatus(value, Constant.ACT)
+                    .ifPresent(user -> {
+                        user.setAttempt(user.getAttempt() + 1);
+                        userRepository.save(user);
+                        // Optionally lock account after max attempts
+                    });
+            throw new CustomMessageException("Invalid username or password",
+                    String.valueOf(HttpStatus.UNAUTHORIZED.value()));
+        }
 
-        UserDetailsImpl userDetails =
-                (UserDetailsImpl) authentication.getPrincipal();
-
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         User user = userRepository.findByUsernameOrEmailAndStatus(value, Constant.ACT)
-                .orElseThrow(() ->
-                        new CustomMessageException(
-                                "User not found",
-                                String.valueOf(HttpStatus.UNAUTHORIZED.value())
-                        )
-                );
+                .orElseThrow(() -> new CustomMessageException("User not found",
+                        String.valueOf(HttpStatus.UNAUTHORIZED.value())));
 
         if (!user.isEnabled()) {
-            throw new CustomMessageException("Please verify email",
+            throw new CustomMessageException("Please verify your email before logging in.",
                     String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
@@ -283,30 +227,18 @@ public class AuthServiceImpl implements AuthService {
                     String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
+        // Reset attempts on success
         user.setAttempt(0);
         userRepository.save(user);
 
         String accessToken = jwtService.generateToken(userDetails);
-
         refreshTokenRepository.deleteByUser(user);
         String refreshToken = generateAndSaveRefreshToken(user);
 
-        return AuthenticationResponse.builder()
-                .id(user.getId())
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .email(user.getEmail())
-                .username(user.getUsername())
-                .role(
-                        user.getRoles().stream()
-                                .map(Role::getName)
-                                .findFirst()
-                                .orElse("USER")
-                )
-                .build();
+        return buildAuthResponse(user, accessToken, refreshToken);
     }
 
+    // --- Refresh token ---
     @Transactional
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
         log.info("Refreshing token...");
@@ -322,62 +254,33 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = refreshToken.getUser();
-
-        UserDetailsImpl userDetails = new UserDetailsImpl(
-                user.getUsername(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
-        );
+        UserDetailsImpl userDetails = buildUserDetails(user);
 
         String newAccessToken = jwtService.generateToken(userDetails);
-
         refreshTokenRepository.delete(refreshToken);
         String newRefreshToken = generateAndSaveRefreshToken(user);
 
         log.info("Token refreshed for user: {}", user.getUsername());
-
-        String role = user.getRoles().stream()
-                .map(Role::getName)
-                .findFirst()
-                .orElse("USER");
-
-        return AuthenticationResponse.builder()
-                .id(user.getId())
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .tokenType("Bearer")
-                .email(user.getEmail())
-                .username(user.getUsername())
-                .role(role)
-                .build();
+        return buildAuthResponse(user, newAccessToken, newRefreshToken);
     }
 
+    // --- Logout ---
     @Transactional
     public AuthenticationResponse logout(RefreshTokenRequest request) {
         log.info("Logging out...");
-
         refreshTokenRepository.findByToken(request.getRefreshToken())
                 .ifPresent(refreshTokenRepository::delete);
-
-        log.info("Logout successful");
-
-        return AuthenticationResponse.builder()
-                .tokenType("Bearer")
-                .build();
+        return AuthenticationResponse.builder().tokenType("Bearer").build();
     }
 
+    // --- Forgot password ---
     @Transactional
     public AuthenticationResponse forgotPassword(ForgotPasswordRequest request) {
         log.info("Processing forgot password request for email: {}", request.getEmail());
 
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
-
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-
             passwordResetTokenRepository.deleteByUser(user);
 
             String token = UUID.randomUUID().toString();
@@ -388,16 +291,26 @@ public class AuthServiceImpl implements AuthService {
                     .used(false)
                     .build();
             passwordResetTokenRepository.save(resetToken);
-            // Save committed before sending email — mail failure won't roll back the token
-            emailService.sendPasswordResetEmail(user.getEmail(), token);
-            log.info("Password reset email sent to: {}", request.getEmail());
+
+            try {
+                emailService.sendPasswordResetEmail(user.getEmail(), token);
+                log.info("Password reset email sent to: {}", request.getEmail());
+            } catch (Exception e) {
+                // If email fails, delete the token to allow retry
+                passwordResetTokenRepository.delete(resetToken);
+                log.error("Failed to send password reset email", e);
+                throw new CustomMessageException("Failed to send reset email. Please try again later.",
+                        String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+            }
         }
 
+        // Always return a generic message for security (don't reveal if email exists)
         return AuthenticationResponse.builder()
                 .tokenType("Bearer")
                 .build();
     }
 
+    // --- Reset password ---
     @Transactional
     public AuthenticationResponse resetPassword(ResetPasswordRequest request) {
         log.info("Resetting password with token");
@@ -418,7 +331,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = resetToken.getUser();
-
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
@@ -429,6 +341,72 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthenticationResponse.builder()
                 .id(user.getId())
+                .tokenType("Bearer")
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .role(user.getRoles().stream().map(Role::getName).findFirst().orElse("USER"))
+                .build();
+    }
+
+    // --- Private helper methods ---
+
+    private Role getOrCreateDefaultRole() {
+        return roleRepository.findByName(DEFAULT_ROLE_NAME)
+                .orElseGet(() -> {
+                    Role role = Role.builder().name(DEFAULT_ROLE_NAME).build();
+                    return roleRepository.save(role);
+                });
+    }
+
+    private Group getOrCreateDefaultGroup() {
+        return groupRepository.findByGroupCode(DEFAULT_GROUP_CODE)
+                .orElseGet(() -> {
+                    Group group = Group.builder()
+                            .groupCode(DEFAULT_GROUP_CODE)
+                            .name("Sales Group")
+                            .description("Default group for new users")
+                            .status(Constant.ACT)
+                            .isActive(true)
+                            .isDelete(false)
+                            .build();
+                    group.setCreatedAt(LocalDateTime.now());
+                    return groupRepository.save(group);
+                });
+    }
+
+    private void assignDefaultPermissions(User user) {
+        // Fetch each permission by code and create UserPermission entries
+        for (String code : DEFAULT_PERMISSION_CODES) {
+            functionPermissionRepository.findByFuncCodeAndIsDeleteFalse(code)
+                    .ifPresent(fp -> {
+                        UserPermission up = UserPermission.builder()
+                                .userId(user.getId())
+                                .funcId(fp.getFuncId())
+                                .isActive(true)
+                                .isDelete(false)
+                                .build();
+                        userPermissionRepository.save(up);
+                        log.info("Assigned permission {} to user {}", code, user.getUsername());
+                    });
+        }
+    }
+
+    private UserDetailsImpl buildUserDetails(User user) {
+        return new UserDetailsImpl(
+                user.getUsername(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getName()))
+                        .collect(Collectors.toList())
+        );
+    }
+
+    private AuthenticationResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
+        return AuthenticationResponse.builder()
+                .id(user.getId())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .email(user.getEmail())
                 .username(user.getUsername())
@@ -472,7 +450,7 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    public RegisterResponse userMapper(User user) {
+    private RegisterResponse userMapper(User user) {
         return RegisterResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -483,5 +461,11 @@ public class AuthServiceImpl implements AuthService {
                 .roles(user.getRoles().stream().map(Role::getName).toList())
                 .created(user.getCreatedAt())
                 .build();
+    }
+
+    // --- Unused methods from interface (if any) ---
+    @Override
+    public Optional<Long> findById(String username) {
+        return Optional.empty();
     }
 }
