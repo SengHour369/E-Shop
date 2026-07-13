@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
 
     // Constants
     private static final String DEFAULT_ROLE_NAME = "USER";
-    private static final String DEFAULT_GROUP_CODE = "USER";
+    private static final String DEFAULT_GROUP_CODE = "USR";
     private static final List<String> DEFAULT_PERMISSION_CODES = Arrays.asList(
             "CART_ADD_ITEM",
             "ORDER_CREATE",

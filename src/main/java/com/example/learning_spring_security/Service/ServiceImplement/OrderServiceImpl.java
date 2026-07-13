@@ -467,7 +467,7 @@ public class OrderServiceImpl implements OrderService {
 
                 String md5 = bakongResponse.getData().getMd5(); //  REAL KEY
 
-                payment.setPaymentProvider(OrderStatus.BAKONG);
+                payment.setPaymentProvider(payment.getPaymentMethod());
                 payment.setPaymentProviderResponse(bakongResponse.getData().getQr());
                 payment.setCode(paymentCodeGenerator.generatePaymentCode());
                 payment.setCodeOrder(generateOrderNumber());
@@ -543,7 +543,7 @@ public class OrderServiceImpl implements OrderService {
 
                 String md5 = bakongResponse.getData().getMd5();
 
-                payment.setPaymentProvider("BAqKONG");
+                payment.setPaymentProvider(payment.getPaymentMethod());
                 payment.setPaymentProviderResponse(bakongResponse.getData().getQr());
 
                 payment.setTransactionId(md5);

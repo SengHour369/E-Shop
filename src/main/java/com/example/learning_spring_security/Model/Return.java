@@ -61,8 +61,23 @@ public class Return extends BaseEntity {
     @Column(name = "rejected_by")
     private String rejectedBy;
 
+    @Column(name = "received_at")
+    private LocalDateTime receivedAt;
+
+    @Column(name = "received_by")
+    private String receivedBy;
+
+    @Column(name = "inspected_at")
+    private LocalDateTime inspectedAt;
+
+    @Column(name = "inspected_by")
+    private String inspectedBy;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    @Column(name = "completed_by")
+    private String completedBy;
 
     @Column(length = 2000)
     private String remark;

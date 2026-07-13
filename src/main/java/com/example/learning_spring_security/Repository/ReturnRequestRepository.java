@@ -4,9 +4,11 @@ import com.example.learning_spring_security.Model.Return;
 import com.example.learning_spring_security.dto.Response.ReturnDetailResponse;
 import com.example.learning_spring_security.dto.Response.ReturnListResponse;
 import com.example.learning_spring_security.dto.Response.ReturnSummaryResponse;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,6 +22,10 @@ public interface ReturnRequestRepository extends JpaRepository<Return, Long> {
     Optional<Return> findByReturnId(String returnId);
 
     boolean existsByReturnId(String returnId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Return r WHERE r.returnId = :returnId")
+    Optional<Return> findByReturnIdForUpdate(@Param("returnId") String returnId);
 
     @Query("""
             SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(

@@ -2,7 +2,9 @@ package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceStructure.ReturnService;
 import com.example.learning_spring_security.dto.Request.ApproveReturnRequest;
+import com.example.learning_spring_security.dto.Request.CompleteInspectionRequest;
 import com.example.learning_spring_security.dto.Request.GetReturnListRequest;
+import com.example.learning_spring_security.dto.Request.ReceiveReturnRequest;
 import com.example.learning_spring_security.dto.Request.RejectReturnRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,11 @@ public class ReturnController {
         return ResponseEntity.ok(returnService.getReturnDetail(returnId));
     }
 
+    @GetMapping("/{returnId}/history")
+    public ResponseEntity<ResponseErrorTemplate> getReturnHistory(@PathVariable String returnId) {
+        return ResponseEntity.ok(returnService.getReturnHistory(returnId));
+    }
+
     @PostMapping("/{returnId}/approve")
     public ResponseEntity<ResponseErrorTemplate> approveReturn(
             @PathVariable String returnId,
@@ -43,5 +50,24 @@ public class ReturnController {
             @PathVariable String returnId,
             @RequestBody(required = false) RejectReturnRequest request) {
         return ResponseEntity.ok(returnService.rejectReturn(returnId, request));
+    }
+
+    @PostMapping("/{returnId}/receive")
+    public ResponseEntity<ResponseErrorTemplate> receiveReturn(
+            @PathVariable String returnId,
+            @RequestBody(required = false) ReceiveReturnRequest request) {
+        return ResponseEntity.ok(returnService.receiveReturn(returnId, request));
+    }
+
+    @PostMapping("/{returnId}/inspect/start")
+    public ResponseEntity<ResponseErrorTemplate> startInspection(@PathVariable String returnId) {
+        return ResponseEntity.ok(returnService.startInspection(returnId));
+    }
+
+    @PostMapping("/{returnId}/inspect/complete")
+    public ResponseEntity<ResponseErrorTemplate> completeInspection(
+            @PathVariable String returnId,
+            @RequestBody(required = false) CompleteInspectionRequest request) {
+        return ResponseEntity.ok(returnService.completeInspection(returnId, request));
     }
 }

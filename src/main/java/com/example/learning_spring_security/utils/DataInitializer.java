@@ -49,6 +49,15 @@ public class DataInitializer implements CommandLineRunner {
         // 4.6 Seed USR group permissions (create + view)  <-- NEW
         seedUserGroupPermissions();
 
+        // 4.7 Seed STF/MNG group permissions (user-group read only)
+        seedStaffUserGroupViewPermissions();
+
+        // 4.8 Seed STF/MNG group permissions for Return Management
+        seedReturnGroupPermissions();
+
+        // 4.9 Seed STF/MNG group permissions for Refund Management
+        seedRefundGroupPermissions();
+
         // 5. Create admin user
         createAdminIfNotFound();
 
@@ -114,7 +123,20 @@ public class DataInitializer implements CommandLineRunner {
                 buildFunction(1006L, "PRODUCT_DELETE", "Delete Product", "Remove product", "PRODUCT"),
                 // ── VIEW ONLY (for SAL users) ──────────────────────────────
                 buildFunction(1007L, "CATEGORY_VIEW", "View Categories", "View category list", "PRODUCT"),
-                buildFunction(1008L, "SUBCATEGORY_VIEW", "View Subcategories", "View subcategory list", "PRODUCT")
+                buildFunction(1008L, "SUBCATEGORY_VIEW", "View Subcategories", "View subcategory list", "PRODUCT"),
+                // ── RETURN MANAGEMENT ───────────────────────────────────
+                buildFunction(1101L, "RETURN_VIEW",    "View Returns",    "View return summary, list and detail", "RETURN"),
+                buildFunction(1102L, "RETURN_APPROVE", "Approve Return",  "Approve a return request",             "RETURN"),
+                buildFunction(1103L, "RETURN_REJECT",  "Reject Return",  "Reject a return request",              "RETURN"),
+                buildFunction(1104L, "RETURN_REFUND",  "Refund Return",  "Process refund for a return",          "RETURN"),
+                buildFunction(1105L, "RETURN_EXPORT",  "Export Returns", "Export return records",                "RETURN"),
+                buildFunction(1106L, "RETURN_RECEIVE", "Receive Return", "Confirm warehouse receipt of a return", "RETURN"),
+                buildFunction(1107L, "RETURN_INSPECT", "Inspect Return", "Complete warehouse inspection of a return", "RETURN"),
+                // ── REFUND MANAGEMENT ───────────────────────────────────
+                buildFunction(1201L, "REFUND_VIEW",    "View Refunds",   "View refund summary, list and detail", "REFUND"),
+                buildFunction(1202L, "REFUND_PROCESS", "Process Refund", "Process a pending refund",             "REFUND"),
+                buildFunction(1203L, "REFUND_CANCEL",  "Cancel Refund",  "Cancel a refund request",              "REFUND"),
+                buildFunction(1204L, "REFUND_EXPORT",  "Export Refunds", "Export refund records",                "REFUND")
         );
 
         for (FunctionPermission fn : functions) {
@@ -271,6 +293,42 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    // ---------- NEW: Grant read-only user-group access to staff/manager groups ----------
+    private void seedStaffUserGroupViewPermissions() {
+        grantFuncIdsToGroup("STF", List.of(101L)); // USER_GROUP_VIEW
+        grantFuncIdsToGroup("MNG", List.of(101L)); // USER_GROUP_VIEW
+    }
+
+    // ---------- NEW: Return Management permissions (STF view-only, MNG view+approve+reject) ----------
+    private void seedReturnGroupPermissions() {
+        grantFuncIdsToGroup("STF", List.of(1101L));
+        grantFuncIdsToGroup("MNG", List.of(1101L, 1102L, 1103L, 1106L, 1107L));
+    }
+
+    // ---------- NEW: Refund Management permissions (STF view-only, MNG view+process) ----------
+    private void seedRefundGroupPermissions() {
+        grantFuncIdsToGroup("STF", List.of(1201L));
+        grantFuncIdsToGroup("MNG", List.of(1201L, 1202L, 1203L));
+    }
+
+    private void grantFuncIdsToGroup(String groupCode, List<Long> funcIds) {
+        Group group = groupRepository.findByGroupCode(groupCode)
+                .orElseThrow(() -> new RuntimeException(groupCode + " group not found"));
+        for (Long funcId : funcIds) {
+            if (!groupPermissionRepository.existsByGroupIdAndFuncId(group.getId(), funcId)) {
+                GroupPermission gp = GroupPermission.builder()
+                        .groupId(group.getId())
+                        .funcId(funcId)
+                        .isActive(true)
+                        .isDelete(false)
+                        .build();
+                gp.setCreatedAt(LocalDateTime.now());
+                groupPermissionRepository.save(gp);
+                System.out.println("Assigned funcId=" + funcId + " -> " + groupCode + " group");
+            }
+        }
+    }
+
     private void assignAdminToGroup(User admin) {
         Group adminGroup = groupRepository.findByGroupCode("ADM")
                 .orElseThrow(() -> new RuntimeException("Administrator group not found"));
@@ -312,6 +370,26 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("POST", "/api/v1/categories/id/get/", 1007L);
         createApiPermissionIfNotExists("GET", "/api/v1/subcategories/**", 1008L);
         createApiPermissionIfNotExists("POST", "/api/v1/subcategories/get/all", 1008L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-groups/get/all", 101L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-groups/get/id/", 101L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-groups/create/", 102L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-groups/update/", 103L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-groups/delete/", 104L);
+        createApiPermissionIfNotExists("GET", "/admin/returns/summary", 1101L);
+        createApiPermissionIfNotExists("POST", "/admin/returns/list", 1101L);
+        createApiPermissionIfNotExists("GET", "/admin/returns/*", 1101L);
+        createApiPermissionIfNotExists("POST", "/admin/returns/*/approve", 1102L);
+        createApiPermissionIfNotExists("POST", "/admin/returns/*/reject", 1103L);
+        createApiPermissionIfNotExists("GET", "/admin/refunds/summary", 1201L);
+        createApiPermissionIfNotExists("POST", "/admin/refunds/list", 1201L);
+        createApiPermissionIfNotExists("GET", "/admin/refunds/*", 1201L);
+        createApiPermissionIfNotExists("POST", "/admin/refunds/*/process", 1202L);
+        createApiPermissionIfNotExists("POST", "/admin/refunds/*/cancel", 1203L);
+        createApiPermissionIfNotExists("GET", "/admin/refunds/*/history", 1201L);
+        createApiPermissionIfNotExists("GET", "/admin/returns/*/history", 1101L);
+        createApiPermissionIfNotExists("POST", "/admin/returns/*/receive", 1106L);
+        createApiPermissionIfNotExists("POST", "/admin/returns/*/inspect/start", 1107L);
+        createApiPermissionIfNotExists("POST", "/admin/returns/*/inspect/complete", 1107L);
     }
 
     private void createApiPermissionIfNotExists(String method, String api, Long funcId) {

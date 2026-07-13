@@ -361,6 +361,28 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ErrorResponse> handleBaseException(
+            BaseException ex, WebRequest request) {
+
+        HttpStatus status = ex.getErrorCode() != null && ex.getErrorCode().contains("NOT_FOUND")
+                ? HttpStatus.NOT_FOUND
+                : HttpStatus.BAD_REQUEST;
+
+        log.error("{}: {}", ex.getErrorCode(), ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .error(status.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .errorCode(ex.getErrorCode())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, status);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, WebRequest request) {
