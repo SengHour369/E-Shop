@@ -13,7 +13,6 @@ public class InventoryResponse {
 
     private Long productSkuId;
     private String sku;
-    private String productName;
 
     private Long quantity;
     private Long reservedQuantity;
