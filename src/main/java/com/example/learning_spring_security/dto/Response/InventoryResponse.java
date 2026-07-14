@@ -24,4 +24,5 @@ public class InventoryResponse {
     private LocalDateTime lastRestockedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Integer lowStockThreshold;
 }

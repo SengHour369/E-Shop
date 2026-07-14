@@ -7,6 +7,7 @@ import com.example.learning_spring_security.Exception.ExceptionService.BadReques
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.*;
 import com.example.learning_spring_security.Repository.*;
+import com.example.learning_spring_security.Service.ServiceStructure.InventoryService;
 import com.example.learning_spring_security.Service.ServiceStructure.OrderService;
 
 import com.example.learning_spring_security.ServiceMapper.OrderItemMapper;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventoryService inventoryService;
     private final PaymentCodeGenerator paymentCodeGenerator;
     private final OrderCancelationRepository orderCancelationRepository;
 
@@ -92,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderItem> orderItems = cart.getCartItems().stream()
                 .map(cartItem -> {
-                    inventoryRepository.reduceStock(cartItem.getProductSku().getId()
+                    inventoryService.reduceStock(cartItem.getProductSku().getId()
                             , cartItem.getQuantity());
                     return OrderItemMapper.toEntity(
                             order,
@@ -474,11 +477,16 @@ public class OrderServiceImpl implements OrderService {
 
                 payment.setTransactionId(md5);
 
+                String qr = bakongResponse.getData().getQr();
+                String paymentUrl = resolveBakongDeepLink(qr);
+                payment.setQrCode(qr);
+                payment.setPaymentUrl(paymentUrl);
+
                 orderRepository.save(pendingOrder);
 
                 orderData.setPayment(PaymentMapper.toResponse(payment));
-                orderData.setQrCode(bakongResponse.getData().getQr());
-                orderData.setPaymentUrl(resolveBakongDeepLink(bakongResponse.getData().getQr()));
+                orderData.setQrCode(qr);
+                orderData.setPaymentUrl(paymentUrl);
             } else {
                 log.error("Bakong QR generation returned a non-success status for order {}: {}",
                         orderData.getOrderNumber(), bakongResponse);
@@ -548,18 +556,24 @@ public class OrderServiceImpl implements OrderService {
 
                 payment.setTransactionId(md5);
 
+                String qr = bakongResponse.getData().getQr();
+                String paymentUrl = resolveBakongDeepLink(qr);
+                payment.setQrCode(qr);
+                payment.setPaymentUrl(paymentUrl);
+
                 orderRepository.save(order);
+
+                Map<String, Object> responseData = new HashMap<>();
+                responseData.put("orderId", order.getId());
+                responseData.put("orderNumber", order.getOrderNumber());
+                responseData.put("qrCode", qr);
+                responseData.put("paymentUrl", paymentUrl);
+                responseData.put("amount", order.getTotalAmount());
+                responseData.put("expiresIn", "15 minutes");
 
                 return ResponseErrorTemplate.builder()
                         .message("Bakong payment initiated successfully")
-                        .object(Map.of(
-                                "orderId", order.getId(),
-                                "orderNumber", order.getOrderNumber(),
-                                "qrCode", bakongResponse.getData().getQr(),
-                                "paymentUrl", resolveBakongDeepLink(bakongResponse.getData().getQr()),
-                                "amount", order.getTotalAmount(),
-                                "expiresIn", "15 minutes"
-                        ))
+                        .object(responseData)
                         .build();
             } else {
                 throw new RuntimeException("Failed to generate QR code: " + bakongResponse);

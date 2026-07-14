@@ -64,6 +64,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
         ProductSku saved = productSkuRepository.save(sku);
         if (request.getOperatorProductAttribute() != null && request.getOperatorProductAttribute()) {
+            applyLowStockThreshold(request);
             inventoryServiceImpl.createInventory(saved.getId(), request.getInventory());
 
             for (ProductAttributeRequest productAttributeRequest : request.getProductAttributes()) {
@@ -107,6 +108,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
         // Handle inventory update/create when inventory info is provided in the SKU request
         if (request.getInventory() != null) {
+            applyLowStockThreshold(request);
             java.util.Optional<com.example.learning_spring_security.Model.Inventory> maybeInv =
                     inventoryRepository.findByProductSkuId(updated.getId());
             if (maybeInv.isPresent()) {
@@ -119,6 +121,16 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
         log.info("Updated SKU: {}", updated.getSku());
         return updated;
+    }
+
+    // ProductSkuRequest carries its own top-level lowStockThreshold alongside the nested
+    // InventoryRequest; propagate it so it isn't silently dropped when the nested value is unset.
+    private void applyLowStockThreshold(ProductSkuRequest request) {
+        if (request.getInventory() != null
+                && request.getInventory().getLowStockThreshold() == null
+                && request.getLowStockThreshold() != null) {
+            request.getInventory().setLowStockThreshold(request.getLowStockThreshold());
+        }
     }
 
     @Override

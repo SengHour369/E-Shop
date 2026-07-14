@@ -45,6 +45,8 @@ public class OrderMapper {
                         .map(orderItemMapper::toResponse)
                         .collect(Collectors.toList()))
                 .payment(order.getPayment() != null ? PaymentMapper.toResponse(order.getPayment()) : null)
+                .qrCode(order.getPayment() != null ? order.getPayment().getQrCode() : null)
+                .paymentUrl(order.getPayment() != null ? order.getPayment().getPaymentUrl() : null)
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();

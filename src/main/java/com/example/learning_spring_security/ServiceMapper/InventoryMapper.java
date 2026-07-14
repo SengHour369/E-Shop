@@ -10,12 +10,17 @@ import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 public class InventoryMapper {
 
     public static Inventory toEntity(InventoryRequest request, ProductSku productSku) {
-        return Inventory.builder()
+        Inventory.InventoryBuilder builder = Inventory.builder()
                 .productSku(productSku)
                 .quantity(request.getQuantity())
                 .reservedQuantity(0L)
-                .warehouseLocation(request.getWarehouseLocation())
-                .build();
+                .warehouseLocation(request.getWarehouseLocation());
+
+        if (request.getLowStockThreshold() != null) {
+            builder.lowStockThreshold(request.getLowStockThreshold());
+        }
+
+        return builder.build();
     }
 
     public static InventoryResponse toResponse(Inventory inventory) {
@@ -29,6 +34,7 @@ public class InventoryMapper {
                 .reservedQuantity(inventory.getReservedQuantity())
                 .availableQuantity(inventory.getQuantity() - inventory.getReservedQuantity())
                 .warehouseLocation(inventory.getWarehouseLocation())
+                .lowStockThreshold(inventory.getLowStockThreshold())
                 .lastRestockedAt(inventory.getLastRestockedAt())
                 .createdAt(inventory.getCreatedAt())
                 .updatedAt(inventory.getUpdatedAt())

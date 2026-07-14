@@ -5,6 +5,7 @@ import com.example.learning_spring_security.Constant.ReturnType;
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.InvalidReturnStatusException;
 import com.example.learning_spring_security.Exception.ExceptionService.ReturnNotFoundException;
+import com.example.learning_spring_security.Model.OrderItem;
 import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.Model.Return;
 import com.example.learning_spring_security.Model.ReturnStatusHistory;
@@ -280,10 +281,21 @@ public class ReturnServiceImpl implements ReturnService {
     }
 
     private void increaseInventoryForReturnedProduct(Return returnRequest) {
+        Long returnedQuantity = orderRepository.findByIdWithItems(returnRequest.getOrderId())
+                .flatMap(order -> order.getOrderItems().stream()
+                        .filter(item -> item.getProductSku().getProduct().getId().equals(returnRequest.getProductId()))
+                        .map(OrderItem::getQuantity)
+                        .findFirst())
+                .orElseGet(() -> {
+                    log.warn("Could not find matching order item for orderId={}, productId={} on return {}; defaulting restocked quantity to 1",
+                            returnRequest.getOrderId(), returnRequest.getProductId(), returnRequest.getReturnId());
+                    return 1L;
+                });
+
         inventoryRepository.findDefaultSkuByProductId(returnRequest.getProductId())
                 .map(ProductSku::getId)
                 .ifPresentOrElse(
-                        skuId -> inventoryRepository.increaseStock(skuId, 1L),
+                        skuId -> inventoryRepository.increaseStock(skuId, returnedQuantity),
                         () -> log.warn("No default SKU found for productId={}, skipping inventory update for return {}",
                                 returnRequest.getProductId(), returnRequest.getReturnId())
                 );

@@ -30,6 +30,7 @@ public class ProductController extends BaseController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     @PostMapping(value = "/create/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseErrorTemplate> createProduct(
             @RequestParam String name,
@@ -58,6 +59,7 @@ public class ProductController extends BaseController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     @PutMapping(value = "/update/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseErrorTemplate> updateProduct(
             @RequestParam Long id,
@@ -86,6 +88,7 @@ public class ProductController extends BaseController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     @PutMapping(value = "/update/", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseErrorTemplate> updateProductJson(
             @RequestParam Long id,
@@ -94,6 +97,7 @@ public class ProductController extends BaseController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     @PostMapping("/update/status/")
     public ResponseEntity<ResponseErrorTemplate> updateProductStatus(
             @RequestParam Long id,

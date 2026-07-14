@@ -109,6 +109,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (request.getWarehouseLocation() != null) {
             inventory.setWarehouseLocation(request.getWarehouseLocation());
         }
+        if (request.getLowStockThreshold() != null) {
+            inventory.setLowStockThreshold(request.getLowStockThreshold());
+        }
         Inventory updated = inventoryRepository.save(inventory);
 
         log.info("Inventory adjusted: id={}, newQuantity={}", id, request.getQuantity());

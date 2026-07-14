@@ -58,6 +58,9 @@ public class DataInitializer implements CommandLineRunner {
         // 4.9 Seed STF/MNG group permissions for Refund Management
         seedRefundGroupPermissions();
 
+        // 4.10 Seed STF/MNG group permissions for Cancelation Management
+        seedCancelationGroupPermissions();
+
         // 5. Create admin user
         createAdminIfNotFound();
 
@@ -88,14 +91,17 @@ public class DataInitializer implements CommandLineRunner {
                 buildFunction(201L, "USER_PERM_CREATE",  "Create User Permission",  "Grant a function to a user",        "USER_PERMISSION"),
                 buildFunction(202L, "USER_PERM_UPDATE",  "Update User Permission",  "Enable or disable user permission", "USER_PERMISSION"),
                 buildFunction(203L, "USER_PERM_DELETE",  "Delete User Permission",  "Remove user permission record",     "USER_PERMISSION"),
+                buildFunction(204L, "USER_PERM_VIEW",    "View User Permissions",   "View user permission list and detail", "USER_PERMISSION"),
                 // ── GROUP PERMISSION ────────────────────────────────────
                 buildFunction(301L, "GRP_PERM_CREATE",   "Create Group Permission", "Assign a function to a group",        "GROUP_PERMISSION"),
                 buildFunction(302L, "GRP_PERM_UPDATE",   "Update Group Permission", "Enable or disable group permission",  "GROUP_PERMISSION"),
                 buildFunction(303L, "GRP_PERM_DELETE",   "Delete Group Permission", "Remove group permission record",      "GROUP_PERMISSION"),
+                buildFunction(304L, "GRP_PERM_VIEW",     "View Group Permissions",  "View group permission list and detail", "GROUP_PERMISSION"),
                 // ── FUNCTION PERMISSION ─────────────────────────────────
                 buildFunction(401L, "FUNC_CREATE",       "Create Function", "Register a new function",    "FUNCTION"),
                 buildFunction(402L, "FUNC_UPDATE",       "Update Function", "Edit or disable a function", "FUNCTION"),
                 buildFunction(403L, "FUNC_DELETE",       "Delete Function", "Remove a function record",   "FUNCTION"),
+                buildFunction(404L, "FUNC_VIEW",         "View Functions",   "View function list and detail", "FUNCTION"),
                 // ── CART ────────────────────────────────────────────────
                 buildFunction(501L, "CART_ADD_ITEM",    "Add item to cart",    "Add a product to user's cart", "CART"),
                 buildFunction(502L, "CART_VIEW",       "View cart",           "View user's cart items",       "CART"),
@@ -105,8 +111,10 @@ public class DataInitializer implements CommandLineRunner {
                 // ── USER MANAGEMENT ────────────────────────────────────
                 buildFunction(601L, "USER_MANAGE",      "Manage Users",        "Create/update/delete users",   "USER_MANAGEMENT"),
                 // ── ORDER ──────────────────────────────────────────────
-                buildFunction(701L, "ORDER_CREATE", "Create Order", "Create order from cart", "ORDER"),
-                buildFunction(702L, "ORDER_VIEW",   "View Order",   "View order details",      "ORDER"),
+                buildFunction(701L, "ORDER_CREATE",   "Create Order",     "Create order from cart, cancel own order",      "ORDER"),
+                buildFunction(702L, "ORDER_VIEW",     "View Order",       "View own order details",                        "ORDER"),
+                buildFunction(703L, "ORDER_MANAGE",   "Manage Order",     "Update order status (admin/staff)",             "ORDER"),
+                buildFunction(706L, "ORDER_VIEW_ALL", "View All Orders",  "View/list orders across all customers (admin)", "ORDER"),
                 // ── BAKONG ──────────────────────────────────────────────
                 buildFunction(801L, "BAKONG_QR", "Get Bakong QR", "Generate Bakong payment QR code", "PAYMENT"),
                 // ── ADDRESS ─────────────────────────────────────────────
@@ -114,6 +122,13 @@ public class DataInitializer implements CommandLineRunner {
                 buildFunction(902L, "ADDRESS_VIEW",   "View Address",   "View user addresses",          "ADDRESS"),
                 buildFunction(903L, "ADDRESS_UPDATE", "Update Address", "Update existing address",      "ADDRESS"),
                 buildFunction(904L, "ADDRESS_DELETE", "Delete Address", "Delete user address",          "ADDRESS"),
+                // ── PAYMENT ─────────────────────────────────────────────
+                buildFunction(705L, "PAYMENT_VIEW",     "View Payments",     "View own payment detail/history",       "PAYMENT"),
+                buildFunction(707L, "PAYMENT_VIEW_ALL", "View All Payments", "View/list payments across all customers (admin)", "PAYMENT"),
+                buildFunction(1301L, "PAYMENT_TXN_VIEW",   "View Payment Transactions",   "View payment gateway transaction records", "PAYMENT"),
+                buildFunction(1302L, "PAYMENT_TXN_MANAGE", "Manage Payment Transactions", "Create/update payment gateway transactions", "PAYMENT"),
+                // ── CANCELATION ─────────────────────────────────────────
+                buildFunction(1401L, "CANCELATION_VIEW", "View Cancelations", "View order cancelation summary, list and detail", "CANCELATION"),
                 // ── PRODUCT & CATEGORY (Admin/Manager only) ────────────────
                 buildFunction(1001L, "CATEGORY_CREATE", "Create Category", "Create product category", "PRODUCT"),
                 buildFunction(1002L, "SUBCATEGORY_CREATE", "Create Subcategory", "Create product subcategory", "PRODUCT"),
@@ -243,8 +258,9 @@ public class DataInitializer implements CommandLineRunner {
 
         // Only view permissions – no create/update/delete for products/categories/subcategories
         List<Long> funcIds = List.of(
-                501L, 502L,          // Cart (add & view)
-                701L,                 // Order create
+                501L, 502L, 503L, 504L, 505L, // Cart (add, view, update, remove, clear)
+                701L, 702L,           // Order create/cancel, view own orders
+                705L,                 // Payment view
                 801L,                 // Bakong QR
                 901L, 902L, 903L, 904L, // Address (all operations)
                 1004L,                // Product VIEW
@@ -271,11 +287,17 @@ public class DataInitializer implements CommandLineRunner {
         Group userGroup = groupRepository.findByGroupCode("USR")
                 .orElseThrow(() -> new RuntimeException("USR group not found"));
 
-        // Grant create and view permissions for categories, subcategories, products
+        // Grant view permissions for categories, subcategories, products, plus the
+        // standard customer self-service functions (cart, checkout, own orders/payments, addresses)
         List<Long> funcIds = List.of(
                 1004L,  // PRODUCT_VIEW
                 1007L,  // CATEGORY_VIEW
-                1008L   // SUBCATEGORY_VIEW
+                1008L,  // SUBCATEGORY_VIEW
+                501L, 502L, 503L, 504L, 505L, // Cart (add, view, update, remove, clear)
+                701L, 702L,           // Order create/cancel, view own orders
+                705L,                 // Payment view
+                801L,                 // Bakong QR
+                901L, 902L, 903L, 904L // Address (all operations)
         );
 
         for (Long funcId : funcIds) {
@@ -309,6 +331,12 @@ public class DataInitializer implements CommandLineRunner {
     private void seedRefundGroupPermissions() {
         grantFuncIdsToGroup("STF", List.of(1201L));
         grantFuncIdsToGroup("MNG", List.of(1201L, 1202L, 1203L));
+    }
+
+    // ---------- NEW: Cancelation Management permissions (STF/MNG view-only, reporting) ----------
+    private void seedCancelationGroupPermissions() {
+        grantFuncIdsToGroup("STF", List.of(1401L));
+        grantFuncIdsToGroup("MNG", List.of(1401L));
     }
 
     private void grantFuncIdsToGroup(String groupCode, List<Long> funcIds) {
@@ -359,6 +387,8 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("PUT", "/api/v1/addresses/**", 903L);
         createApiPermissionIfNotExists("DELETE", "/api/v1/addresses/**", 904L);
         createApiPermissionIfNotExists("POST", "/api/v1/categories/**", 1001L);
+        createApiPermissionIfNotExists("PUT", "/api/v1/categories/**", 1001L);
+        createApiPermissionIfNotExists("DELETE", "/api/v1/categories/**", 1001L);
         createApiPermissionIfNotExists("POST", "/api/v1/subcategories/**", 1002L);
         createApiPermissionIfNotExists("POST", "/api/v1/products/**", 1003L);
         createApiPermissionIfNotExists("GET", "/api/v1/products/**", 1004L);
@@ -390,6 +420,86 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("POST", "/admin/returns/*/receive", 1106L);
         createApiPermissionIfNotExists("POST", "/admin/returns/*/inspect/start", 1107L);
         createApiPermissionIfNotExists("POST", "/admin/returns/*/inspect/complete", 1107L);
+
+        // ── CART (remaining endpoints) ──────────────────────────────
+        createApiPermissionIfNotExists("POST", "/api/v1/cart/user/id", 502L);
+        createApiPermissionIfNotExists("POST", "/api/v1/cart/user/id/get-or-create", 502L);
+        createApiPermissionIfNotExists("POST", "/api/v1/cart/user/id/items/cartItemId", 503L);
+        createApiPermissionIfNotExists("POST", "/api/v1/cart/user/userId/items/cartItemId", 504L);
+        createApiPermissionIfNotExists("POST", "/api/v1/cart/user/userId/clear", 505L);
+
+        // ── ORDERS (remaining endpoints) ────────────────────────────
+        createApiPermissionIfNotExists("GET", "/api/v1/orders", 706L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/get/all", 706L);
+        createApiPermissionIfNotExists("GET", "/api/v1/orders/summary", 706L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/user/id/", 702L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/id/", 702L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/number/", 702L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/user/detail", 702L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/user/history", 702L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/items", 702L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/user/from-cart", 701L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/user/cancel", 701L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/bakong/initiate", 701L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/bakong/verify", 701L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/bakong/callback", 701L);
+        createApiPermissionIfNotExists("POST", "/api/v1/orders/status/", 703L);
+
+        // ── PAYMENTS (customer-facing) ───────────────────────────────
+        createApiPermissionIfNotExists("POST", "/api/v1/payments/user/id", 705L);
+        createApiPermissionIfNotExists("POST", "/api/v1/payments/user/detail", 705L);
+        createApiPermissionIfNotExists("POST", "/api/v1/payments/order/", 705L);
+        createApiPermissionIfNotExists("POST", "/api/v1/payments/transaction/", 705L);
+        createApiPermissionIfNotExists("POST", "/api/v1/payments/user/history", 705L);
+        createApiPermissionIfNotExists("POST", "/api/v1/payments/get/all", 707L);
+
+        // ── PAYMENT TRANSACTIONS (admin gateway audit trail) ─────────
+        createApiPermissionIfNotExists("POST", "/api/v1/payment-transactions/get/all", 1301L);
+        createApiPermissionIfNotExists("GET", "/api/v1/payment-transactions/**", 1301L);
+        createApiPermissionIfNotExists("POST", "/api/v1/payment-transactions", 1302L);
+        createApiPermissionIfNotExists("PUT", "/api/v1/payment-transactions/**", 1302L);
+
+        // ── CANCELATIONS (admin) ─────────────────────────────────────
+        createApiPermissionIfNotExists("GET", "/admin/cancelations/summary", 1401L);
+        createApiPermissionIfNotExists("POST", "/admin/cancelations/list", 1401L);
+        createApiPermissionIfNotExists("GET", "/admin/cancelations/*", 1401L);
+
+        // ── CATEGORY ICONS (reuse category view/manage functions) ────
+        createApiPermissionIfNotExists("GET", "/api/v1/category-icons/get/all", 1007L);
+        createApiPermissionIfNotExists("GET", "/api/v1/category-icons/id", 1007L);
+        createApiPermissionIfNotExists("POST", "/api/v1/category-icons/upload", 1001L);
+        createApiPermissionIfNotExists("DELETE", "/api/v1/category-icons/delete", 1001L);
+
+        // ── USER MANAGEMENT (admin only) ─────────────────────────────
+        createApiPermissionIfNotExists("POST", "/api/v1/user/create", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user/id", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user/id/image", 601L);
+        createApiPermissionIfNotExists("GET", "/api/v1/user/id/user", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user/All", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user/id/update", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user/id/delete", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user/count", 601L);
+
+        // ── USER PERMISSIONS (admin only) ────────────────────────────
+        createApiPermissionIfNotExists("POST", "/api/v1/user-permissions/get/all", 204L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-permissions/get/id/", 204L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-permissions/create/", 201L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-permissions/update/", 202L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user-permissions/delete/", 203L);
+
+        // ── GROUP PERMISSIONS (admin only) ───────────────────────────
+        createApiPermissionIfNotExists("POST", "/api/v1/group-permissions/get/all", 304L);
+        createApiPermissionIfNotExists("POST", "/api/v1/group-permissions/get/id/", 304L);
+        createApiPermissionIfNotExists("POST", "/api/v1/group-permissions/create/", 301L);
+        createApiPermissionIfNotExists("POST", "/api/v1/group-permissions/update/", 302L);
+        createApiPermissionIfNotExists("POST", "/api/v1/group-permissions/delete/", 303L);
+
+        // ── FUNCTION PERMISSIONS (admin only) ────────────────────────
+        createApiPermissionIfNotExists("POST", "/api/v1/functions/get/all", 404L);
+        createApiPermissionIfNotExists("POST", "/api/v1/functions/get/id/", 404L);
+        createApiPermissionIfNotExists("POST", "/api/v1/functions/create/", 401L);
+        createApiPermissionIfNotExists("POST", "/api/v1/functions/update/", 402L);
+        createApiPermissionIfNotExists("POST", "/api/v1/functions/delete/", 403L);
     }
 
     private void createApiPermissionIfNotExists(String method, String api, Long funcId) {

@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,6 +24,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -33,13 +35,16 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/webjars/**",
-            "/api/v1/products/**",
+            "/api/v1/products/get/all",
             "/api/v1/products/active",
             "/api/v1/products/search",
             "/api/v1/products/subcategory/**",
             "/api/v1/products/category/**",
-            "/api/v1/categories/**",
-            "/api/v1/subcategories/**"
+            "/api/v1/categories/get/all",
+            "/api/v1/categories/id/get/",
+            "/api/v1/categories/name/",
+            "/api/v1/categories/with-subcategories",
+            "/api/v1/subcategories/get/all"
     };
 
     private final UserDetailsService customUserDetailService;

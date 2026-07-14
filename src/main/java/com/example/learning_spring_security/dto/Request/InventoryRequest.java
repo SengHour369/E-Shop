@@ -16,6 +16,7 @@ public class InventoryRequest {
     @NotNull(message = "Quantity is required")
     @PositiveOrZero(message = "Quantity must be zero or positive")
     private Long quantity;
+    private Integer lowStockThreshold= 5;
 
     @JsonProperty("warehouse_location")
     private String warehouseLocation;

@@ -37,9 +37,11 @@ public class Inventory extends BaseEntity {
     private LocalDateTime lastRestockedAt;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isDefault = false;
 
     @Column(name = "low_stock_threshold")
+    @Builder.Default
     private Integer lowStockThreshold = 5;
 
     @PrePersist
