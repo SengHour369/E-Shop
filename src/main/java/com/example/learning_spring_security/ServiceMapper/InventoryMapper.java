@@ -25,16 +25,34 @@ public class InventoryMapper {
 
     public static InventoryResponse toResponse(Inventory inventory) {
         ProductSku sku = inventory.getProductSku();
+        if (sku == null) {
+            throw new IllegalStateException("Inventory has no associated ProductSku");
+        }
+
+        long available = inventory.getQuantity() - inventory.getReservedQuantity();
+        int threshold = inventory.getLowStockThreshold() != null ? inventory.getLowStockThreshold() : 5;
+        String stockStatus;
+        if (available <= 0) {
+            stockStatus = "OUT_OF_STOCK";
+        } else if (available <= threshold) {
+            stockStatus = "LOW_STOCK";
+        } else {
+            stockStatus = "IN_STOCK";
+        }
+
         return InventoryResponse.builder()
                 .id(inventory.getId())
                 .productSkuId(sku.getId())
                 .sku(sku.getSku())
-                .productSkuId(sku.getId())
+                .productId(sku.getProduct() != null ? sku.getProduct().getId() : null)
+                .productName(sku.getProduct() != null ? sku.getProduct().getName() : null)
+                .description(sku.getDescription())
                 .quantity(inventory.getQuantity())
                 .reservedQuantity(inventory.getReservedQuantity())
-                .availableQuantity(inventory.getQuantity() - inventory.getReservedQuantity())
+                .availableQuantity(available)
                 .warehouseLocation(inventory.getWarehouseLocation())
                 .lowStockThreshold(inventory.getLowStockThreshold())
+                .stockStatus(stockStatus)
                 .lastRestockedAt(inventory.getLastRestockedAt())
                 .createdAt(inventory.getCreatedAt())
                 .updatedAt(inventory.getUpdatedAt())

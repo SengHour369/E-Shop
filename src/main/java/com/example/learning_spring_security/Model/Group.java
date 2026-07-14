@@ -3,6 +3,8 @@ package com.example.learning_spring_security.Model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "tt_group")
 @Getter
@@ -22,6 +24,7 @@ public class Group extends BaseEntity {
     private String name;
     private String description;
     private String status;
+    private String type;
 
     @Column(name = "is_active")
     private Boolean isActive = false;

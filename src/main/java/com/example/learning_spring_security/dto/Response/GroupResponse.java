@@ -23,6 +23,7 @@ public class GroupResponse {
 
     private String description;
     private String status;
+    private String type;
 
     @JsonProperty("is_active")
     private Boolean isActive;

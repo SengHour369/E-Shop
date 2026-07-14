@@ -18,18 +18,14 @@ import java.util.Optional;
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     Optional<Inventory> findByProductSkuId(Long productSkuId);
-
     boolean existsByProductSkuId(Long productSkuId);
 
-    // Low stock – returns Inventory records (used for paginated view)
     @Query("SELECT i FROM Inventory i WHERE (i.quantity - i.reservedQuantity) <= :threshold")
     Page<Inventory> findLowStock(@Param("threshold") Long threshold, Pageable pageable);
 
-    // Inventory by product ID (paginated)
     @Query("SELECT i FROM Inventory i JOIN i.productSku sku JOIN sku.product p WHERE p.id = :productId")
     Page<Inventory> findByProductId(@Param("productId") Long productId, Pageable pageable);
 
-    // ---------- Stock update methods (by productSkuId) ----------
     @Modifying
     @Transactional
     @Query("UPDATE Inventory i SET i.quantity = i.quantity - :quantity WHERE i.productSku.id = :productSkuId AND i.quantity >= :quantity")
@@ -40,14 +36,46 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @Query("UPDATE Inventory i SET i.quantity = i.quantity + :quantity WHERE i.productSku.id = :productSkuId")
     int increaseStock(@Param("productSkuId") Long productSkuId, @Param("quantity") Long quantity);
 
-    // ---------- Low stock SKU lists (return ProductSku directly) ----------
     @Query("SELECT sku FROM Inventory i JOIN i.productSku sku WHERE i.quantity <= i.lowStockThreshold")
     List<ProductSku> findLowStockSkus();
 
     @Query("SELECT sku FROM Inventory i JOIN i.productSku sku WHERE sku.product.id = :productId AND i.quantity <= i.lowStockThreshold")
     List<ProductSku> findLowStockSkusByProductId(@Param("productId") Long productId);
 
-    // ---------- Default SKU for a product ----------
     @Query("SELECT sku FROM Inventory i JOIN i.productSku sku WHERE sku.product.id = :productId AND i.isDefault = true")
     Optional<ProductSku> findDefaultSkuByProductId(@Param("productId") Long productId);
+
+    // ---------- Dashboard summary ----------
+    @Query("SELECT COUNT(DISTINCT p.id) FROM Product p WHERE EXISTS (" +
+            "SELECT 1 FROM ProductSku s WHERE s.product = p AND EXISTS (" +
+            "SELECT 1 FROM Inventory i WHERE i.productSku = s))")
+    Long countDistinctProductsWithInventory();
+
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM Inventory i")
+    Long sumTotalStock();
+
+    @Query("SELECT COALESCE(COUNT(i), 0) FROM Inventory i WHERE (i.quantity - i.reservedQuantity) <= i.lowStockThreshold")
+    Long countLowStock();
+
+    @Query("SELECT COALESCE(COUNT(i), 0) FROM Inventory i WHERE (i.quantity - i.reservedQuantity) = 0")
+    Long countOutOfStock();
+
+    // ---------- Search (without barcode for now) ----------
+    @Query("SELECT i FROM Inventory i " +
+            "JOIN FETCH i.productSku sku " +
+            "JOIN FETCH sku.product p " +
+            "WHERE (:search IS NULL OR " +
+            "       LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "       LOWER(sku.sku) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:warehouse IS NULL OR i.warehouseLocation = :warehouse) " +
+            "AND (:status IS NULL OR " +
+            "     (CASE WHEN :status = 'IN_STOCK' THEN (i.quantity - i.reservedQuantity) > i.lowStockThreshold " +
+            "           WHEN :status = 'LOW_STOCK' THEN (i.quantity - i.reservedQuantity) <= i.lowStockThreshold " +
+            "                                         AND (i.quantity - i.reservedQuantity) > 0 " +
+            "           WHEN :status = 'OUT_OF_STOCK' THEN (i.quantity - i.reservedQuantity) = 0 " +
+            "           ELSE TRUE END))")
+    Page<Inventory> searchInventory(@Param("search") String search,
+                                    @Param("warehouse") String warehouse,
+                                    @Param("status") String status,
+                                    Pageable pageable);
 }
