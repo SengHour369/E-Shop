@@ -22,6 +22,8 @@ public interface OrderCancelationRepository extends JpaRepository<OrderCancelati
 
     boolean existsByOrderId(Long orderId);
 
+    boolean existsByCancelationId(String cancelationId);
+
     @Query("""
             SELECT new com.example.learning_spring_security.dto.Response.CancelationListResponse(
                 oc.orderNo, oc.customerName, oc.cancelDate, oc.cancelReason, oc.amount

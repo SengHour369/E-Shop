@@ -4,6 +4,7 @@ import com.example.learning_spring_security.Constant.ReturnStatus;
 import com.example.learning_spring_security.Constant.ReturnType;
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.InvalidReturnStatusException;
+import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Exception.ExceptionService.ReturnNotFoundException;
 import com.example.learning_spring_security.Model.OrderItem;
 import com.example.learning_spring_security.Model.ProductSku;
@@ -17,6 +18,7 @@ import com.example.learning_spring_security.Service.ServiceStructure.RefundServi
 import com.example.learning_spring_security.Service.ServiceStructure.ReturnService;
 import com.example.learning_spring_security.dto.Request.ApproveReturnRequest;
 import com.example.learning_spring_security.dto.Request.CompleteInspectionRequest;
+import com.example.learning_spring_security.dto.Request.CreateReturnRequest;
 import com.example.learning_spring_security.dto.Request.GetReturnListRequest;
 import com.example.learning_spring_security.dto.Request.ReceiveReturnRequest;
 import com.example.learning_spring_security.dto.Request.RejectReturnRequest;
@@ -36,19 +38,63 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ReturnServiceImpl implements ReturnService {
 
+    private static final String RETURN_ID_PREFIX = "RET";
+    private static final String ID_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int ID_LENGTH = 8;
+    private static final Set<String> VALID_RETURN_TYPES =
+            Set.of(ReturnType.RETURN, ReturnType.REFUND, ReturnType.EXCHANGE);
+
+    private final SecureRandom random = new SecureRandom();
+
     private final ReturnRequestRepository returnRequestRepository;
     private final OrderRepository orderRepository;
     private final ReturnStatusHistoryRepository returnStatusHistoryRepository;
     private final RefundService refundService;
     private final InventoryRepository inventoryRepository;
+
+    @Override
+    @Transactional
+    public ResponseErrorTemplate createReturn(CreateReturnRequest request) {
+        orderRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + request.getOrderId()));
+
+        String returnType = request.getReturnType() == null ? null : request.getReturnType().trim().toUpperCase();
+        if (!VALID_RETURN_TYPES.contains(returnType)) {
+            throw new BadRequestException("Invalid return type: " + request.getReturnType()
+                    + ". Allowed values: " + VALID_RETURN_TYPES);
+        }
+
+        String actor = currentUsername();
+        Return returnRequest = Return.builder()
+                .returnId(generateReturnId())
+                .orderId(request.getOrderId())
+                .customerId(request.getCustomerId())
+                .productId(request.getProductId())
+                .returnType(returnType)
+                .reason(request.getReason())
+                .amount(request.getAmount())
+                .status(ReturnStatus.REQUESTED)
+                .requestedAt(LocalDateTime.now())
+                .requestedBy(actor)
+                .createdBy(actor)
+                .build();
+
+        Return saved = returnRequestRepository.save(returnRequest);
+        recordHistory(saved.getId(), null, ReturnStatus.REQUESTED, actor, saved.getReason());
+        log.info("Return {} created for order {} by {}", saved.getReturnId(), saved.getOrderId(), actor);
+
+        return getReturnDetail(saved.getReturnId());
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -316,5 +362,21 @@ public class ReturnServiceImpl implements ReturnService {
     private String currentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null ? authentication.getName() : "system";
+    }
+
+    private String generateReturnId() {
+        String returnId;
+        do {
+            returnId = RETURN_ID_PREFIX + "-" + generateRandomPart();
+        } while (returnRequestRepository.existsByReturnId(returnId));
+        return returnId;
+    }
+
+    private String generateRandomPart() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < ID_LENGTH; i++) {
+            builder.append(ID_CHARACTERS.charAt(random.nextInt(ID_CHARACTERS.length())));
+        }
+        return builder.toString();
     }
 }

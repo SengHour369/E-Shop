@@ -2,9 +2,11 @@ package com.example.learning_spring_security.Repository;
 
 import com.example.learning_spring_security.Enumeration.TransactionStatus;
 import com.example.learning_spring_security.Model.PaymentTransaction;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -28,4 +30,5 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     Page<PaymentTransaction> findByStatus(TransactionStatus status, Pageable pageable);
 
     boolean existsByTransactionNo(String transactionNo);
+
 }

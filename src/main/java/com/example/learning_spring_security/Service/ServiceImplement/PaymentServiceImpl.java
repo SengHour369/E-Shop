@@ -1,5 +1,7 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
+import com.example.learning_spring_security.Enumeration.PaymentMethod;
+import com.example.learning_spring_security.Enumeration.TransactionStatus;
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.OrderDetail;
@@ -7,11 +9,15 @@ import com.example.learning_spring_security.Model.Payment;
 import com.example.learning_spring_security.Repository.OrderRepository;
 import com.example.learning_spring_security.Repository.PaymentRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.PaymentService;
+import com.example.learning_spring_security.Service.ServiceStructure.PaymentTransactionService;
 import com.example.learning_spring_security.ServiceMapper.PaymentMapper;
 import com.example.learning_spring_security.dto.Request.GetPaymentRequest;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
+import com.example.learning_spring_security.dto.Request.PaymentTransactionRequest;
+import com.example.learning_spring_security.dto.Request.PaymentTransactionStatusUpdateRequest;
 import com.example.learning_spring_security.dto.Response.PaymentPageResponse;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
+import com.example.learning_spring_security.dto.Response.PaymentTransactionResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final PaymentTransactionService paymentTransactionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -137,7 +144,51 @@ public class PaymentServiceImpl implements PaymentService {
         order.setStatus("PROCESSING");
         orderRepository.save(order);
 
+        // Record the money received as a PaymentTransaction so downstream flows
+        // (e.g. refunds) can find a SUCCESS transaction for this order.
+        recordSuccessfulTransaction(order, savedPayment);
+
         return PaymentMapper.toResponse(savedPayment);
+    }
+
+    private void recordSuccessfulTransaction(OrderDetail order, Payment payment) {
+        try {
+            PaymentTransactionRequest txnRequest = PaymentTransactionRequest.builder()
+                    .orderId(order.getId())
+                    .customerId(order.getUser() != null ? order.getUser().getId() : null)
+                    .paymentMethod(parsePaymentMethod(payment.getPaymentMethod()))
+                    .amount(payment.getAmount())
+                    .currency(payment.getCurrency() != null ? payment.getCurrency() : "USD")
+                    .remarks("Auto-created on payment success for order " + order.getId())
+                    .build();
+
+            PaymentTransactionResponse txn = paymentTransactionService.createTransaction(txnRequest);
+
+            paymentTransactionService.updateTransactionStatus(txn.getId(),
+                    PaymentTransactionStatusUpdateRequest.builder()
+                            .newStatus(TransactionStatus.SUCCESS)
+                            .changedBy("SYSTEM")
+                            .reason("Payment completed")
+                            .build());
+
+            log.info("PaymentTransaction {} recorded as SUCCESS for order {}",
+                    txn.getTransactionNo(), order.getId());
+        } catch (Exception e) {
+            // Re-throw so the whole @Transactional processPayment rolls back: we never want a
+            // COMPLETED payment without its matching PaymentTransaction (refunds depend on it).
+            log.error("Failed to record PaymentTransaction for order {}: {}", order.getId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private PaymentMethod parsePaymentMethod(String method) {
+        if (method == null) return null;
+        try {
+            return PaymentMethod.valueOf(method.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            log.warn("Unknown payment method '{}' for PaymentTransaction; storing null", method);
+            return null;
+        }
     }
 
     @Override

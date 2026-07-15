@@ -3,10 +3,12 @@ package com.example.learning_spring_security.controller;
 import com.example.learning_spring_security.Service.ServiceStructure.ReturnService;
 import com.example.learning_spring_security.dto.Request.ApproveReturnRequest;
 import com.example.learning_spring_security.dto.Request.CompleteInspectionRequest;
+import com.example.learning_spring_security.dto.Request.CreateReturnRequest;
 import com.example.learning_spring_security.dto.Request.GetReturnListRequest;
 import com.example.learning_spring_security.dto.Request.ReceiveReturnRequest;
 import com.example.learning_spring_security.dto.Request.RejectReturnRequest;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class ReturnController {
 
     private final ReturnService returnService;
+
+    @PostMapping
+    public ResponseEntity<ResponseErrorTemplate> createReturn(@Valid @RequestBody CreateReturnRequest request) {
+        return ResponseEntity.ok(returnService.createReturn(request));
+    }
 
     @GetMapping("/summary")
     public ResponseEntity<ResponseErrorTemplate> getReturnSummary() {

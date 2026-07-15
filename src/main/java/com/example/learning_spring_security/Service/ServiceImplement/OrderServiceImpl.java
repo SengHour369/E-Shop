@@ -322,6 +322,7 @@ public class OrderServiceImpl implements OrderService {
         OrderDetail cancelled = orderRepository.save(order);
 
         orderCancelationRepository.save(OrderCancelation.builder()
+                .cancelationId(generateCancelationId())
                 .orderId(cancelled.getId())
                 .orderNo(cancelled.getOrderNumber())
                 .customerId(cancelled.getUser().getId())
@@ -372,6 +373,14 @@ public class OrderServiceImpl implements OrderService {
 
     private String generateOrderNumber() {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private String generateCancelationId() {
+        String cancelationId;
+        do {
+            cancelationId = "CNL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        } while (orderCancelationRepository.existsByCancelationId(cancelationId));
+        return cancelationId;
     }
 
     /**
