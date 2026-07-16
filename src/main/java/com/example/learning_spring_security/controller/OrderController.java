@@ -75,14 +75,6 @@ public class OrderController extends BaseController {
         return ResponseEntity.ok(orders);
     }
 
-    @PostMapping("/user/from-cart")
-    public ResponseEntity<ResponseErrorTemplate> createOrderFromCart(
-            @RequestParam Long userId,
-            @Valid @RequestBody OrderRequest request) {
-        ResponseErrorTemplate order = orderService.createOrderFromCart(userId, request);
-        return new ResponseEntity<>(order, HttpStatus.CREATED);
-    }
-
     @PostMapping("/status/")
     public ResponseEntity<ResponseErrorTemplate> updateOrderStatus(
             @RequestParam Long id,

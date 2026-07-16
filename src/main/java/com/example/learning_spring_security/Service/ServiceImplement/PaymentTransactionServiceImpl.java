@@ -196,6 +196,27 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         return PaymentTransactionMapper.toResponse(updated);
     }
 
+    @Override
+    public PaymentTransactionResponse recordTransaction(PaymentTransactionRequest request,
+                                                        TransactionStatus finalStatus,
+                                                        String changedBy,
+                                                        String reason) {
+        PaymentTransactionResponse txn = createTransaction(request);
+
+        if (finalStatus != null && finalStatus != TransactionStatus.PENDING) {
+            txn = updateTransactionStatus(txn.getId(),
+                    PaymentTransactionStatusUpdateRequest.builder()
+                            .newStatus(finalStatus)
+                            .changedBy(changedBy != null ? changedBy : "SYSTEM")
+                            .reason(reason)
+                            .build());
+        }
+
+        log.info("PaymentTransaction {} recorded as {} for order {}",
+                txn.getTransactionNo(), txn.getStatus(), request.getOrderId());
+        return txn;
+    }
+
     private String generateTransactionNo() {
         String transactionNo;
         do {

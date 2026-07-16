@@ -14,10 +14,8 @@ import com.example.learning_spring_security.ServiceMapper.PaymentMapper;
 import com.example.learning_spring_security.dto.Request.GetPaymentRequest;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
 import com.example.learning_spring_security.dto.Request.PaymentTransactionRequest;
-import com.example.learning_spring_security.dto.Request.PaymentTransactionStatusUpdateRequest;
 import com.example.learning_spring_security.dto.Response.PaymentPageResponse;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
-import com.example.learning_spring_security.dto.Response.PaymentTransactionResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -156,38 +154,19 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentTransactionRequest txnRequest = PaymentTransactionRequest.builder()
                     .orderId(order.getId())
                     .customerId(order.getUser() != null ? order.getUser().getId() : null)
-                    .paymentMethod(parsePaymentMethod(payment.getPaymentMethod()))
+                    .paymentMethod(PaymentMethod.fromString(payment.getPaymentMethod()))
                     .amount(payment.getAmount())
                     .currency(payment.getCurrency() != null ? payment.getCurrency() : "USD")
                     .remarks("Auto-created on payment success for order " + order.getId())
                     .build();
 
-            PaymentTransactionResponse txn = paymentTransactionService.createTransaction(txnRequest);
-
-            paymentTransactionService.updateTransactionStatus(txn.getId(),
-                    PaymentTransactionStatusUpdateRequest.builder()
-                            .newStatus(TransactionStatus.SUCCESS)
-                            .changedBy("SYSTEM")
-                            .reason("Payment completed")
-                            .build());
-
-            log.info("PaymentTransaction {} recorded as SUCCESS for order {}",
-                    txn.getTransactionNo(), order.getId());
+            paymentTransactionService.recordTransaction(
+                    txnRequest, TransactionStatus.SUCCESS, "SYSTEM", "Payment completed");
         } catch (Exception e) {
             // Re-throw so the whole @Transactional processPayment rolls back: we never want a
             // COMPLETED payment without its matching PaymentTransaction (refunds depend on it).
             log.error("Failed to record PaymentTransaction for order {}: {}", order.getId(), e.getMessage(), e);
             throw e;
-        }
-    }
-
-    private PaymentMethod parsePaymentMethod(String method) {
-        if (method == null) return null;
-        try {
-            return PaymentMethod.valueOf(method.trim().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            log.warn("Unknown payment method '{}' for PaymentTransaction; storing null", method);
-            return null;
         }
     }
 

@@ -3,12 +3,16 @@ package com.example.learning_spring_security.Service.ServiceImplement;
 import com.example.learning_spring_security.Constant.CancelReason;
 import com.example.learning_spring_security.Constant.CancelStatus;
 import com.example.learning_spring_security.Constant.OrderStatus;
+import com.example.learning_spring_security.Enumeration.PaymentMethod;
+import com.example.learning_spring_security.Enumeration.TransactionStatus;
 import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.*;
 import com.example.learning_spring_security.Repository.*;
 import com.example.learning_spring_security.Service.ServiceStructure.InventoryService;
 import com.example.learning_spring_security.Service.ServiceStructure.OrderService;
+import com.example.learning_spring_security.Service.ServiceStructure.PaymentTransactionService;
+import com.example.learning_spring_security.dto.Request.PaymentTransactionRequest;
 
 import com.example.learning_spring_security.ServiceMapper.OrderItemMapper;
 import com.example.learning_spring_security.ServiceMapper.OrderMapper;
@@ -58,6 +62,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     private final BakongService bakongService;
+    private final PaymentTransactionService paymentTransactionService;
     private final EmailNotificationService emailNotificationService;
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
@@ -422,6 +427,28 @@ public class OrderServiceImpl implements OrderService {
                 || OrderStatus.ACLEDA.equalsIgnoreCase(paymentMethod);
     }
 
+    /**
+     * Persist a {@link com.example.learning_spring_security.Model.PaymentTransaction} for a KHQR
+     * order once the Bakong result is known. Runs in the caller's transaction, so if the record
+     * fails the whole verify/callback rolls back — a confirmed order must always have a matching
+     * transaction (refund logic depends on finding a SUCCESS transaction for the order). Callers
+     * already guard against re-entry via the CONFIRMED/CANCELLED short-circuits, so this does not
+     * create duplicate rows on gateway retries.
+     */
+    private void recordBakongTransaction(OrderDetail order, Payment payment,
+                                         TransactionStatus status, String reason) {
+        PaymentTransactionRequest txnRequest = PaymentTransactionRequest.builder()
+                .orderId(order.getId())
+                .customerId(order.getUser() != null ? order.getUser().getId() : null)
+                .paymentMethod(PaymentMethod.fromString(payment.getPaymentMethod()))
+                .amount(payment.getAmount())
+                .currency(payment.getCurrency() != null ? payment.getCurrency() : "USD")
+                .remarks(reason + " (bakong txn " + payment.getTransactionId() + ")")
+                .build();
+
+        paymentTransactionService.recordTransaction(txnRequest, status, "SYSTEM", reason);
+    }
+
     private String resolveBakongDeepLink(String qr) {
         try {
             KHQRResponse<KHQRDeepLinkData> deepLinkResponse = bakongService.generateDeepLink(qr);
@@ -638,6 +665,9 @@ public class OrderServiceImpl implements OrderService {
 
             orderRepository.save(order);
 
+            // Money confirmed received — record the successful PaymentTransaction.
+            recordBakongTransaction(order, payment, TransactionStatus.SUCCESS, "Bakong payment verified");
+
             return ResponseErrorTemplate.builder()
                     .message("Payment verified successfully")
                     .object(Map.of(
@@ -683,11 +713,13 @@ public class OrderServiceImpl implements OrderService {
         // Store the real Bakong transaction ID
         payment.setTransactionId(transactionId);         // keep generic field updated too
 
+        TransactionStatus transactionStatus;
         switch (status.toUpperCase()) {
             case "SUCCESS":
             case "COMPLETED":
                 order.setStatus(OrderStatus.CONFIRMED);
                 payment.setStatus(OrderStatus.COMPLETED);
+                transactionStatus = TransactionStatus.SUCCESS;
                 break;
             case "FAILED":
             case "CANCELLED":
@@ -696,15 +728,24 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderItems().forEach(item ->
                         inventoryRepository.increaseStock(item.getProductSku().getId(), item.getQuantity())
                 );
+                transactionStatus = TransactionStatus.FAILED;
                 break;
             case "PENDING":
             default:
                 order.setStatus(OrderStatus.PENDING);
                 payment.setStatus(OrderStatus.PENDING);
+                transactionStatus = null; // still pending — nothing settled yet, don't record
                 break;
         }
 
         orderRepository.save(order);
+
+        // Record the settled (SUCCESS/FAILED) outcome as a PaymentTransaction. PENDING is skipped
+        // so repeated pending callbacks don't spam the table with unsettled rows.
+        if (transactionStatus != null) {
+            recordBakongTransaction(order, payment, transactionStatus,
+                    "Bakong callback: " + status.toUpperCase());
+        }
 
         return ResponseErrorTemplate.builder()
                 .message("Payment callback processed successfully")
