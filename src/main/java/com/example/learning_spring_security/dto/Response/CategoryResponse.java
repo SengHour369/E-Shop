@@ -16,6 +16,7 @@ public class CategoryResponse {
     private String name;
     private String description;
     private String icon;
+    private Boolean status;
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
 
