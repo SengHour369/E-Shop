@@ -72,7 +72,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public List<ResponseErrorTemplate> getAllCategories() {
-        return categoryRepository.findAll().stream()
+        return categoryRepository.findAllActive().stream()
                 .map(CategoryMapper::toResponse)
                 .collect(Collectors.toList());
     }

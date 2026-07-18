@@ -22,25 +22,15 @@ public class ImageServiceImpl implements ImageService {
     @Override
     public Image uploadImage(MultipartFile imageModel) {
         try {
-
             if (imageModel.isEmpty()) {
                 return null;
             }
-
             Image image = new Image();
-
             image.setUrl(cloudinaryService.uploadFile(imageModel, "folder_1"));
-            if(image.getUrl() == null) {
-                return null;
-            }
-            // Do NOT persist the Image here. We only upload to Cloudinary and return an Image entity
-            // that will be attached to a Product and persisted together with the Product (cascade = ALL).
-            return image;
+            return image.getUrl() != null ? image : null;
         } catch (Exception e) {
             log.error("Failed to upload image to Cloudinary", e);
             return null;
         }
-
-
     }
 }
