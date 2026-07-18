@@ -116,12 +116,12 @@ public class InventoryController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(inventoryService.getInventoryHistory(inventoryId, pageable));
     }
-    @PostMapping("/increase-stock")
-    @Operation(summary = "Increase stock quantity for a SKU")
-    public ResponseEntity<ResponseErrorTemplate> increaseStock(
-            @Parameter(description = "Product SKU ID") @RequestParam Long skuId,
-            @Parameter(description = "Quantity to add") @RequestParam Long quantity) {
-        inventoryService.increaseStock(skuId, quantity);
-        return ResponseEntity.ok(ResponseErrorTemplate.success("Stock increased successfully", null));
-    }
+//    @PostMapping("/increase-stock")
+//    @Operation(summary = "Increase stock quantity for a SKU")
+//    public ResponseEntity<ResponseErrorTemplate> increaseStock(
+//            @Parameter(description = "Product SKU ID") @RequestParam Long skuId,
+//            @Parameter(description = "Quantity to add") @RequestParam Long quantity) {
+//        inventoryService.increaseStock(skuId, quantity);
+//        return ResponseEntity.ok(ResponseErrorTemplate.success("Stock increased successfully", null));
+//    }
 }
