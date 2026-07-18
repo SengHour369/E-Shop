@@ -30,4 +30,8 @@ public class PaymentTransactionStatusHistoryResponse {
     private String changedBy;
 
     private String reason;
+    private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private LocalDateTime updatedAt;
 }

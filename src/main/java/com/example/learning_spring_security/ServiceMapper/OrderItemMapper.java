@@ -45,7 +45,10 @@ public class OrderItemMapper {
                 .id(orderItem.getId())
                 .quantity(orderItem.getQuantity())
                 .unitPrice(orderItem.getUnitPrice())
+                .createdAt(orderItem.getCreatedAt())
+                .updatedAt(orderItem.getUpdatedAt())
                 .totalPrice(orderItem.getTotalPrice());
+
         if (orderItem.getProductSku() != null) {
             builder.productSku(productMapper.toSkuResponse(orderItem.getProductSku()));
             if (orderItem.getProductSku().getProduct() != null) {

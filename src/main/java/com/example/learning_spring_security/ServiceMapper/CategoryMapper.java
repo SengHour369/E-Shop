@@ -14,6 +14,7 @@ public class CategoryMapper {
         return Category.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .status(request.getStatus())
                 .build();
     }
 
@@ -23,6 +24,8 @@ public class CategoryMapper {
                 .name(category.getName())
                 .description(category.getDescription())
                 .icon(category.getIcon())
+                .createdAt(category.getCreatedAt())
+                .updatedAt(category.getUpdatedAt())
                 .build();
         return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, categoryResponse);
     }

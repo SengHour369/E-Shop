@@ -26,9 +26,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
-    // ---------- Existing endpoints ----------
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Create inventory for a SKU")
     public ResponseEntity<ResponseErrorTemplate> createInventory(
             @Valid @RequestBody InventoryRequest request,
@@ -37,7 +35,6 @@ public class InventoryController {
     }
 
     @PostMapping("/all/")
-    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Get all inventory with pagination")
     public ResponseEntity<Page<ResponseErrorTemplate>> getAllInventory(
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -71,18 +68,16 @@ public class InventoryController {
             @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(inventoryService.getLowStockInventory(threshold, pageable));
     }
-//
-//    @PatchMapping("/restock")
-//    @PreAuthorize("hasAuthority('ADMIN')")
-//    @Operation(summary = "Restock inventory")
-//    public ResponseEntity<ResponseErrorTemplate> restock(
-//            @RequestParam Long id,
-//            @Valid @RequestBody RestockRequest request) {
-//        return ResponseEntity.ok(inventoryService.restock(id, request));
-//    }
+
+    @PatchMapping("/restock")
+    @Operation(summary = "Restock inventory")
+    public ResponseEntity<ResponseErrorTemplate> restock(
+            @RequestParam Long id,
+            @Valid @RequestBody RestockRequest request) {
+        return ResponseEntity.ok(inventoryService.restock(id, request));
+    }
 
     @PostMapping("/exact")
-    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Adjust inventory (set exact quantity)")
     public ResponseEntity<ResponseErrorTemplate> adjustInventory(
             @RequestParam Long id,
@@ -91,7 +86,6 @@ public class InventoryController {
     }
 
     @PostMapping("/delete")
-    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Delete inventory record")
     public ResponseEntity<Void> deleteInventory(@RequestParam Long id) {
         inventoryService.deleteInventory(id);
@@ -123,7 +117,6 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.getInventoryHistory(inventoryId, pageable));
     }
     @PostMapping("/increase-stock")
-    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Increase stock quantity for a SKU")
     public ResponseEntity<ResponseErrorTemplate> increaseStock(
             @Parameter(description = "Product SKU ID") @RequestParam Long skuId,

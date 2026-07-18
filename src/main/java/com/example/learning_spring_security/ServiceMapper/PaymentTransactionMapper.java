@@ -37,6 +37,8 @@ public class PaymentTransactionMapper {
                 .currency(transaction.getCurrency())
                 .status(transaction.getStatus() != null ? transaction.getStatus().name() : null)
                 .remarks(transaction.getRemarks())
+                .createdAt(transaction.getCreatedAt())
+                .updatedAt(transaction.getUpdatedAt())
                 .build();
     }
 
@@ -58,6 +60,8 @@ public class PaymentTransactionMapper {
                 .changedAt(history.getChangedAt())
                 .changedBy(history.getChangedBy())
                 .reason(history.getReason())
+                .createdAt(history.getCreatedAt())
+                .updatedAt(history.getUpdatedAt())
                 .build();
     }
 }

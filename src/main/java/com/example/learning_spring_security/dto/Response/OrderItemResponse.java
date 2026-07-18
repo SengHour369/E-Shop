@@ -3,6 +3,7 @@ package com.example.learning_spring_security.dto.Response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,4 +21,8 @@ public class OrderItemResponse {
     private BigDecimal totalPrice;
     @JsonProperty("product_sku")
     private ProductSkuResponse productSku;
+    private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private LocalDateTime updatedAt;
 }

@@ -25,19 +25,19 @@ public interface OrderCancelationRepository extends JpaRepository<OrderCancelati
     boolean existsByCancelationId(String cancelationId);
 
     @Query("""
-            SELECT new com.example.learning_spring_security.dto.Response.CancelationListResponse(
-                oc.orderNo, oc.customerName, oc.cancelDate, oc.cancelReason, oc.amount
-            )
-            FROM OrderCancelation oc
-            WHERE (:orderNo IS NULL OR oc.orderNo = :orderNo)
-            AND (:customerName IS NULL OR LOWER(oc.customerName) LIKE LOWER(CONCAT('%', :customerName, '%')))
-            AND (:cancelReason IS NULL OR oc.cancelReason = :cancelReason)
-            AND (:cancelStatus IS NULL OR oc.cancelStatus = :cancelStatus)
-            AND (CAST(:fromCancelDate AS LocalDateTime) IS NULL OR oc.cancelDate >= :fromCancelDate)
-            AND (CAST(:toCancelDate AS LocalDateTime) IS NULL OR oc.cancelDate <= :toCancelDate)
-            AND (CAST(:minAmount AS BigDecimal) IS NULL OR oc.amount >= :minAmount)
-            AND (CAST(:maxAmount AS BigDecimal) IS NULL OR oc.amount <= :maxAmount)
-            """)
+    SELECT new com.example.learning_spring_security.dto.Response.CancelationListResponse(
+        oc.orderNo, oc.customerName, oc.cancelDate, oc.cancelReason, oc.amount
+    )
+    FROM OrderCancelation oc
+    WHERE (:orderNo IS NULL OR oc.orderNo = :orderNo)
+    AND (:customerName IS NULL OR LOWER(oc.customerName) LIKE LOWER(CONCAT('%', :customerName, '%')))
+    AND (:cancelReason IS NULL OR oc.cancelReason = :cancelReason)
+    AND (:cancelStatus IS NULL OR oc.cancelStatus = :cancelStatus)
+    AND (:fromCancelDate IS NULL OR oc.cancelDate >= :fromCancelDate)
+    AND (:toCancelDate IS NULL OR oc.cancelDate <= :toCancelDate)
+    AND (:minAmount IS NULL OR oc.amount >= :minAmount)
+    AND (:maxAmount IS NULL OR oc.amount <= :maxAmount)
+    """)
     Page<CancelationListResponse> search(
             @Param("orderNo") String orderNo,
             @Param("customerName") String customerName,

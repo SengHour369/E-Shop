@@ -27,34 +27,6 @@ public interface ReturnRequestRepository extends JpaRepository<Return, Long> {
     @Query("SELECT r FROM Return r WHERE r.returnId = :returnId")
     Optional<Return> findByReturnIdForUpdate(@Param("returnId") String returnId);
 
-    @Query("""
-            SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
-                r.returnId, o.orderNumber, u.fullName, p.name, r.returnType, r.reason, r.status, r.amount
-            )
-            FROM ReturnRequest r
-            LEFT JOIN OrderDetail o ON o.id = r.orderId
-            LEFT JOIN User u ON u.id = r.customerId
-            LEFT JOIN Product p ON p.id = r.productId
-            WHERE (:returnId IS NULL OR r.returnId = :returnId)
-            AND (:orderNo IS NULL OR o.orderNumber = :orderNo)
-            AND (:customerName IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :customerName, '%')))
-            AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%')))
-            AND (:returnType IS NULL OR r.returnType = :returnType)
-            AND (:status IS NULL OR r.status = :status)
-            AND (:fromDate IS NULL OR r.requestedAt >= :fromDate)
-            AND (:toDate IS NULL OR r.requestedAt <= :toDate)
-            """)
-    Page<ReturnListResponse> search(
-            @Param("returnId") String returnId,
-            @Param("orderNo") String orderNo,
-            @Param("customerName") String customerName,
-            @Param("productName") String productName,
-            @Param("returnType") String returnType,
-            @Param("status") String status,
-            @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate,
-            Pageable pageable
-    );
 
     @Query("""
             SELECT new com.example.learning_spring_security.dto.Response.ReturnDetailResponse(
@@ -79,4 +51,93 @@ public interface ReturnRequestRepository extends JpaRepository<Return, Long> {
             FROM ReturnRequest r
             """)
     ReturnSummaryResponse getReturnSummary();
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
+            r.returnId, o.orderNumber, u.fullName, p.name,
+            r.returnType, r.reason, r.status, r.amount
+        )
+        FROM Return r
+        LEFT JOIN OrderDetail o ON o.id = r.orderId
+        LEFT JOIN User u ON u.id = r.customerId
+        LEFT JOIN Product p ON p.id = r.productId
+        WHERE r.returnId = :returnId
+    """)
+    Optional<ReturnListResponse> findReturnListByReturnId(@Param("returnId") String returnId);
+
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
+            r.returnId, o.orderNumber, u.fullName, p.name,
+            r.returnType, r.reason, r.status, r.amount
+        )
+        FROM Return r
+        LEFT JOIN OrderDetail o ON o.id = r.orderId
+        LEFT JOIN User u ON u.id = r.customerId
+        LEFT JOIN Product p ON p.id = r.productId
+    """)
+    Page<ReturnListResponse> findAllReturns(Pageable pageable);
+
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
+            r.returnId, o.orderNumber, u.fullName, p.name,
+            r.returnType, r.reason, r.status, r.amount
+        )
+        FROM Return r
+        LEFT JOIN OrderDetail o ON o.id = r.orderId
+        LEFT JOIN User u ON u.id = r.customerId
+        LEFT JOIN Product p ON p.id = r.productId
+        WHERE o.orderNumber = :orderNo
+    """)
+    Page<ReturnListResponse> findByOrderNumber(@Param("orderNo") String orderNo, Pageable pageable);
+
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
+            r.returnId, o.orderNumber, u.fullName, p.name,
+            r.returnType, r.reason, r.status, r.amount
+        )
+        FROM Return r
+        LEFT JOIN OrderDetail o ON o.id = r.orderId
+        LEFT JOIN User u ON u.id = r.customerId
+        LEFT JOIN Product p ON p.id = r.productId
+        WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :customerName, '%'))
+    """)
+    Page<ReturnListResponse> findByCustomerNameContaining(@Param("customerName") String customerName, Pageable pageable);
+
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
+            r.returnId, o.orderNumber, u.fullName, p.name,
+            r.returnType, r.reason, r.status, r.amount
+        )
+        FROM Return r
+        LEFT JOIN OrderDetail o ON o.id = r.orderId
+        LEFT JOIN User u ON u.id = r.customerId
+        LEFT JOIN Product p ON p.id = r.productId
+        WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%'))
+    """)
+    Page<ReturnListResponse> findByProductNameContaining(@Param("productName") String productName, Pageable pageable);
+
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
+            r.returnId, o.orderNumber, u.fullName, p.name,
+            r.returnType, r.reason, r.status, r.amount
+        )
+        FROM Return r
+        LEFT JOIN OrderDetail o ON o.id = r.orderId
+        LEFT JOIN User u ON u.id = r.customerId
+        LEFT JOIN Product p ON p.id = r.productId
+        WHERE r.status = :status
+    """)
+    Page<ReturnListResponse> findByStatus(@Param("status") String status, Pageable pageable);
+
+    @Query("""
+        SELECT new com.example.learning_spring_security.dto.Response.ReturnListResponse(
+            r.returnId, o.orderNumber, u.fullName, p.name,
+            r.returnType, r.reason, r.status, r.amount
+        )
+        FROM Return r
+        LEFT JOIN OrderDetail o ON o.id = r.orderId
+        LEFT JOIN User u ON u.id = r.customerId
+        LEFT JOIN Product p ON p.id = r.productId
+        WHERE r.returnType = :returnType
+    """)
+    Page<ReturnListResponse> findByReturnType(@Param("returnType") String returnType, Pageable pageable);
 }

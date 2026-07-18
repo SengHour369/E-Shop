@@ -43,7 +43,7 @@ public class OrderCancelation extends BaseEntity {
     @Column(name = "cancel_source")
     private String cancelSource;
 
-    @Column(name = "cancel_date", nullable = false)
+    @Column(name = "cancel_date")
     private LocalDateTime cancelDate;
 
     @Column(nullable = false)

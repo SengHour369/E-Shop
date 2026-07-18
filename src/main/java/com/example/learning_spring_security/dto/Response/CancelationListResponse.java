@@ -13,16 +13,21 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
+
 public class CancelationListResponse {
-
     private String orderNo;
-
     private String customerName;
-
     private LocalDateTime cancelDate;
-
     private String cancelReason;
-
     private BigDecimal amount;
+
+    // Explicit constructor (optional, but ensures compatibility)
+    public CancelationListResponse(String orderNo, String customerName, LocalDateTime cancelDate,
+                                   String cancelReason, BigDecimal amount) {
+        this.orderNo = orderNo;
+        this.customerName = customerName;
+        this.cancelDate = cancelDate;
+        this.cancelReason = cancelReason;
+        this.amount = amount;
+    }
 }

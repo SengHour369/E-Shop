@@ -38,4 +38,8 @@ public class PaymentResponse {
 
     @JsonProperty("payment_provider")
     private String paymentProvider;
+    private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private LocalDateTime updatedAt;
 }

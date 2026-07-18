@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -37,6 +38,9 @@ public class PaymentTransactionResponse {
     private String status;
 
     private String remarks;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @JsonProperty("status_history")
     private List<PaymentTransactionStatusHistoryResponse> statusHistory;

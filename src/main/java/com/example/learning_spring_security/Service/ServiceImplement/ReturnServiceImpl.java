@@ -16,12 +16,7 @@ import com.example.learning_spring_security.Repository.ReturnRequestRepository;
 import com.example.learning_spring_security.Repository.ReturnStatusHistoryRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.RefundService;
 import com.example.learning_spring_security.Service.ServiceStructure.ReturnService;
-import com.example.learning_spring_security.dto.Request.ApproveReturnRequest;
-import com.example.learning_spring_security.dto.Request.CompleteInspectionRequest;
-import com.example.learning_spring_security.dto.Request.CreateReturnRequest;
-import com.example.learning_spring_security.dto.Request.GetReturnListRequest;
-import com.example.learning_spring_security.dto.Request.ReceiveReturnRequest;
-import com.example.learning_spring_security.dto.Request.RejectReturnRequest;
+import com.example.learning_spring_security.dto.Request.*;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import com.example.learning_spring_security.dto.Response.ReturnListResponse;
 import com.example.learning_spring_security.dto.Response.ReturnPageResponse;
@@ -109,41 +104,6 @@ public class ReturnServiceImpl implements ReturnService {
         return ResponseErrorTemplate.success("Return summary retrieved successfully", summary);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ResponseErrorTemplate getReturnList(GetReturnListRequest request) {
-        if (request.getFromDate() != null && request.getToDate() != null
-                && request.getFromDate().isAfter(request.getToDate())) {
-            throw new BadRequestException("fromDate must not be greater than toDate");
-        }
-
-        int page = request.getPage() == null || request.getPage() < 1 ? 1 : request.getPage();
-        int size = request.getSize() == null || request.getSize() < 1 ? 10 : request.getSize();
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("requestedAt").descending());
-
-        Page<ReturnListResponse> result = returnRequestRepository.search(
-                request.getReturnId(),
-                request.getOrderNo(),
-                request.getCustomerName(),
-                request.getProductName(),
-                request.getReturnType(),
-                request.getStatus(),
-                request.getFromDate(),
-                request.getToDate(),
-                pageable
-        );
-
-        ReturnPageResponse pageResponse = ReturnPageResponse.builder()
-                .payload(result.getContent())
-                .totalItems(result.getTotalElements())
-                .totalPages(result.getTotalPages())
-                .currentPage(result.getNumber() + 1)
-                .pageSize(result.getSize())
-                .build();
-
-        String message = result.isEmpty() ? "No returns found" : "Returns retrieved successfully";
-        return ResponseErrorTemplate.success(message, pageResponse);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -378,5 +338,61 @@ public class ReturnServiceImpl implements ReturnService {
             builder.append(ID_CHARACTERS.charAt(random.nextInt(ID_CHARACTERS.length())));
         }
         return builder.toString();
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getReturns(GetReturnRequest request) {
+        int page = request.getPage() < 1 ? 1 : request.getPage();
+        int size = request.getSize() < 1 ? 10 : request.getSize();
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("requestedAt").descending());
+
+        Integer type = request.getCriteriaType();
+        String value = request.getCriteriaValue();
+
+        Page<ReturnListResponse> resultPage;
+
+        // ── Single‑item lookup (no pagination needed) ──────────────
+        if (type != null && type == 1 && value != null && !value.isBlank()) {
+            // by returnId – return a single item wrapped as a page
+            ReturnListResponse detail = returnRequestRepository.findReturnListByReturnId(value)
+                    .orElseThrow(() -> new ReturnNotFoundException(value));
+            return ResponseErrorTemplate.success("Return retrieved successfully",
+                    List.of(detail));   // or wrap in a page if you prefer
+        }
+
+        // ── Paginated lookups ────────────────────────────────────────
+        if (type == null || value == null || value.isBlank()) {
+            // no filter → all returns
+            resultPage = returnRequestRepository.findAllReturns(pageable);
+        } else if (type == 2) {
+            // by order number
+            resultPage = returnRequestRepository.findByOrderNumber(value, pageable);
+        } else if (type == 3) {
+            // by customer name (fuzzy)
+            resultPage = returnRequestRepository.findByCustomerNameContaining(value, pageable);
+        } else if (type == 4) {
+            // by product name (fuzzy)
+            resultPage = returnRequestRepository.findByProductNameContaining(value, pageable);
+        } else if (type == 5) {
+            // by status (exact)
+            resultPage = returnRequestRepository.findByStatus(value, pageable);
+        } else if (type == 6) {
+            // by return type (exact)
+            resultPage = returnRequestRepository.findByReturnType(value, pageable);
+        } else {
+            // fallback: all
+            resultPage = returnRequestRepository.findAllReturns(pageable);
+        }
+
+        ReturnPageResponse pageResponse = ReturnPageResponse.builder()
+                .payload(resultPage.getContent())
+                .totalItems(resultPage.getTotalElements())
+                .totalPages(resultPage.getTotalPages())
+                .currentPage(resultPage.getNumber() + 1)
+                .pageSize(resultPage.getSize())
+                .build();
+
+        String message = resultPage.isEmpty() ? "No returns found" : "Returns retrieved successfully";
+        return ResponseErrorTemplate.success(message, pageResponse);
     }
 }

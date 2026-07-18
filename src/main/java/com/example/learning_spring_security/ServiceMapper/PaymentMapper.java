@@ -31,6 +31,8 @@ public class PaymentMapper {
                 .transactionId(payment.getTransactionId())
                 .code(payment.getCode())
                 .codeOrder(payment.getCodeOrder())
+                .createdAt(payment.getCreatedAt())
+                .updatedAt(payment.getUpdatedAt())
                 .paymentProvider(payment.getPaymentProvider());
 
         if (payment.getOrderDetail() != null) {

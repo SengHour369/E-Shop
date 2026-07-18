@@ -1,11 +1,6 @@
 package com.example.learning_spring_security.Service.ServiceStructure;
 
-import com.example.learning_spring_security.dto.Request.ApproveReturnRequest;
-import com.example.learning_spring_security.dto.Request.CompleteInspectionRequest;
-import com.example.learning_spring_security.dto.Request.CreateReturnRequest;
-import com.example.learning_spring_security.dto.Request.GetReturnListRequest;
-import com.example.learning_spring_security.dto.Request.ReceiveReturnRequest;
-import com.example.learning_spring_security.dto.Request.RejectReturnRequest;
+import com.example.learning_spring_security.dto.Request.*;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 
 public interface ReturnService {
@@ -14,7 +9,7 @@ public interface ReturnService {
 
     ResponseErrorTemplate getReturnSummary();
 
-    ResponseErrorTemplate getReturnList(GetReturnListRequest request);
+//    ResponseErrorTemplate getReturnList(GetReturnListRequest request);
 
     ResponseErrorTemplate getReturnDetail(String returnId);
 
@@ -29,4 +24,6 @@ public interface ReturnService {
     ResponseErrorTemplate startInspection(String returnId);
 
     ResponseErrorTemplate completeInspection(String returnId, CompleteInspectionRequest request);
+
+    ResponseErrorTemplate getReturns(GetReturnRequest request);
 }

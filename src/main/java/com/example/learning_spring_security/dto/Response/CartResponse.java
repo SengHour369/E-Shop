@@ -3,6 +3,7 @@ package com.example.learning_spring_security.dto.Response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -21,5 +22,10 @@ public class CartResponse {
 
 
     private List<CartItemResponse> items;
+    @JsonProperty("created_at")
+    private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private LocalDateTime updatedAt;
 
 }

@@ -1,12 +1,7 @@
 package com.example.learning_spring_security.controller;
 
 import com.example.learning_spring_security.Service.ServiceStructure.ReturnService;
-import com.example.learning_spring_security.dto.Request.ApproveReturnRequest;
-import com.example.learning_spring_security.dto.Request.CompleteInspectionRequest;
-import com.example.learning_spring_security.dto.Request.CreateReturnRequest;
-import com.example.learning_spring_security.dto.Request.GetReturnListRequest;
-import com.example.learning_spring_security.dto.Request.ReceiveReturnRequest;
-import com.example.learning_spring_security.dto.Request.RejectReturnRequest;
+import com.example.learning_spring_security.dto.Request.*;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +15,7 @@ public class ReturnController {
 
     private final ReturnService returnService;
 
-    @PostMapping
+    @PostMapping("/user")
     public ResponseEntity<ResponseErrorTemplate> createReturn(@Valid @RequestBody CreateReturnRequest request) {
         return ResponseEntity.ok(returnService.createReturn(request));
     }
@@ -30,11 +25,11 @@ public class ReturnController {
         return ResponseEntity.ok(returnService.getReturnSummary());
     }
 
-    @PostMapping("/list")
-    public ResponseEntity<ResponseErrorTemplate> getReturnList(@RequestBody GetReturnListRequest request) {
-        return ResponseEntity.ok(returnService.getReturnList(request));
-    }
 
+    @PostMapping("/returns")
+    public ResponseEntity<ResponseErrorTemplate> getReturns(@Valid @RequestBody  GetReturnRequest request) {
+        return ResponseEntity.ok(returnService.getReturns(request));
+    }
     @GetMapping("/{returnId}")
     public ResponseEntity<ResponseErrorTemplate> getReturnDetail(@PathVariable String returnId) {
         return ResponseEntity.ok(returnService.getReturnDetail(returnId));
