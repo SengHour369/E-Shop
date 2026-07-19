@@ -86,9 +86,30 @@ public class ProductMapper {
                         .map(this::toAttributeResponse)
                         .toList();
 
-        Long quantity = inventoryRepository.findByProductSkuId(sku.getId())
-                .map(Inventory::getQuantity)
-                .orElse(null);
+        // Fetch inventory (if any)
+        Inventory inventory = inventoryRepository.findByProductSkuId(sku.getId()).orElse(null);
+
+        // Map inventory entity to InventoryResponse DTO
+        InventoryResponse inventoryResponse = null;
+        if (inventory != null) {
+            inventoryResponse = InventoryResponse.builder()
+                    .id(inventory.getId())
+                    .productSkuId(sku.getId())
+                    .sku(sku.getSku())
+                    .productId(sku.getProduct().getId())
+                    .productName(sku.getProduct().getName())
+                    .description(sku.getDescription()) // or inventory.getDescription() if present
+                    .quantity(inventory.getQuantity())
+                    .reservedQuantity(inventory.getReservedQuantity())
+                    .availableQuantity(inventory.getAvailableQuantity())
+                    .warehouseLocation(inventory.getWarehouseLocation())
+                    .lowStockThreshold(inventory.getLowStockThreshold())
+                    .stockStatus(inventory.getIsDefault() ? "Default" : "Non-default") // Example logic for stock status
+                    .lastRestockedAt(inventory.getLastRestockedAt())
+                    .createdAt(inventory.getCreatedAt())
+                    .updatedAt(inventory.getUpdatedAt())
+                    .build();
+        }
 
         return ProductSkuResponse.builder()
                 .id(sku.getId())
@@ -97,9 +118,10 @@ public class ProductMapper {
                 .price(sku.getPrice())
                 .isDefault(sku.getIsDefault())
                 .OperatorProductAttribute(sku.getOperatorProductAttribute())
-                .quantity(quantity)
+                .quantity(inventory != null ? inventory.getQuantity() : null) // kept for backward compatibility
                 .imageUrl(sku.getImage() != null ? sku.getImage().getUrl() : null)
                 .ProductAttributeResponse(attributeResponses)
+                .inventory(inventoryResponse) // ✅ full inventory details
                 .build();
     }
 
