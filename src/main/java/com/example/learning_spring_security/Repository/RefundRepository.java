@@ -40,18 +40,63 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
             FROM Refund r
             LEFT JOIN OrderDetail o ON o.id = r.orderId
             LEFT JOIN User u ON u.id = r.customerId
-            WHERE (:refundId IS NULL OR r.refundId = :refundId)
-            AND (:orderNo IS NULL OR o.orderNumber = :orderNo)
-            AND (:customerName IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :customerName, '%')))
-            AND (:status IS NULL OR r.status = :status)
-            AND (:fromDate IS NULL OR r.requestedAt >= :fromDate)
-            AND (:toDate IS NULL OR r.requestedAt <= :toDate)
             """)
-    Page<RefundListResponse> search(
-            @Param("refundId") String refundId,
-            @Param("orderNo") String orderNo,
-            @Param("customerName") String customerName,
-            @Param("status") String status,
+    Page<RefundListResponse> findAllRefunds(Pageable pageable);
+
+    @Query("""
+            SELECT new com.example.learning_spring_security.dto.Response.RefundListResponse(
+                r.refundId, o.orderNumber, u.fullName, r.requestedAt, r.amount, r.status
+            )
+            FROM Refund r
+            LEFT JOIN OrderDetail o ON o.id = r.orderId
+            LEFT JOIN User u ON u.id = r.customerId
+            WHERE r.refundId = :refundId
+            """)
+    Page<RefundListResponse> findByRefundIdForList(@Param("refundId") String refundId, Pageable pageable);
+
+    @Query("""
+            SELECT new com.example.learning_spring_security.dto.Response.RefundListResponse(
+                r.refundId, o.orderNumber, u.fullName, r.requestedAt, r.amount, r.status
+            )
+            FROM Refund r
+            LEFT JOIN OrderDetail o ON o.id = r.orderId
+            LEFT JOIN User u ON u.id = r.customerId
+            WHERE o.orderNumber = :orderNo
+            """)
+    Page<RefundListResponse> findByOrderNo(@Param("orderNo") String orderNo, Pageable pageable);
+
+    @Query("""
+            SELECT new com.example.learning_spring_security.dto.Response.RefundListResponse(
+                r.refundId, o.orderNumber, u.fullName, r.requestedAt, r.amount, r.status
+            )
+            FROM Refund r
+            LEFT JOIN OrderDetail o ON o.id = r.orderId
+            LEFT JOIN User u ON u.id = r.customerId
+            WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :customerName, '%'))
+            """)
+    Page<RefundListResponse> findByCustomerNameContaining(@Param("customerName") String customerName, Pageable pageable);
+
+    @Query("""
+            SELECT new com.example.learning_spring_security.dto.Response.RefundListResponse(
+                r.refundId, o.orderNumber, u.fullName, r.requestedAt, r.amount, r.status
+            )
+            FROM Refund r
+            LEFT JOIN OrderDetail o ON o.id = r.orderId
+            LEFT JOIN User u ON u.id = r.customerId
+            WHERE r.status = :status
+            """)
+    Page<RefundListResponse> findByStatus(@Param("status") String status, Pageable pageable);
+
+    @Query("""
+            SELECT new com.example.learning_spring_security.dto.Response.RefundListResponse(
+                r.refundId, o.orderNumber, u.fullName, r.requestedAt, r.amount, r.status
+            )
+            FROM Refund r
+            LEFT JOIN OrderDetail o ON o.id = r.orderId
+            LEFT JOIN User u ON u.id = r.customerId
+            WHERE r.requestedAt BETWEEN :fromDate AND :toDate
+            """)
+    Page<RefundListResponse> findByRequestedAtBetween(
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
             Pageable pageable

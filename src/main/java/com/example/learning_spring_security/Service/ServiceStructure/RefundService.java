@@ -21,6 +21,12 @@ public interface RefundService {
     ResponseErrorTemplate cancelRefund(String refundId, CancelRefundRequest request);
 
     /**
+     * Returns products similar to the ones in the refunded order (same sub-category),
+     * delegating to {@code ProductService.getProducts} for the actual lookup/pagination.
+     */
+    ResponseErrorTemplate getSimilarProducts(String refundId, Integer page, Integer size);
+
+    /**
      * Creates a PENDING refund for an approved return (BR-001/002/003/004).
      * Idempotent: does nothing if a refund already exists for this return.
      */

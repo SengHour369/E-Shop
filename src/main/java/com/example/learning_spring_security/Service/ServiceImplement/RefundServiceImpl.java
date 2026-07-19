@@ -8,15 +8,19 @@ import com.example.learning_spring_security.Exception.ExceptionService.InvalidRe
 import com.example.learning_spring_security.Exception.ExceptionService.PaymentNotFoundException;
 import com.example.learning_spring_security.Exception.ExceptionService.RefundAmountExceededException;
 import com.example.learning_spring_security.Exception.ExceptionService.RefundNotFoundException;
+import com.example.learning_spring_security.Model.OrderItem;
 import com.example.learning_spring_security.Model.PaymentTransaction;
 import com.example.learning_spring_security.Model.Refund;
 import com.example.learning_spring_security.Model.RefundStatusHistory;
 import com.example.learning_spring_security.Model.Return;
+import com.example.learning_spring_security.Repository.OrderItemRepository;
 import com.example.learning_spring_security.Repository.PaymentTransactionRepository;
 import com.example.learning_spring_security.Repository.RefundRepository;
 import com.example.learning_spring_security.Repository.RefundStatusHistoryRepository;
+import com.example.learning_spring_security.Service.ServiceStructure.ProductService;
 import com.example.learning_spring_security.Service.ServiceStructure.RefundService;
 import com.example.learning_spring_security.dto.Request.CancelRefundRequest;
+import com.example.learning_spring_security.dto.Request.GetProductRequest;
 import com.example.learning_spring_security.dto.Request.GetRefundListRequest;
 import com.example.learning_spring_security.dto.Request.ProcessRefundRequest;
 import com.example.learning_spring_security.dto.Response.RefundListResponse;
@@ -39,6 +43,7 @@ import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -48,12 +53,15 @@ public class RefundServiceImpl implements RefundService {
     private static final String REFUND_ID_PREFIX = "RFD";
     private static final String ID_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int ID_LENGTH = 8;
+    private static final int SIMILAR_PRODUCTS_CRITERIA_TYPE = 2; // matches ProductServiceImpl#getProducts "by subCategoryId"
 
     private final SecureRandom random = new SecureRandom();
 
     private final RefundRepository refundRepository;
     private final RefundStatusHistoryRepository refundStatusHistoryRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ProductService productService;
 
     @Override
     @Transactional(readOnly = true)
@@ -70,24 +78,57 @@ public class RefundServiceImpl implements RefundService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getRefundList(GetRefundListRequest request) {
-        if (request.getFromDate() != null && request.getToDate() != null
-                && request.getFromDate().isAfter(request.getToDate())) {
-            throw new BadRequestException("fromDate must not be greater than toDate");
-        }
+        log.info("getRefundList: criteriaType={}, criteriaValue={}, page={}, size={}",
+                request.getCriteriaType(), request.getCriteriaValue(), request.getPage(), request.getSize());
 
-        int page = request.getPage() == null || request.getPage() < 1 ? 1 : request.getPage();
-        int size = request.getSize() == null || request.getSize() < 1 ? 10 : request.getSize();
+        int page = request.getPage() < 1 ? 1 : request.getPage();
+        int size = request.getSize() < 1 ? 10 : request.getSize();
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("requestedAt").descending());
 
-        Page<RefundListResponse> result = refundRepository.search(
-                request.getRefundId(),
-                request.getOrderNo(),
-                request.getCustomerName(),
-                request.getStatus(),
-                request.getFromDate(),
-                request.getToDate(),
-                pageable
-        );
+        Integer type = request.getCriteriaType();
+        String value = request.getCriteriaValue();
+
+        Page<RefundListResponse> result;
+        String successMsg;
+
+        if (type == null || type == 0 || value == null || value.isBlank()) {
+            result = refundRepository.findAllRefunds(pageable);
+            successMsg = "Retrieved all refunds";
+
+        } else if (type == 1) {
+            result = refundRepository.findByRefundIdForList(value.trim(), pageable);
+            successMsg = "Retrieved refunds by refund ID";
+
+        } else if (type == 2) {
+            result = refundRepository.findByOrderNo(value.trim(), pageable);
+            successMsg = "Retrieved refunds by order number";
+
+        } else if (type == 3) {
+            result = refundRepository.findByCustomerNameContaining(value.trim(), pageable);
+            successMsg = "Retrieved refunds by customer name";
+
+        } else if (type == 4) {
+            result = refundRepository.findByStatus(value.trim(), pageable);
+            successMsg = "Retrieved refunds by status";
+
+        } else if (type == 5) {
+            // by date range, criteriaValue format: "fromDate,toDate" (yyyy-MM-ddTHH:mm:ss)
+            String[] parts = value.split(",");
+            if (parts.length != 2) {
+                throw new BadRequestException("criteriaValue for type 5 must be 'fromDate,toDate'");
+            }
+            LocalDateTime fromDate = LocalDateTime.parse(parts[0].trim());
+            LocalDateTime toDate = LocalDateTime.parse(parts[1].trim());
+            if (fromDate.isAfter(toDate)) {
+                throw new BadRequestException("fromDate must not be greater than toDate");
+            }
+            result = refundRepository.findByRequestedAtBetween(fromDate, toDate, pageable);
+            successMsg = "Retrieved refunds by date range";
+
+        } else {
+            result = refundRepository.findAllRefunds(pageable);
+            successMsg = "Retrieved all refunds";
+        }
 
         RefundPageResponse pageResponse = RefundPageResponse.builder()
                 .payload(result.getContent())
@@ -97,7 +138,7 @@ public class RefundServiceImpl implements RefundService {
                 .pageSize(result.getSize())
                 .build();
 
-        String message = result.isEmpty() ? "No refunds found" : "Refunds retrieved successfully";
+        String message = result.isEmpty() ? "No refunds found" : successMsg;
         return ResponseErrorTemplate.success(message, pageResponse);
     }
 
@@ -128,6 +169,31 @@ public class RefundServiceImpl implements RefundService {
                 .toList();
 
         return ResponseErrorTemplate.success("Refund history retrieved successfully", history);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getSimilarProducts(String refundId, Integer page, Integer size) {
+        Refund refund = refundRepository.findByRefundId(refundId)
+                .orElseThrow(() -> new RefundNotFoundException(refundId));
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrderDetailId(refund.getOrderId());
+
+        Long subCategoryId = orderItems.stream()
+                .map(item -> item.getProductSku().getProduct().getSubCategory())
+                .filter(Objects::nonNull)
+                .map(subCategory -> subCategory.getId())
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("No sub-category found for refund " + refundId));
+
+        GetProductRequest request = GetProductRequest.builder()
+                .criteriaType(SIMILAR_PRODUCTS_CRITERIA_TYPE)
+                .criteriaValue(String.valueOf(subCategoryId))
+                .page(page == null || page < 1 ? 1 : page)
+                .size(size == null || size < 1 ? 10 : size)
+                .build();
+
+        return productService.getProducts(request);
     }
 
     @Override

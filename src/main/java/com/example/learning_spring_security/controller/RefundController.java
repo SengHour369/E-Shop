@@ -50,4 +50,12 @@ public class RefundController {
     public ResponseEntity<ResponseErrorTemplate> getRefundHistory(@PathVariable String refundId) {
         return ResponseEntity.ok(refundService.getRefundHistory(refundId));
     }
+
+    @GetMapping("/{refundId}/similar-products")
+    public ResponseEntity<ResponseErrorTemplate> getSimilarProducts(
+            @PathVariable String refundId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(refundService.getSimilarProducts(refundId, page, size));
+    }
 }

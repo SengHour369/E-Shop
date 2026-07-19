@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @Builder
@@ -16,26 +14,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class GetRefundListRequest {
 
-    @Builder.Default
-    private Integer page = 1;
+    // 1=refundId, 2=orderNo, 3=customerName, 4=status, 5=dateRange ("fromDate,toDate", ISO LocalDateTime)
+    @JsonProperty("criteria_type")
+    private Integer criteriaType;
+
+    @JsonProperty("criteria_value")
+    private String criteriaValue;
 
     @Builder.Default
-    private Integer size = 10;
+    private int page = 1;
 
-    @JsonProperty("refund_id")
-    private String refundId;
-
-    @JsonProperty("order_no")
-    private String orderNo;
-
-    @JsonProperty("customer_name")
-    private String customerName;
-
-    private String status;
-
-    @JsonProperty("from_date")
-    private LocalDateTime fromDate;
-
-    @JsonProperty("to_date")
-    private LocalDateTime toDate;
+    @Builder.Default
+    private int size = 10;
 }
