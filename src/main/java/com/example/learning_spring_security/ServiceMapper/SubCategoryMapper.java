@@ -35,6 +35,7 @@ public class SubCategoryMapper {
                 .name(subCategory.getName())
                 .description(subCategory.getDescription())
                 .Status(subCategory.getStatus())
+                .CategoryId(subCategory.getCategory() != null ? subCategory.getCategory().getId() : null)
                 .createdAt(subCategory.getCreatedAt())
                 .updatedAt(subCategory.getUpdatedAt())
                 .build();
@@ -58,6 +59,7 @@ public class SubCategoryMapper {
                 .name(subCategory.getName())
                 .description(subCategory.getDescription())
                 .Status(true)
+                .CategoryId(subCategory.getCategory() != null ? subCategory.getCategory().getId() : null)
                 .createdAt(subCategory.getCreatedAt())
                 .updatedAt(subCategory.getUpdatedAt())
                 .build();
@@ -83,7 +85,10 @@ public class SubCategoryMapper {
         SubCategoryResponse response = SubCategoryResponse.builder()
                 .id(subCategory.getId())
                 .name(subCategory.getName())
+                .CategoryId(subCategory.getCategory() != null ? subCategory.getCategory().getId() : null)
                 .description(subCategory.getDescription())
+                .createdAt(subCategory.getCreatedAt())
+                .updatedAt(subCategory.getUpdatedAt())
                 .build();
 
         if (subCategory.getCategory() != null) {

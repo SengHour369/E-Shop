@@ -38,9 +38,5 @@ public class CategoryIconController extends BaseController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteIcon(@RequestParam Long id) {
-        categoryIconService.deleteIcon(id);
-        return ResponseEntity.noContent().build();
-    }
+
 }

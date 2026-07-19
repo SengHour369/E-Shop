@@ -18,9 +18,9 @@ public class SubCategoryResponse {
     @JsonProperty("category_name")
     private String categoryName;
     private Boolean Status;
+    private Long CategoryId;
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
-
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
 }

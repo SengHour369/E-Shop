@@ -48,9 +48,12 @@ public class ProductMapper {
                 .name(product.getName())
                 .description(product.getDescription())
                 .skus(skuResponses)
+                .SubcategoryId(product.getSubCategory() != null ? product.getSubCategory().getId() : null)
                 .Image(product.getImage().stream().map(Image::getUrl)
                         .collect(Collectors.toList()))
                 .isActive(product.getIsActive())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
                 .build();
     }
 

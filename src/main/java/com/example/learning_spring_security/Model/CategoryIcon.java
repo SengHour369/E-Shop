@@ -21,4 +21,5 @@ public class CategoryIcon extends BaseEntity {
 
     @Column(nullable = false)
     private String url;
+
 }

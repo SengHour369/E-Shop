@@ -27,6 +27,7 @@ public class ProductSku extends BaseEntity {
     @Column( nullable = false)
     private String sku;
 
+    @Column( nullable = false,columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)

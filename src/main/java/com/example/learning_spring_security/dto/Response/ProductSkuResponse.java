@@ -23,6 +23,8 @@ public class ProductSkuResponse {
     @JsonProperty("image_url")
     private String imageUrl;
 
+    private InventoryResponse inventory;
+
     // Optional: attributes assigned to this SKU
     @JsonProperty("attributes")
     private List<ProductAttributeResponse> ProductAttributeResponse;

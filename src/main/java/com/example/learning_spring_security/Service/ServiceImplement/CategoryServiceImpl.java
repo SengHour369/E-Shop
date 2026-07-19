@@ -3,6 +3,7 @@ package com.example.learning_spring_security.Service.ServiceImplement;
 import com.example.learning_spring_security.Exception.ExceptionService.DuplicateResourceException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.Category;
+import com.example.learning_spring_security.Model.CategoryIcon;
 import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Repository.CategoryRepository;
 import com.example.learning_spring_security.Service.ServiceStructure.CategoryService;
@@ -90,7 +91,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         CategoryMapper.updateEntity(category, request);
         if (request.getIconId() != null) {
-            com.example.learning_spring_security.Model.CategoryIcon icon = categoryIconRepository.findById(request.getIconId())
+            CategoryIcon icon = categoryIconRepository.findById(request.getIconId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category icon not found with id: " + request.getIconId()));
             category.setIcon(icon.getUrl());
         }
@@ -104,7 +105,10 @@ public class CategoryServiceImpl implements CategoryService {
         if (category.isEmpty()) {
             throw new ResourceNotFoundException("Category not found with id: " + id);
         }
+        CategoryIcon icon = categoryIconRepository.findById(category.get().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category icon not found with id: " + category.get().getId()));
         category.get().setDeleted(true);
+        this.categoryIconRepository.deleteById(icon.getId());
         categoryRepository.save(category.get());
     }
 
