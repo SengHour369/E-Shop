@@ -297,7 +297,7 @@ public class DataInitializer implements CommandLineRunner {
                 701L, 702L,           // Order create/cancel, view own orders
                 705L,                 // Payment view
                 801L,                 // Bakong QR
-                901L, 902L, 903L, 904L // Address (all operations)
+                901L, 902L, 903L, 904L,601L // Address (all operations)
         );
 
         for (Long funcId : funcIds) {
