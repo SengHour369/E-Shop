@@ -6,35 +6,32 @@ import com.example.learning_spring_security.dto.Request.PaymentTransactionReques
 import com.example.learning_spring_security.dto.Request.PaymentTransactionStatusUpdateRequest;
 import com.example.learning_spring_security.dto.Response.PaymentTransactionResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 
 public interface PaymentTransactionService {
 
-    // Paginated – skip
     ResponseErrorTemplate getTransactions(GetPaymentTransactionRequest request);
 
-    @Cacheable(value = "transactions", key = "#id")
     ResponseErrorTemplate getTransactionById(Long id);
 
-    @Cacheable(value = "transactions", key = "#transactionNo")
     ResponseErrorTemplate getTransactionByNo(String transactionNo);
 
-    @Cacheable(value = "transactions", key = "#orderId + ':order'")
     ResponseErrorTemplate getTransactionsByOrder(Long orderId);
 
-    @Cacheable(value = "transactions", key = "#customerId + ':customer'")
     ResponseErrorTemplate getTransactionsByCustomer(Long customerId);
 
-    @Cacheable(value = "transactions", key = "#transactionId + ':history'")
     ResponseErrorTemplate getTransactionStatusHistory(Long transactionId);
 
-    @CacheEvict(value = "transactions", allEntries = true)
     PaymentTransactionResponse createTransaction(PaymentTransactionRequest request);
 
-    @CacheEvict(value = "transactions", key = "#transactionId")
     PaymentTransactionResponse updateTransactionStatus(Long transactionId, PaymentTransactionStatusUpdateRequest request);
 
+    /**
+     * Create a transaction and, in one step, move it to {@code finalStatus} (recording the
+     * status-history entry). Shared by every payment flow that needs to persist a
+     * {@code PaymentTransaction} the moment money is confirmed received (or fails).
+     * Runs in the caller's transaction, so a failure here rolls the caller back — we never
+     * want a COMPLETED payment without its matching transaction row.
+     */
     PaymentTransactionResponse recordTransaction(PaymentTransactionRequest request,
                                                  TransactionStatus finalStatus,
                                                  String changedBy,
