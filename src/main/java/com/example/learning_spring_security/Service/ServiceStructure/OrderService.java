@@ -22,7 +22,7 @@ public interface OrderService {
     // kept for backward compat
     Page<ResponseErrorTemplate> getUserOrders(Long userId, Pageable pageable);
     Page<ResponseErrorTemplate> getAllOrders(Pageable pageable);
-    Page<ResponseErrorTemplate> getOrderDetailHistory(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Page<ResponseErrorTemplate>     getOrderDetailHistory(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     // Bakong Payment Integration Methods
     ResponseErrorTemplate createOrderWithBakongPayment(Long userId, OrderRequest request);
