@@ -27,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ApiPermissionRepository apiPermissionRepository;
     private final GroupPermissionRepository groupPermissionRepository;
     private final UserGroupRepository userGroupRepository;
+    private final CategoryIconRepository categoryIconRepository;
 
     @Override
     public void run(String... args) {
@@ -513,5 +514,553 @@ public class DataInitializer implements CommandLineRunner {
             apiPermissionRepository.save(p);
             log.info("Seeded API Permission: {} {} -> funcId={}", method, api, funcId);
         }
+    }
+    private void seedCategoryIcons() {
+
+        String baseUrl = "https://cdn.jsdelivr.net/npm/lucide-static@1.39.0/icons/";
+
+        List<CategoryIcon> icons = List.of(
+
+                CategoryIcon.builder()
+                        .name("Electronics")
+                        .url(baseUrl + "smartphone.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Mobile Phones")
+                        .url(baseUrl + "smartphone.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Computers")
+                        .url(baseUrl + "laptop.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Laptops")
+                        .url(baseUrl + "laptop.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Desktop Computers")
+                        .url(baseUrl + "monitor.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Tablets")
+                        .url(baseUrl + "tablet.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Smart Watches")
+                        .url(baseUrl + "watch.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Televisions")
+                        .url(baseUrl + "tv.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Cameras")
+                        .url(baseUrl + "camera.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Headphones")
+                        .url(baseUrl + "headphones.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Speakers")
+                        .url(baseUrl + "speaker.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Microphones")
+                        .url(baseUrl + "mic.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Gaming")
+                        .url(baseUrl + "gamepad-2.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Controllers")
+                        .url(baseUrl + "gamepad.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Computer Mouse")
+                        .url(baseUrl + "mouse.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Keyboards")
+                        .url(baseUrl + "keyboard.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Printers")
+                        .url(baseUrl + "printer.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Storage")
+                        .url(baseUrl + "hard-drive.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("USB Devices")
+                        .url(baseUrl + "usb.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Networking")
+                        .url(baseUrl + "router.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Fashion")
+                        .url(baseUrl + "shirt.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Men Fashion")
+                        .url(baseUrl + "user.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Women Fashion")
+                        .url(baseUrl + "user-round.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Shoes")
+                        .url(baseUrl + "footprints.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Sport Shoes")
+                        .url(baseUrl + "footprints.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Bags")
+                        .url(baseUrl + "shopping-bag.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Backpacks")
+                        .url(baseUrl + "backpack.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Watches")
+                        .url(baseUrl + "watch.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Jewelry")
+                        .url(baseUrl + "gem.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Glasses")
+                        .url(baseUrl + "glasses.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Beauty")
+                        .url(baseUrl + "sparkles.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Cosmetics")
+                        .url(baseUrl + "brush.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Perfume")
+                        .url(baseUrl + "spray-can.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Skincare")
+                        .url(baseUrl + "droplets.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Health")
+                        .url(baseUrl + "heart-pulse.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Medicine")
+                        .url(baseUrl + "pill.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Pharmacy")
+                        .url(baseUrl + "pill.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Food")
+                        .url(baseUrl + "utensils.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Groceries")
+                        .url(baseUrl + "shopping-basket.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Fruits")
+                        .url(baseUrl + "apple.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Vegetables")
+                        .url(baseUrl + "carrot.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Meat")
+                        .url(baseUrl + "beef.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Seafood")
+                        .url(baseUrl + "fish.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Bakery")
+                        .url(baseUrl + "croissant.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Coffee")
+                        .url(baseUrl + "coffee.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Drinks")
+                        .url(baseUrl + "cup-soda.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Restaurant")
+                        .url(baseUrl + "utensils.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Home")
+                        .url(baseUrl + "house.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Furniture")
+                        .url(baseUrl + "sofa.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Kitchen")
+                        .url(baseUrl + "cooking-pot.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Bedroom")
+                        .url(baseUrl + "bed.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Bathroom")
+                        .url(baseUrl + "bath.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Lighting")
+                        .url(baseUrl + "lamp.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Garden")
+                        .url(baseUrl + "flower-2.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Tools")
+                        .url(baseUrl + "wrench.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Hardware")
+                        .url(baseUrl + "hammer.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Automotive")
+                        .url(baseUrl + "car.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Cars")
+                        .url(baseUrl + "car-front.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Motorcycles")
+                        .url(baseUrl + "bike.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Bicycles")
+                        .url(baseUrl + "bike.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Car Parts")
+                        .url(baseUrl + "settings-2.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Travel")
+                        .url(baseUrl + "plane.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Hotels")
+                        .url(baseUrl + "hotel.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Luggage")
+                        .url(baseUrl + "luggage.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Tickets")
+                        .url(baseUrl + "ticket.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Books")
+                        .url(baseUrl + "book-open.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Education")
+                        .url(baseUrl + "graduation-cap.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Office Supplies")
+                        .url(baseUrl + "briefcase.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Stationery")
+                        .url(baseUrl + "pencil.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Music")
+                        .url(baseUrl + "music.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Movies")
+                        .url(baseUrl + "film.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Photography")
+                        .url(baseUrl + "image.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Sports")
+                        .url(baseUrl + "trophy.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Fitness")
+                        .url(baseUrl + "dumbbell.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Outdoor")
+                        .url(baseUrl + "mountain.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Toys")
+                        .url(baseUrl + "toy-brick.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Baby Products")
+                        .url(baseUrl + "baby.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Pets")
+                        .url(baseUrl + "paw-print.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Pet Food")
+                        .url(baseUrl + "bone.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Stationery Supplies")
+                        .url(baseUrl + "notebook.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Office")
+                        .url(baseUrl + "building-2.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Business")
+                        .url(baseUrl + "briefcase-business.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Finance")
+                        .url(baseUrl + "wallet.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Banking")
+                        .url(baseUrl + "landmark.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Credit Cards")
+                        .url(baseUrl + "credit-card.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Money")
+                        .url(baseUrl + "banknote.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Cryptocurrency")
+                        .url(baseUrl + "bitcoin.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Shopping")
+                        .url(baseUrl + "shopping-cart.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Discount")
+                        .url(baseUrl + "badge-percent.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Coupons")
+                        .url(baseUrl + "ticket-percent.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Gift")
+                        .url(baseUrl + "gift.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Delivery")
+                        .url(baseUrl + "truck.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Shipping")
+                        .url(baseUrl + "package.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Warehouse")
+                        .url(baseUrl + "warehouse.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Security")
+                        .url(baseUrl + "shield-check.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Mobile Accessories")
+                        .url(baseUrl + "cable.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Batteries")
+                        .url(baseUrl + "battery.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Smart Home")
+                        .url(baseUrl + "home.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Software")
+                        .url(baseUrl + "code.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Cloud Services")
+                        .url(baseUrl + "cloud.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Internet")
+                        .url(baseUrl + "globe.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Accessories")
+                        .url(baseUrl + "watch.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("New Arrivals")
+                        .url(baseUrl + "sparkles.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Popular")
+                        .url(baseUrl + "flame.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Best Sellers")
+                        .url(baseUrl + "trending-up.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Offers")
+                        .url(baseUrl + "badge-percent.svg")
+                        .build(),
+
+                CategoryIcon.builder()
+                        .name("Other")
+                        .url(baseUrl + "shapes.svg")
+                        .build()
+        );
+
+        icons.forEach(icon -> {
+            if (!categoryIconRepository.existsByName(icon.getName())) {
+                categoryIconRepository.save(icon);
+            }
+        });
     }
 }

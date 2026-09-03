@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CategoryIconRepository extends JpaRepository<CategoryIcon, Long> {
+    boolean existsByName(String name);
 }
