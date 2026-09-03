@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +33,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final com.example.learning_spring_security.Repository.CategoryIconRepository categoryIconRepository;
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(value = "categories", allEntries = true)
     public ResponseErrorTemplate createCategory(CategoryRequest request) {
         if (categoryRepository.existsByNameAndDeletedFalse(request.getName())) {
             throw new DuplicateResourceException("Category already exists with name: " + request.getName());
@@ -48,6 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "#id")
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getCategoryById(Long id) {
         Category category = categoryRepository.findByCategoryId(id)
@@ -56,6 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "'name:' + #name")
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getCategoryByName(String name) {
         Category category = categoryRepository.findByName(name)
@@ -64,6 +68,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "'page:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getAllCategories(Pageable pageable) {
         return categoryRepository.findAll(pageable)
@@ -71,6 +76,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "'allActive'")
     @Transactional(readOnly = true)
     public List<ResponseErrorTemplate> getAllCategories() {
         return categoryRepository.findAllActive().stream()
@@ -79,6 +85,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(value = "categories", allEntries = true)
     public ResponseErrorTemplate updateCategory(Long id, CategoryRequest request) {
         Category category = categoryRepository.findByCategoryId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
@@ -100,6 +107,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(value = "categories", allEntries = true)
     public void deleteCategory(Long id) {
         Optional<Category> category = categoryRepository.findByCategoryId(id);
         if (category.isEmpty()) {
@@ -113,6 +121,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "'withSub:' + #id")
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getCategoryWithSubCategories(Long id) {
         Category category = categoryRepository.findByIdWithSubCategories(id)
@@ -121,6 +130,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "'allWithSub'")
     @Transactional(readOnly = true)
     public List<ResponseErrorTemplate> getAllCategoriesWithSubCategories() {
         return categoryRepository.findAllWithSubCategories().stream()

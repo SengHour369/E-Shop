@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,6 +52,7 @@ public class  UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "users", allEntries = true)
     public ResponseErrorTemplate createUser(AdminCreateUserRequest request) {
         if (request.password() == null || request.password().isBlank()) {
             throw new BadRequestException("Password can't be blank or null");
@@ -148,6 +150,7 @@ public class  UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#id")
     public ResponseErrorTemplate getUserById(Long id) {
         Optional<User> user = this.userRepository.findUserById(id);
         if(user.isEmpty()){
@@ -160,6 +163,7 @@ public class  UserServiceImpl implements UserService {
 
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(value = "users", allEntries = true)
     public ResponseErrorTemplate updateUser(Long id, UserRequest request) {
         Optional<User>  user = this.userRepository.findUserById(id);
         if (user.isEmpty()) {
@@ -176,6 +180,7 @@ public class  UserServiceImpl implements UserService {
 
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(value = "users", allEntries = true)
     public void deleteUser(Long id){
         Optional<User> user = this.userRepository.findUserById(id);
         if (user.isEmpty()) {
@@ -187,6 +192,7 @@ public class  UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "'allUsers'")
     public List<ResponseErrorTemplate> getAllUsers() {
         log.info("get All Users");
         return  this.userRepository.findAllUser()
@@ -232,6 +238,7 @@ public class  UserServiceImpl implements UserService {
 
 
     @Override
+    @Cacheable(value = "users", key = "'search:' + #keyword")
     public List<ResponseErrorTemplate> searchUsers(String keyword) {
         log.info("search users by name :{}",keyword);
         return  this.userRepository.searchUsers(keyword)

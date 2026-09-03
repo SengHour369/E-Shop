@@ -59,11 +59,13 @@ public class RedisConnectionConfig {
         if (u != null && !u.isEmpty()) config.setUsername(u);
         if (pwd != null && !pwd.isEmpty()) config.setPassword(RedisPassword.of(pwd));
 
-        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+        LettuceClientConfiguration.LettuceClientConfigurationBuilder clientBuilder = LettuceClientConfiguration.builder()
                 .commandTimeout(Duration.ofSeconds(2))
-                .shutdownTimeout(Duration.ofSeconds(1))
-                .useSsl(useSsl)
-                .build();
+                .shutdownTimeout(Duration.ofSeconds(1));
+        if (useSsl) {
+            clientBuilder.useSsl();
+        }
+        LettuceClientConfiguration clientConfig = clientBuilder.build();
 
         return new LettuceConnectionFactory(config, clientConfig);
     }

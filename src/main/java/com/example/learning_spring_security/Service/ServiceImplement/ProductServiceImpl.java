@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +44,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "products", allEntries = true)
     public ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception {
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
@@ -148,6 +150,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getProductById(Long id) {
         Product product = productRepository.findByIdNotDeleted(id)
@@ -156,6 +159,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "'withSkus:' + #id")
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getProductWithSkus(Long id) {
         Product product = productRepository.findByIdWithSkus(id)
@@ -171,6 +175,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "'active:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getActiveProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable)
@@ -178,6 +183,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "'subcat:' + #subCategoryId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getProductsBySubCategory(Long subCategoryId, Pageable pageable) {
         if (!subCategoryRepository.existsById(subCategoryId)) {
@@ -188,6 +194,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "'cat:' + #categoryId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getProductsByCategory(Long categoryId, Pageable pageable) {
         return productRepository.findByCategoryId(categoryId, pageable)
@@ -203,6 +210,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "products", allEntries = true)
     public ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
@@ -248,6 +256,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Long id) {
         Product product = productRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
