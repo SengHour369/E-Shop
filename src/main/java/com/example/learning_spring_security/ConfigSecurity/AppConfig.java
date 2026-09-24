@@ -6,17 +6,28 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class AppConfig implements WebMvcConfigurer {
+
+    private final ApiPermissionInterceptor apiPermissionInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(apiPermissionInterceptor);
+    }
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -37,10 +48,10 @@ public class AppConfig implements WebMvcConfigurer {
         return converter;
     }
 
-        @Override
-        public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-            converters.add(new MappingJackson2HttpMessageConverter());
-        }
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        converters.add(new MappingJackson2HttpMessageConverter());
+    }
     @Bean
     public Validator validator() {
         return Validation.buildDefaultValidatorFactory().getValidator();

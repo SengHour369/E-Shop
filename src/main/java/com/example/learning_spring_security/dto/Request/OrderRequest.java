@@ -19,4 +19,7 @@ public class OrderRequest {
     @JsonProperty("payment_method")
     private String paymentMethod;
 
+    @JsonProperty("currency")
+    private String currency;
+
 }

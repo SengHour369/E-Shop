@@ -1,22 +1,29 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
+import com.example.learning_spring_security.Exception.ExceptionService.BadRequestException;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
+import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.ProductAttribute;
 import com.example.learning_spring_security.Model.ProductSku;
-import com.example.learning_spring_security.Repository.ProductAttributeValueRepository;
+import com.example.learning_spring_security.Repository.ProductAttributeRepository;
 import com.example.learning_spring_security.Repository.ProductRepository;
 import com.example.learning_spring_security.Repository.ProductSkuRepository;
-import com.example.learning_spring_security.Service.ProductSkuService;
+
+import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
+import com.example.learning_spring_security.Service.ServiceStructure.ProductSkuService;
+import com.example.learning_spring_security.ServiceMapper.ProductMapper;
 import com.example.learning_spring_security.ServiceMapper.ProductSkuMapper;
 import com.example.learning_spring_security.dto.Request.ProductAttributeRequest;
 
 import com.example.learning_spring_security.dto.Request.ProductSkuRequest;
+import com.example.learning_spring_security.utils.SkuGeneratorUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -27,15 +34,15 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     private final ProductSkuRepository productSkuRepository;
     private final ProductRepository productRepository;
-    private  final ProductAttributeServiceImpl  productAttributeServiceImpl;
+    private final ProductAttributeServiceImpl productAttributeServiceImpl;
+    private final InventoryServiceImpl inventoryServiceImpl;
+    private final com.example.learning_spring_security.Repository.InventoryRepository inventoryRepository;
+    private final SkuGeneratorUtil skuGeneratorUtil;
+    private final ImageService imageService;
 
     @Override
     @Transactional
-    public ProductSku createSku(Long productId, ProductSkuRequest request) {
-        // 1. Check SKU uniqueness
-        if (productSkuRepository.existsBySku(request.getSku())) {
-            throw new ResourceNotFoundException("SKU already exists: " + request.getSku());
-        }
+    public ProductSku createSku(Long productId, ProductSkuRequest request, MultipartFile image) {
 
         // 2. Fetch the parent product
         Product product = productRepository.findById(productId)
@@ -44,16 +51,25 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         // 3. Map request to entity
         ProductSku sku = ProductSkuMapper.toEntity(request, product);
 
-        // 4. Handle default SKU logic: only one default per product
-        if (Boolean.TRUE.equals(sku.getIsDefault())) {
-            clearExistingDefaultSku(productId);
+        // 4. Generate SKU if not provided and ensure uniqueness
+
+        String base = skuGeneratorUtil.generateSku(product, request);
+
+        sku.setSku(base);
+
+        if (image != null && !image.isEmpty()) {
+            sku.setImage(uploadSkuImage(image));
         }
-
         // 5. Save
-        ProductSku saved = productSkuRepository.save(sku);
 
-        for (ProductAttributeRequest productAttributeRequest : request.getProductAttributes()) {
-            this.productAttributeServiceImpl.createAttribute(saved.getId(), productAttributeRequest);
+        ProductSku saved = productSkuRepository.save(sku);
+        if (request.getOperatorProductAttribute() != null && request.getOperatorProductAttribute()) {
+            applyLowStockThreshold(request);
+            inventoryServiceImpl.createInventory(saved.getId(), request.getInventory());
+
+            for (ProductAttributeRequest productAttributeRequest : request.getProductAttributes()) {
+                this.productAttributeServiceImpl.createAttribute(saved.getId(), productAttributeRequest);
+            }
         }
         log.info("Created SKU: {} for product ID: {}", saved.getSku(), productId);
         return saved;
@@ -61,31 +77,60 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     @Override
     @Transactional
-    public ProductSku updateSku(Long skuId, ProductSkuRequest request) {
-        // 1. Fetch existing SKU
+    public ProductSku updateSku(Long skuId, ProductSkuRequest request, MultipartFile image) {
         ProductSku existing = productSkuRepository.findById(skuId)
                 .orElseThrow(() -> new ResourceNotFoundException("SKU not found with id: " + skuId));
 
-        // 2. Check SKU uniqueness if changed
-        if (!existing.getSku().equals(request.getSku()) &&
-                productSkuRepository.existsBySku(request.getSku())) {
-            throw new ResourceNotFoundException("SKU already exists: " + request.getSku());
-        }
+        Product product = productRepository.findById(existing.getProduct().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + existing.getProduct().getId()));
 
-        // 3. Update entity fields using mapper
+
         ProductSkuMapper.updateEntity(existing, request);
+        String base = skuGeneratorUtil.generateSku(product, request);
 
-        // 4. Handle default flag: if setting this SKU as default, clear others
-        if (Boolean.TRUE.equals(request.getIsDefault())) {
-            clearExistingDefaultSku(existing.getProduct().getId());
-            // explicitly set after clearing (though updateEntity already set it, but ensure)
-            existing.setIsDefault(true);
+        existing.setSku(base);
+
+        if (image != null && !image.isEmpty()) {
+            existing.setImage(uploadSkuImage(image));
         }
 
-        // 5. Save
         ProductSku updated = productSkuRepository.save(existing);
+
+        if (request.getProductAttributes() != null && !request.getProductAttributes().isEmpty()) {
+            for (com.example.learning_spring_security.dto.Request.ProductAttributeRequest attributeRequest : request.getProductAttributes()) {
+                if (attributeRequest.getId() != null) {
+                    productAttributeServiceImpl.updateAttribute(attributeRequest.getId(), attributeRequest);
+                } else {
+                    productAttributeServiceImpl.createAttribute(updated.getId(), attributeRequest);
+                }
+            }
+        }
+
+        // Handle inventory update/create when inventory info is provided in the SKU request
+        if (request.getInventory() != null) {
+            applyLowStockThreshold(request);
+            java.util.Optional<com.example.learning_spring_security.Model.Inventory> maybeInv =
+                    inventoryRepository.findByProductSkuId(updated.getId());
+            if (maybeInv.isPresent()) {
+                com.example.learning_spring_security.Model.Inventory inv = maybeInv.get();
+                inventoryServiceImpl.adjustQuantity(inv.getId(), request.getInventory());
+            } else {
+                inventoryServiceImpl.createInventory(updated.getId(), request.getInventory());
+            }
+        }
+
         log.info("Updated SKU: {}", updated.getSku());
         return updated;
+    }
+
+    // ProductSkuRequest carries its own top-level lowStockThreshold alongside the nested
+    // InventoryRequest; propagate it so it isn't silently dropped when the nested value is unset.
+    private void applyLowStockThreshold(ProductSkuRequest request) {
+        if (request.getInventory() != null
+                && request.getInventory().getLowStockThreshold() == null
+                && request.getLowStockThreshold() != null) {
+            request.getInventory().setLowStockThreshold(request.getLowStockThreshold());
+        }
     }
 
     @Override
@@ -111,61 +156,28 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         return productSkuRepository.findByProductId(productId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ProductSku getDefaultSkuByProductId(Long productId) {
-        return productSkuRepository.findDefaultSkuByProductId(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("No default SKU found for product id: " + productId));
-    }
-
-    @Override
-    @Transactional
-    public void reduceStock(Long skuId, Long quantity) {
-        int updated = productSkuRepository.reduceStock(skuId, quantity);
-        if (updated == 0) {
-            // Either SKU not found or insufficient stock
-            ProductSku sku = productSkuRepository.findById(skuId)
-                    .orElseThrow(() -> new ResourceNotFoundException("SKU not found with id: " + skuId));
-            if (sku.getQuantity() < quantity) {
-                throw new ResourceNotFoundException("Insufficient stock for SKU: " + sku.getSku() +
-                        ". Available: " + sku.getQuantity() + ", requested: " + quantity);
-            }
+    private Image uploadSkuImage(MultipartFile file) {
+        Image uploaded = imageService.uploadImage(file);
+        if (uploaded == null) {
+            throw new BadRequestException("Failed to upload SKU image");
         }
-        log.info("Reduced stock for SKU id {} by {}", skuId, quantity);
+        return uploaded;
     }
-
-    @Override
-    @Transactional
-    public void increaseStock(Long skuId, Long quantity) {
-        int updated = productSkuRepository.increaseStock(skuId, quantity);
-        if (updated == 0) {
-            throw new ResourceNotFoundException("SKU not found with id: " + skuId);
-        }
-        log.info("Increased stock for SKU id {} by {}", skuId, quantity);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductSku> getLowStockSkus() {
-        return productSkuRepository.findLowStockSkus();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductSku> getLowStockSkusByProductId(Long productId) {
-        return productSkuRepository.findLowStockSkusByProductId(productId);
-    }
-
-    // --------------------- Helper Methods ---------------------
 
     /**
-     * Clears the default flag on all other SKUs of the same product.
+     * Generate a base SKU using the product name and provided attribute values.
+     * Now delegated to {@link SkuGeneratorUtil} for dynamic and extensible generation.
+     *
+     * Example: Product name "iPhone 15", Color "Blue", Storage "128GB" -> IPH15-BLU-128
+     *
+     * @deprecated Use {@link SkuGeneratorUtil#generateSku(Product, ProductSkuRequest)} instead
      */
-    private void clearExistingDefaultSku(Long productId) {
-        productSkuRepository.findDefaultSkuByProductId(productId)
-                .ifPresent(defaultSku -> {
-                    defaultSku.setIsDefault(false);
-                    productSkuRepository.save(defaultSku);
-                });
+    @Deprecated
+    private String generateSku(Product product, ProductSkuRequest request) {
+        return skuGeneratorUtil.generateSku(product, request);
     }
+
+
+
+
 }

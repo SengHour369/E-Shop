@@ -24,26 +24,26 @@ public class ProductSku extends BaseEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(unique = true, nullable = false)
+    @Column( nullable = false)
     private String sku;
 
+    @Column( nullable = false,columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Column(nullable = false)
-    private Long quantity;
-
-    @Column(name = "low_stock_threshold")
-    private Integer lowStockThreshold = 5;
     @Column(name = "is_default")
     private Boolean isDefault = false;
+    @Column(name = "operator_product_attribute")
+    private Boolean OperatorProductAttribute = false;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "image_id")
+    private Image image;
 
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CartItem> cartItems = new ArrayList<>();
     @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
-    @OneToMany(mappedBy = "productSku", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ProductAttribute> productAttributes = new ArrayList<>();
 }

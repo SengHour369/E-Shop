@@ -19,10 +19,5 @@ public class LearningSpringSecurityApplication {
 
     public static void main(String[] args) throws IOException {
         SpringApplication.run(LearningSpringSecurityApplication.class, args);
-        Socket socket = new Socket();
-        socket.connect(new InetSocketAddress("smtp.gmail.com", 465), 5000);
-        System.out.println("SMTP CONNECT OK");
     }
-
-
 }

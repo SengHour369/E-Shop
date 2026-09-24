@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -12,6 +13,8 @@ import java.util.List;
 @Getter
 @Builder
 public class ProductAttributeRequest {
+
+    private Long id;
 
     @NotBlank(message = "Attribute name is required")
     private String name;
@@ -23,6 +26,5 @@ public class ProductAttributeRequest {
      * @see SkuAttributeAssignmentRequest
      */
     @JsonProperty("attributes")
-    private List<ProductAttributeValueRequest> attributes;
+    private List<ProductAttributeValueRequest> attributes = new ArrayList<>();
 }
-

@@ -1,5 +1,6 @@
 package com.example.learning_spring_security.controller;
 
+import com.example.learning_spring_security.Service.ServiceImplement.CartServiceImpl;
 import com.example.learning_spring_security.Service.ServiceStructure.CartService;
 import com.example.learning_spring_security.dto.Request.CartRequest;
 import com.example.learning_spring_security.dto.Response.CartResponse;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CartController extends BaseController {
 
-    private final CartService cartService;
+    private final CartServiceImpl cartService;
 
     @PostMapping("/user/id")
     public ResponseEntity<ResponseErrorTemplate> getCartByUserId(@RequestParam Long userId) {

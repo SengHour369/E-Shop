@@ -11,7 +11,8 @@ import lombok.*;
 @Builder
 public class ProductAttributeValueRequest {
 
+    private Long id;
+
     @NotBlank(message = "Attribute value is required")
     private String value;
 }
-

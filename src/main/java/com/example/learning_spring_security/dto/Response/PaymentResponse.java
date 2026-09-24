@@ -13,6 +13,12 @@ import java.time.LocalDateTime;
 public class PaymentResponse {
     private Long id;
 
+    @JsonProperty("order_id")
+    private Long orderId;
+
+    @JsonProperty("order_number")
+    private String orderNumber;
+
     @JsonProperty("payment_method")
     private String paymentMethod;
 
@@ -20,11 +26,20 @@ public class PaymentResponse {
     private LocalDateTime paymentDate;
 
     private BigDecimal amount;
+    private String currency;
     private String status;
 
     @JsonProperty("transaction_id")
     private String transactionId;
 
+    private String code;
+
+    private String codeOrder;
+
     @JsonProperty("payment_provider")
     private String paymentProvider;
+    private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private LocalDateTime updatedAt;
 }

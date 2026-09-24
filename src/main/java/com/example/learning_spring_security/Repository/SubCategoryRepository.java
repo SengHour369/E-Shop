@@ -18,10 +18,16 @@ public interface SubCategoryRepository extends JpaRepository<SubCategory, Long> 
 
     List<SubCategory> findByCategoryId(Long categoryId);
 
+    Page<SubCategory> findByCategoryId(Long categoryId, Pageable pageable);
+
+    @Query("SELECT s FROM SubCategory s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    Page<SubCategory> findByNameContaining(@Param("name") String name, Pageable pageable);
+
     @Query("SELECT s FROM SubCategory s LEFT JOIN FETCH s.products WHERE s.id = :id")
     Optional<SubCategory> findByIdWithProducts(@Param("id") Long id);
 
     boolean existsByNameAndCategoryId(String name, Long categoryId);
+
     @Query("SELECT s FROM SubCategory s JOIN FETCH s.category WHERE s.category.id = :categoryId")
     List<SubCategory> findByCategoryIdWithCategory(@Param("categoryId") Long categoryId);
 }

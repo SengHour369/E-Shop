@@ -12,13 +12,11 @@ import lombok.*;
 @Builder
 public class InventoryRequest {
 
-    @NotNull(message = "Product SKU ID is required")
-    @JsonProperty("product_sku_id")
-    private Long productSkuId;
 
     @NotNull(message = "Quantity is required")
     @PositiveOrZero(message = "Quantity must be zero or positive")
     private Long quantity;
+    private Integer lowStockThreshold= 5;
 
     @JsonProperty("warehouse_location")
     private String warehouseLocation;

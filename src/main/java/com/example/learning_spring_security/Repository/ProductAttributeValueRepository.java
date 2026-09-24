@@ -12,12 +12,24 @@ import java.util.Optional;
 @Repository
 public interface ProductAttributeValueRepository extends JpaRepository<ProductAttributeValue, Long> {
 
-    @Query("SELECT pav FROM ProductAttributeValue pav WHERE pav.attribute.id = :attributeId AND LOWER(pav.value) = LOWER(:value)")
-    Optional<ProductAttributeValue> findByAttributeIdAndValueIgnoreCase(@Param("attributeId") Long attributeId, @Param("value") String value);
+    @Query("""
+        SELECT pav 
+        FROM ProductAttributeValue pav 
+        WHERE pav.attributeId = :attributeId 
+        AND LOWER(pav.value) = LOWER(:value)
+    """)
+    Optional<ProductAttributeValue> findByAttributeIdAndValueIgnoreCase(
+            @Param("attributeId") Long attributeId,
+            @Param("value") String value
+    );
 
-    @Query("SELECT pav FROM ProductAttributeValue pav WHERE pav.attribute.id = :attributeId ORDER BY pav.value ASC")
+    @Query("""
+        SELECT pav 
+        FROM ProductAttributeValue pav 
+        WHERE pav.attributeId = :attributeId 
+        ORDER BY pav.value ASC
+    """)
     List<ProductAttributeValue> findByAttributeId(@Param("attributeId") Long attributeId);
 
     boolean existsByAttributeIdAndValue(Long attributeId, String value);
 }
-

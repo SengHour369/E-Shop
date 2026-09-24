@@ -19,12 +19,13 @@ public class Product  extends BaseEntity{
     private Long id;
     @Column(nullable = false)
     private String name;
-    @Column(length = 2000)
+    @Column( columnDefinition = "TEXT")
     private String description;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Image> image = new ArrayList<>();
     @Column(name = "is_active")
     private Boolean isActive = true;
+    private Boolean deleted = false;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id")
     private SubCategory subCategory;

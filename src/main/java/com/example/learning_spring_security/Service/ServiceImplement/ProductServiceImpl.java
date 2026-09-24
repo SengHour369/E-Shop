@@ -1,20 +1,22 @@
 package com.example.learning_spring_security.Service.ServiceImplement;
 
+import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Exception.ExceptionService.ResourceNotFoundException;
 import com.example.learning_spring_security.Model.Image;
 import com.example.learning_spring_security.Model.Product;
 import com.example.learning_spring_security.Model.ProductSku;
 import com.example.learning_spring_security.Model.SubCategory;
-import com.example.learning_spring_security.Repository.ProductRepository;
-import com.example.learning_spring_security.Repository.ProductSkuRepository;
-import com.example.learning_spring_security.Repository.SubCategoryRepository;
-import com.example.learning_spring_security.Service.ProductSkuService;
+import com.example.learning_spring_security.Repository.*;
 import com.example.learning_spring_security.Service.ServiceStructure.ImageService;
 import com.example.learning_spring_security.Service.ServiceStructure.ProductService;
+import com.example.learning_spring_security.Service.ServiceStructure.ProductSkuService;
 import com.example.learning_spring_security.ServiceMapper.ProductMapper;
 import com.example.learning_spring_security.ServiceMapper.ProductSkuMapper;
+import com.example.learning_spring_security.dto.Request.GetProductRequest;
 import com.example.learning_spring_security.dto.Request.ProductRequest;
 import com.example.learning_spring_security.dto.Request.ProductSkuRequest;
+import com.example.learning_spring_security.dto.Response.ProductPageResponse;
+import com.example.learning_spring_security.dto.Response.ProductResponse;
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -37,52 +38,121 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final SubCategoryRepository subCategoryRepository;
     private final ImageService imageService;
-    private final ProductSkuServiceImpl productSkuServiceImpl;
+    private final ProductMapper productMapper;
+    private final ProductSkuServiceImpl productSkuService;
 
     @Override
     @Transactional
-    public ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files) throws Exception {
-
+    public ResponseErrorTemplate createProduct(ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception {
         SubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId())
-                        .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with id: " + request.getSubCategoryId()));
+
         List<Image> imageUrls = List.of();
         if (files == null || files.isEmpty()) {
             throw new Exception("file in image is empty");
         }
-            imageUrls = files.stream()
-                    .map(imageService::uploadImage)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+        imageUrls = files.stream()
+                .map(imageService::uploadImage)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        Product product = ProductMapper.toEntity(request, subCategory,request.getSkus());
+        Product product = ProductMapper.toEntity(request, subCategory);
         product.setImage(imageUrls);
         if (imageUrls != null) {
             imageUrls.forEach(img -> img.setProduct(product));
         }
 
         Product savedProduct = productRepository.save(product);
-        System.out.println("ddddddddddddddddddddddddddddddddddddddddddddd+ "+savedProduct.getId());
-        if (request.getSkus() != null && !request.getSkus().isEmpty()) {
-            for(ProductSkuRequest productSkuRequest : request.getSkus()) {
-                  this.productSkuServiceImpl.createSku(savedProduct.getId(), productSkuRequest);
 
+        if (request.getSkus() != null && !request.getSkus().isEmpty()) {
+            List<ProductSkuRequest> skus = request.getSkus();
+            for (int i = 0; i < skus.size(); i++) {
+                MultipartFile skuImage = skuImages != null && i < skuImages.size() ? skuImages.get(i) : null;
+                this.productSkuService.createSku(savedProduct.getId(), skus.get(i), skuImage);
             }
         }
 
-
-
-
-        log.info("Product created: id={}, name={}, skus={}", savedProduct.getId(), savedProduct.getName(), savedProduct.getProductSkus().size());
-        return ProductMapper.toResponse(savedProduct);
+        log.info("Product created: id={}, name={}, skus={}", savedProduct.getId(), savedProduct.getName());
+        return productMapper.toResponse(savedProduct);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseErrorTemplate getProducts(GetProductRequest request) {
+        log.info("getProducts: criteriaType={}, criteriaValue={}, page={}, size={}",
+                request.getCriteriaType(), request.getCriteriaValue(),
+                request.getPage(), request.getSize());
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                request.getPage() - 1,
+                request.getSize(),
+                org.springframework.data.domain.Sort.by("id").descending()
+        );
+
+        Integer type = request.getCriteriaType();
+        String value = request.getCriteriaValue();
+
+        // ── Single-item lookups (no pagination needed) ──────────────
+        if (type == 5) { // by ID — returns single product
+            Product product = productRepository.findByIdNotDeleted(Long.parseLong(value))
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + value));
+            return ResponseErrorTemplate.success("Product retrieved successfully",
+                    productMapper.toProductResponse(product));
+        }
+
+        if (type == 6) { // by ID with SKUs
+            Product product = productRepository.findByIdWithSkus(Long.parseLong(value))
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + value));
+            return productMapper.toResponse(product);
+        }
+
+        // ── Paginated lookups ────────────────────────────────────────
+        org.springframework.data.domain.Page<Product> page;
+        String successMsg;
+
+        if (type == null || type == 0 || value == null || value.isBlank()) {
+            page = productRepository.findAllNotDeleted(pageable);
+            successMsg = "Retrieved all products";
+        } else if (type == 1) { // by name (fuzzy)
+            page = productRepository.searchProducts(value, pageable);
+            successMsg = "Retrieved products by name";
+        } else if (type == 2) { // by subCategoryId
+            page = productRepository.findBySubCategoryId(Long.parseLong(value), pageable);
+            successMsg = "Retrieved products by sub-category";
+        } else if (type == 3) { // by categoryId
+            page = productRepository.findByCategoryId(Long.parseLong(value), pageable);
+            successMsg = "Retrieved products by category";
+        } else if (type == 4) { // active only
+            page = productRepository.findByIsActiveTrue(pageable);
+            successMsg = "Retrieved active products";
+        } else {
+            page = productRepository.findAllNotDeleted(pageable);
+            successMsg = "Retrieved all products";
+        }
+
+        List<ProductResponse> payload = page.getContent()
+                .stream()
+                .map(productMapper::toProductResponse)
+                .toList();
+
+        ProductPageResponse pageResponse = ProductPageResponse.builder()
+                .payload(payload)
+                .totalItems(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .currentPage(page.getNumber() + 1)
+                .pageSize(page.getSize())
+                .build();
+
+        String message = page.isEmpty() ? "No products found" : successMsg;
+        return ResponseErrorTemplate.success(message, pageResponse);
+    }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getProductById(Long id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        return ProductMapper.toResponse(product);
+        return productMapper.toResponse(product);
     }
 
     @Override
@@ -90,22 +160,23 @@ public class ProductServiceImpl implements ProductService {
     public ResponseErrorTemplate getProductWithSkus(Long id) {
         Product product = productRepository.findByIdWithSkus(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        return ProductMapper.toResponse(product);
+        return productMapper.toResponse(product);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
-                .map(ProductMapper::toResponse);
+        return productRepository.findAllNotDeleted(pageable)
+                .map(productMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getActiveProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable)
-                .map(ProductMapper::toResponse);
+                .map(productMapper::toResponse);
     }
+
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getProductsBySubCategory(Long subCategoryId, Pageable pageable) {
@@ -113,26 +184,26 @@ public class ProductServiceImpl implements ProductService {
             throw new ResourceNotFoundException("SubCategory not found with id: " + subCategoryId);
         }
         return productRepository.findBySubCategoryId(subCategoryId, pageable)
-                .map(ProductMapper::toResponse);
+                .map(productMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getProductsByCategory(Long categoryId, Pageable pageable) {
         return productRepository.findByCategoryId(categoryId, pageable)
-                .map(ProductMapper::toResponse);
+                .map(productMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> searchProducts(String keyword, Pageable pageable) {
         return productRepository.searchProducts(keyword, pageable)
-                .map(ProductMapper::toResponse);
+                .map(productMapper::toResponse);
     }
 
     @Override
     @Transactional
-    public ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files) throws Exception {
+    public ResponseErrorTemplate updateProduct(Long id, ProductRequest request, List<MultipartFile> files, List<MultipartFile> skuImages) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
@@ -143,28 +214,45 @@ public class ProductServiceImpl implements ProductService {
         }
 
         if (files != null && !files.isEmpty()) {
-            List<Image> newImageUrls = files.stream()
+
+            List<Image> newImages = files.stream()
                     .map(imageService::uploadImage)
-                    .filter(url -> url != null)
-                    .collect(Collectors.toList());
-            product.setImage(newImageUrls);
-            if (newImageUrls != null) {
-                newImageUrls.forEach(img -> img.setProduct(product));
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            product.getImage().clear();
+
+            for (Image image : newImages) {
+                image.setProduct(product);
+                product.getImage().add(image);
+            }
+        }
+        ProductMapper.updateEntity(product, request, subCategory);
+        Product updatedProduct = productRepository.save(product);
+
+        if (request.getSkus() != null && !request.getSkus().isEmpty()) {
+            List<ProductSkuRequest> skus = request.getSkus();
+            for (int i = 0; i < skus.size(); i++) {
+                ProductSkuRequest skuRequest = skus.get(i);
+                MultipartFile skuImage = skuImages != null && i < skuImages.size() ? skuImages.get(i) : null;
+                if (skuRequest.getProductSkuId() != null) {
+                    productSkuService.updateSku(skuRequest.getProductSkuId(), skuRequest, skuImage);
+                } else {
+                    productSkuService.createSku(updatedProduct.getId(), skuRequest, skuImage);
+                }
             }
         }
 
-        ProductMapper.updateEntity(product, request, subCategory);
-        Product updatedProduct = productRepository.save(product);
         log.info("Product updated: id={}, name={}", updatedProduct.getId(), updatedProduct.getName());
-        return ProductMapper.toResponse(updatedProduct);
+        return productMapper.toResponse(updatedProduct);
     }
 
     @Override
     public void deleteProduct(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Product not found with id: " + id);
-        }
-        productRepository.deleteById(id);
+        Product product = productRepository.findByIdNotDeleted(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        product.setDeleted(true);
+        productRepository.save(product);
     }
 
     @Override
@@ -173,6 +261,6 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         product.setIsActive(isActive);
         Product updatedProduct = productRepository.save(product);
-        return ProductMapper.toResponse(updatedProduct);
+        return productMapper.toResponse(updatedProduct);
     }
 }

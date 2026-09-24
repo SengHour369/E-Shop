@@ -7,7 +7,6 @@ import com.example.learning_spring_security.Service.ServiceStructure.CartService
 import com.example.learning_spring_security.ServiceMapper.CartItemMapper;
 import com.example.learning_spring_security.ServiceMapper.CartMapper;
 import com.example.learning_spring_security.dto.Request.CartRequest;
-import com.example.learning_spring_security.dto.Response.CartResponse;
 
 import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +29,14 @@ public class CartServiceImpl implements CartService {
     private final UserRepository userRepository;
     private final ProductSkuRepository productSkuRepository;
     private final ProductRepository productRepository;
+    private final CartMapper cartMapper;
 
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getCartByUserId(Long userId) {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user id: " + userId));
-        return CartMapper.toResponse(cart);
+        return cartMapper.toResponse(cart);
     }
 
     @Override
@@ -45,37 +45,36 @@ public class CartServiceImpl implements CartService {
         if (cart.getCartItems() == null) {
             cart.setCartItems(new ArrayList<>());
         }
-        Optional<Product> product = this.productRepository.findById(request.getProductId());
-        if (product.isEmpty()) {
-            log.info("Product not found for product id: {}", request.getProductId());
-            throw new ResourceNotFoundException("Product not found for product id: " + request.getProductId());
 
-        }
-        Optional<ProductSku> productSku = productSkuRepository.findById(product.get().getId());
-        if (productSku.isEmpty()) {
-            log.info("Product sku not found for product id: {}", productSku.get().getId());
-            throw new ResourceNotFoundException("Product sku not found for product id: " + productSku.get().getId());
-        }
-
+           ProductSku productSku = productSkuRepository.findById(request.getProductSkuId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Product SKU not found: " + request.getProductSkuId()));
 
         Optional<CartItem> existingItem = cart.getCartItems().stream()
-                .filter(item -> item.getProductSku().getId().equals(productSku.get()))
+                .filter(item ->
+                        item.getProductSku().getId().equals(productSku.getId()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
-
             CartItem item = existingItem.get();
-            Long newQuantity = item.getQuantity() + request.getQuantity();
-            item.setQuantity(newQuantity);
-            item.setTotalPrice(productSku.get().getPrice().multiply(BigDecimal.valueOf(newQuantity)));
+
+            long quantity = item.getQuantity() + request.getQuantity();
+
+            item.setQuantity(quantity);
+            item.setTotalPrice(
+                    productSku.getPrice().multiply(BigDecimal.valueOf(quantity)));
         } else {
-            CartItem newItem = CartItemMapper.toEntity(cart, productSku.get(), request.getQuantity());
+
+            CartItem newItem =
+                    CartItemMapper.toEntity(cart, productSku, request.getQuantity());
+
             cart.getCartItems().add(newItem);
         }
 
         updateCartTotals(cart);
         Cart savedCart = cartRepository.save(cart);
-        return CartMapper.toResponse(savedCart);
+        return cartMapper.toResponse(savedCart);
     }
 
     @Override
@@ -100,7 +99,7 @@ public class CartServiceImpl implements CartService {
 
         updateCartTotals(cart);
         Cart savedCart = cartRepository.save(cart);
-        return CartMapper.toResponse(savedCart);
+        return cartMapper.toResponse(savedCart);
     }
 
     @Override
@@ -117,7 +116,7 @@ public class CartServiceImpl implements CartService {
 
         updateCartTotals(cart);
         Cart savedCart = cartRepository.save(cart);
-        return CartMapper.toResponse(savedCart);
+        return cartMapper.toResponse(savedCart);
     }
 
     @Override
@@ -131,13 +130,13 @@ public class CartServiceImpl implements CartService {
         cart.setTotalItems(0);
 
         Cart savedCart = cartRepository.save(cart);
-        return CartMapper.toResponse(savedCart);
+        return cartMapper.toResponse(savedCart);
     }
 
     @Override
     public ResponseErrorTemplate getOrCreateCart(Long userId) {
         Cart cart = getOrCreateCartEntity(userId);
-        return CartMapper.toResponse(cart);
+        return cartMapper.toResponse(cart);
     }
 
     private Cart getOrCreateCartEntity(Long userId) {

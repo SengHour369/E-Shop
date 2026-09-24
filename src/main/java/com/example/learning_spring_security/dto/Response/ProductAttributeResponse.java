@@ -1,6 +1,5 @@
 package com.example.learning_spring_security.dto.Response;
 
-import com.example.learning_spring_security.dto.Request.SkuAttributeAssignmentRequest;
 import lombok.*;
 
 import java.util.List;

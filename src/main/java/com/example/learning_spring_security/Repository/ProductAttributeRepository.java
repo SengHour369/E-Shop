@@ -19,5 +19,6 @@ public interface ProductAttributeRepository extends JpaRepository<ProductAttribu
 
     @Query("SELECT pa FROM ProductAttribute pa ORDER BY pa.name ASC")
     List<ProductAttribute> findAllOrderByName();
+    List<ProductAttribute> findByProductSkuId(Long productSkuId);
 }
 

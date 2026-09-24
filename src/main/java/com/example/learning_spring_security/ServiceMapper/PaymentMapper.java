@@ -1,10 +1,9 @@
 package com.example.learning_spring_security.ServiceMapper;
 
-import com.example.learning_spring_security.Constant.Constant;
 import com.example.learning_spring_security.Model.Payment;
 import com.example.learning_spring_security.dto.Request.PaymentRequest;
 import com.example.learning_spring_security.dto.Response.PaymentResponse;
-import com.example.learning_spring_security.dto.Response.ResponseErrorTemplate;
+
 
 import java.time.LocalDateTime;
 
@@ -22,15 +21,25 @@ public class PaymentMapper {
     }
 
     public static PaymentResponse toResponse(Payment payment) {
-                 return PaymentResponse.builder()
+        PaymentResponse.PaymentResponseBuilder builder = PaymentResponse.builder()
                 .id(payment.getId())
                 .paymentMethod(payment.getPaymentMethod())
                 .paymentDate(payment.getPaymentDate())
                 .amount(payment.getAmount())
+                .currency(payment.getCurrency())
                 .status(payment.getStatus())
                 .transactionId(payment.getTransactionId())
-                .paymentProvider(payment.getPaymentProvider())
-                .build();
+                .code(payment.getCode())
+                .codeOrder(payment.getCodeOrder())
+                .createdAt(payment.getCreatedAt())
+                .updatedAt(payment.getUpdatedAt())
+                .paymentProvider(payment.getPaymentProvider());
 
+        if (payment.getOrderDetail() != null) {
+            builder.orderId(payment.getOrderDetail().getId())
+                    .orderNumber(payment.getOrderDetail().getOrderNumber());
+        }
+
+        return builder.build();
     }
 }

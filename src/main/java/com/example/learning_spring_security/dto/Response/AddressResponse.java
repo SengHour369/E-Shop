@@ -3,6 +3,8 @@ package com.example.learning_spring_security.dto.Response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
@@ -24,4 +26,9 @@ public class AddressResponse {
 
     @JsonProperty("is_default")
     private Boolean isDefault;
+    @JsonProperty("created_at")
+    private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private LocalDateTime updatedAt;
 }

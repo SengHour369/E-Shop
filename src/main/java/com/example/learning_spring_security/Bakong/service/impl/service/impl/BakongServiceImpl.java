@@ -18,8 +18,10 @@ import jakarta.validation.Valid;
 import kh.gov.nbc.bakong_khqr.BakongKHQR;
 import kh.gov.nbc.bakong_khqr.model.KHQRCurrency;
 import kh.gov.nbc.bakong_khqr.model.KHQRData;
+import kh.gov.nbc.bakong_khqr.model.KHQRDeepLinkData;
 import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
 import kh.gov.nbc.bakong_khqr.model.MerchantInfo;
+import kh.gov.nbc.bakong_khqr.model.SourceInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,12 @@ public class BakongServiceImpl implements BakongService {
     private String bakongAccountId;
     @Value("${bakong.base-url}")
     private String baseUrl;
+    @Value("${bakong.app-name}")
+    private String appName;
+    @Value("${bakong.app-icon-url}")
+    private String appIconUrl;
+    @Value("${app.base-url}")
+    private String appDeepLinkCallback;
 
     private final RestClient restClient;
     private final ObjectMapper mapper;
@@ -116,8 +124,9 @@ public class BakongServiceImpl implements BakongService {
     public BakongResponse checkTransactionByMD5(CheckTransactionRequest request) {
         try {
             String bearerToken = bakongTokenService.getToken();
-
             String url = baseUrl.replaceAll("/+$", "") + "/v1/check_transaction_by_md5";
+
+            log.info("Sending md5 to Bakong: {}", request.md5());
 
             String responseBody = restClient.post()
                     .uri(url)
@@ -128,20 +137,29 @@ public class BakongServiceImpl implements BakongService {
                     .retrieve()
                     .body(String.class);
 
-            log.info("Data response from Bakong API: {}", responseBody);
+            log.info("Bakong response: {}", responseBody);
 
-            try {
-                return mapper.readValue(responseBody, BakongResponse.class);
-            } catch (Exception e) {
-                throw new RuntimeException("Invalid upstream response", e);
-            }
+            return mapper.readValue(responseBody, BakongResponse.class);
+
         } catch (Exception e) {
-            log.error("Error checking transaction: {}", e.getMessage());
+            log.error("Error checking transaction: {}", e.getMessage(), e);
             BakongResponse response = new BakongResponse();
-            response.setStatus("ERROR");
-            response.setMessage("Failed to check transaction: " + e.getMessage());
+            response.setResponseCode(-1);
+            response.setResponseMessage("Failed to check transaction: " + e.getMessage());
             return response;
         }
+    }
+
+    @Override
+    public KHQRResponse<KHQRDeepLinkData> generateDeepLink(String qr) {
+        String url = baseUrl.replaceAll("/+$", "") + "/v1/generate_deeplink_by_qr";
+
+        SourceInfo sourceInfo = new SourceInfo();
+        sourceInfo.setAppName(appName);
+        sourceInfo.setAppIconUrl(appIconUrl);
+        sourceInfo.setAppDeepLinkCallback(appDeepLinkCallback);
+
+        return BakongKHQR.generateDeepLink(url, qr, sourceInfo);
     }
 
     /**

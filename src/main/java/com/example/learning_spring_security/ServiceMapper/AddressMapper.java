@@ -26,6 +26,8 @@ public class AddressMapper {
                 .zipCode(address.getZipCode())
                 .country(address.getCountry())
                 .isDefault(address.getIsDefault())
+                .createdAt(address.getCreatedAt())
+                .updatedAt(address.getUpdatedAt())
                 .build();
         return  new  ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, addressResponse);
     }

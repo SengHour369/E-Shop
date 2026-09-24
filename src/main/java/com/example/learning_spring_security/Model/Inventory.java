@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Inventory {
+public class Inventory extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,10 +36,13 @@ public class Inventory {
 
     private LocalDateTime lastRestockedAt;
 
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDefault = false;
 
-    private LocalDateTime updatedAt;
+    @Column(name = "low_stock_threshold")
+    @Builder.Default
+    private Integer lowStockThreshold = 5;
 
     @PrePersist
     public void onCreate() {

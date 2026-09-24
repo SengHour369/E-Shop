@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
 public class ProductAttribute {
 
     @Id
@@ -23,11 +23,7 @@ public class ProductAttribute {
 
     @Column(nullable = false)
     private String name;
-    @OneToMany(mappedBy = "attribute", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ProductAttributeValue> attributeValues;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_sku_id", nullable = false)
-    private ProductSku productSku;
+    private Long productSkuId;
 
 }
 

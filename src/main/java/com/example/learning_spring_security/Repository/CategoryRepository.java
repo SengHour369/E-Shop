@@ -48,4 +48,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         AND (c.deleted IS NULL OR c.deleted = false)
     """)
     Optional<Category> findByCategoryId(@Param("id") Long id);
+    @Query("SELECT c FROM Category c WHERE c.deleted IS NULL OR c.deleted = false")
+    List<Category> findAllActive();
+
 }
