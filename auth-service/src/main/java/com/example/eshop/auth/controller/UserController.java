@@ -1,0 +1,83 @@
+package com.example.eshop.auth.controller;
+
+
+import com.example.eshop.auth.model.User;
+import com.example.eshop.auth.service.UserService;
+import com.example.eshop.auth.dto.request.AdminCreateUserRequest;
+import com.example.eshop.auth.dto.request.UserRequest;
+import com.example.eshop.auth.dto.response.ResponseErrorTemplate;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("api/v1/user")
+@Slf4j
+@RequiredArgsConstructor
+@SecurityRequirement(name = "BearerAuth")
+
+public class UserController {
+    private final UserService userService;
+    @PostMapping(value = "/create")
+    @Operation(summary = "Create a user with role(s) and permission group(s) assigned (admin only)")
+    public ResponseEntity<ResponseErrorTemplate> createUser(@RequestBody AdminCreateUserRequest request) {
+        ResponseErrorTemplate responseErrorTemplate = this.userService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseErrorTemplate);
+    }
+    @PostMapping(value = "/id", consumes = MediaType.ALL_VALUE)
+    @Operation(summary = "Change user status for admin")
+    public ResponseEntity<ResponseErrorTemplate> updateUserStatus(@RequestParam Long id,
+                                                                  @RequestParam String status) {
+        ResponseErrorTemplate responseErrorTemplate = this.userService.changeUserStatus(id,status);
+        return ResponseEntity.ok(responseErrorTemplate);
+    }
+    @PostMapping(value = "/id/image",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary =  "Update image user for user")
+    public  ResponseEntity<ResponseErrorTemplate> updateUserImage(@RequestParam Long id,
+                                                                  @RequestPart("file") MultipartFile file) {
+        ResponseErrorTemplate responseErrorTemplate = this.userService.updateProfilePicture(id, file);
+        return ResponseEntity.ok(responseErrorTemplate);
+    }
+    @GetMapping(value = "/id/user")
+    @Operation(summary = " Output By Id user ")
+    public ResponseEntity<ResponseErrorTemplate> getUserByIdAllUser(@RequestParam Long id) {
+        ResponseErrorTemplate responseErrorTemplate =  this.userService.getUserById(id);
+        return ResponseEntity.ok(responseErrorTemplate);
+    }
+    @PostMapping("/All")
+    @Operation(summary = " Output all admin")
+    public ResponseEntity<List<ResponseErrorTemplate>> getAllUser() {
+        List<ResponseErrorTemplate> responseErrorTemplate =  this.userService.getAllUsers();
+        return ResponseEntity.ok(responseErrorTemplate);
+    }
+    @PostMapping(value = "/id/update")
+    @Operation(summary = "update by admin ")
+    // @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseErrorTemplate> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
+        ResponseErrorTemplate responseErrorTemplate = this.userService.updateUser(id,userRequest);
+        return ResponseEntity.ok(responseErrorTemplate);
+    }
+    @PostMapping(value = "/id/delete")
+    @Operation(summary ="delete by admin")
+    public ResponseEntity<ResponseErrorTemplate> deleteUser(@RequestParam Long id) {
+        this.userService.deleteUser(id);
+        return null;
+    }
+    @PostMapping("/count")
+    @Operation(summary = "count user by admin")
+    public  ResponseEntity<Long> getAllCountUser() {
+        Long responseErrorTemplate = this.userService.countUsers();
+        return ResponseEntity.ok(responseErrorTemplate);
+
+    }
+
+}

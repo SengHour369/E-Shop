@@ -1,0 +1,56 @@
+server:
+  forward-headers-strategy: none
+  port: 8084
+
+spring:
+  application:
+    name: payment-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_db
+    username: senghour
+    password: senghour369
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  header: Authorization
+  prefix: Bearer
+  secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+bakong:
+  account-id: ${BAKONG_ACCOUNT_ID:senghour_soeurng@bkrt}
+  base-url: ${BAKONG_BASE_URL:https://api-bakong.nbc.gov.kh}
+  email: ${BAKONG_EMAIL:seanghour097328@gmail.com}
+  app-name: E-Shop
+  app-icon-url: ${BAKONG_APP_ICON_URL:https://random-subdomain.trycloudflare.com/logo.png}
+app:
+  base-url: ${APP_BASE_URL:https://random-subdomain.trycloudflare.com}
+  exchange-rate:
+    usd-to-khr: 4100
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=payment-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"

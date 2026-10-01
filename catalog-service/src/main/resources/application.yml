@@ -1,0 +1,59 @@
+server:
+  forward-headers-strategy: none
+  port: 8082
+
+spring:
+  application:
+    name: catalog-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/catalog_db
+    username: senghour
+    password: senghour369
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 2000MB
+      max-request-size: 2000MB
+
+jwt:
+  header: Authorization
+  prefix: Bearer
+  secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME:dr9z2x9s1}
+  api_key: ${CLOUDINARY_API_KEY:changeme}
+  api_secret: ${CLOUDINARY_API_SECRET:changeme}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# Feign client to auth-service, e.g. to resolve current user for audit fields
+auth-service:
+  name: auth-service
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=catalog-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"

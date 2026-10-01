@@ -1,0 +1,35 @@
+package com.example.eshop.catalog.model;
+
+import com.example.eshop.common.entity.BaseEntity;
+
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "categories")
+public class Category extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String name;
+
+    private String description;
+    private String icon;
+    private Boolean deleted = false;
+    private Boolean status = true;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SubCategory> subCategories = new ArrayList<>(); // ប្តូរពី subCategoryItems
+}

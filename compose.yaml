@@ -1,37 +1,219 @@
 version: '3.9'
 
 services:
-  postgres:
+  auth-db:
     image: postgres:18
-    container_name: postgres
+    container_name: auth-db
     environment:
-      POSTGRES_DB: postgres
+      POSTGRES_DB: auth_db
       POSTGRES_USER: senghour
       POSTGRES_PASSWORD: senghour369
     ports:
-      - "5432:5432"   # host:container
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Fixed: added /data
-    restart: always
+      - auth_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U senghour -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U senghour -d auth_db"]
       interval: 5s
       retries: 5
 
-  app:
-    build: .
-    container_name: senghour-app
+  catalog-db:
+    image: postgres:18
+    container_name: catalog-db
+    environment:
+      POSTGRES_DB: catalog_db
+      POSTGRES_USER: senghour
+      POSTGRES_PASSWORD: senghour369
     ports:
-      - "8080:8080"   # Fixed: match application.properties port
+      - "5433:5432"
+    volumes:
+      - catalog_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U senghour -d catalog_db"]
+      interval: 5s
+      retries: 5
+
+  order-db:
+    image: postgres:18
+    container_name: order-db
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: senghour
+      POSTGRES_PASSWORD: senghour369
+    ports:
+      - "5434:5432"
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U senghour -d order_db"]
+      interval: 5s
+      retries: 5
+
+  payment-db:
+    image: postgres:18
+    container_name: payment-db
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_USER: senghour
+      POSTGRES_PASSWORD: senghour369
+    ports:
+      - "5435:5432"
+    volumes:
+      - payment_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U senghour -d payment_db"]
+      interval: 5s
+      retries: 5
+
+  discovery-server:
+    build:
+      context: .
+      dockerfile: discovery-server/Dockerfile
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    restart: always
+
+  gateway-db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: gateway_db
+      POSTGRES_USER: ${GATEWAY_DATABASE_USERNAME:-eshop}
+      POSTGRES_PASSWORD: ${GATEWAY_DATABASE_PASSWORD:-eshop}
+    ports:
+      - "127.0.0.1:5436:5432"
+    volumes:
+      - gateway_db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d gateway_db"]
+      interval: 5s
+      retries: 10
+
+  gateway-redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
     depends_on:
-      postgres:
+      discovery-server:
+        condition: service_started
+      gateway-db:
+        condition: service_healthy
+      gateway-redis:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      GATEWAY_DATABASE_URL: r2dbc:postgresql://gateway-db:5432/gateway_db
+      GATEWAY_DATABASE_USERNAME: ${GATEWAY_DATABASE_USERNAME:-eshop}
+      GATEWAY_DATABASE_PASSWORD: ${GATEWAY_DATABASE_PASSWORD:-eshop}
+      REDIS_HOST: gateway-redis
+      GATEWAY_AUTH_ENABLED: ${GATEWAY_AUTH_ENABLED:-true}
+      GATEWAY_DYNAMIC_ROUTES_ENABLED: ${GATEWAY_DYNAMIC_ROUTES_ENABLED:-true}
+      GATEWAY_DATABASE_LOGGING_ENABLED: ${GATEWAY_DATABASE_LOGGING_ENABLED:-true}
+      GATEWAY_ADMIN_KEY: ${GATEWAY_ADMIN_KEY:-}
+      GATEWAY_CORS_ORIGINS: ${GATEWAY_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:8080}
+      JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    restart: always
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
+      GATEWAY_CORS_ORIGINS: ${GATEWAY_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:8080}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-900}
       SPRING_DATASOURCE_USERNAME: senghour
       SPRING_DATASOURCE_PASSWORD: senghour369
-      SERVER_PORT: 8080  # Added to ensure correct port
+      JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    restart: always
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: catalog-service/Dockerfile
+    container_name: catalog-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://catalog-db:5432/catalog_db
+      SPRING_DATASOURCE_USERNAME: senghour
+      SPRING_DATASOURCE_PASSWORD: senghour369
+      JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    restart: always
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      order-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://order-db:5432/order_db
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      SPRING_DATASOURCE_USERNAME: senghour
+      SPRING_DATASOURCE_PASSWORD: senghour369
+      JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    restart: always
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      payment-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://payment-db:5432/payment_db
+      SPRING_DATASOURCE_USERNAME: senghour
+      SPRING_DATASOURCE_PASSWORD: senghour369
+      JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
     restart: always
 
 volumes:
-  postgres_data:
+  auth_db_data:
+  catalog_db_data:
+  order_db_data:
+  payment_db_data:
+
+  gateway_db_data:

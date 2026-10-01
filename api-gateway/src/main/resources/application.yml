@@ -1,0 +1,239 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+              lower-case-service-id: true
+          httpclient:
+            connect-timeout: 3000
+            response-timeout: 5s
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            - SecureHeaders
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: ${GATEWAY_CORS_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080}
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                exposedHeaders: [X-Request-ID, X-Correlation-Id]
+                allowedHeaders: "*"
+                allowCredentials: true
+          routes:
+            - id: auth-audit-search
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/admin/audit-logs/auth
+              filters:
+                - SetPath=/api/admin/audit-logs
+                - name: CircuitBreaker
+                  args:
+                    name: authServiceCB
+                    fallbackUri: forward:/fallback/auth
+            - id: catalog-audit-search
+              uri: lb://catalog-service
+              predicates:
+                - Path=/api/admin/audit-logs/catalog
+              filters:
+                - SetPath=/api/admin/audit-logs
+                - name: CircuitBreaker
+                  args:
+                    name: catalogServiceCB
+                    fallbackUri: forward:/fallback/catalog
+            - id: order-audit-search
+              uri: lb://order-service
+              predicates:
+                - Path=/api/admin/audit-logs/order
+              filters:
+                - SetPath=/api/admin/audit-logs
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCB
+                    fallbackUri: forward:/fallback/order
+            - id: payment-audit-search
+              uri: lb://payment-service
+              predicates:
+                - Path=/api/admin/audit-logs/payment
+              filters:
+                - SetPath=/api/admin/audit-logs
+                - name: CircuitBreaker
+                  args:
+                    name: paymentServiceCB
+                    fallbackUri: forward:/fallback/payment
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/v1/auth/**, /api/v1/public/**, /api/v1/functions/**, /api/v1/user-groups/**, /api/v1/user-permissions/**, /api/v1/group-permissions/**, /api/v1/user/**, /api/v1/addresses/**, /api/v1/admin/users/**, /api/v1/groups/**, /api/v1/permissions/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: authServiceCB
+                    fallbackUri: forward:/fallback/auth
+            - id: catalog-service
+              uri: lb://catalog-service
+              predicates:
+                - Path=/api/v1/admin/promotions/**, /api/v1/promotions/**, /api/v1/products/**, /api/v1/categories/**, /api/v1/category-icons/**, /api/v1/subcategories/**, /api/v1/attributes/**, /api/v1/attribute-values/**, /api/v1/inventory/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: catalogServiceCB
+                    fallbackUri: forward:/fallback/catalog
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/v1/cart/**, /api/v1/orders/**, /api/v1/cancelations/**, /api/v1/returns/**, /api/v1/refunds/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCB
+                    fallbackUri: forward:/fallback/order
+            - id: payment-service
+              uri: lb://payment-service
+              predicates:
+                - Path=/api/v1/payments/**, /api/v1/payment-transactions/**, /api/v1/bakong/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: paymentServiceCB
+                    fallbackUri: forward:/fallback/payment
+
+
+            - id: auth-service-openapi
+              uri: lb://auth-service
+              predicates:
+                - Path=/openapi/auth-service
+              filters:
+                - SetPath=/v3/api-docs
+                - OpenApiServer
+
+            - id: catalog-service-openapi
+              uri: lb://catalog-service
+              predicates:
+                - Path=/openapi/catalog-service
+              filters:
+                - SetPath=/v3/api-docs
+                - OpenApiServer
+
+            - id: order-service-openapi
+              uri: lb://order-service
+              predicates:
+                - Path=/openapi/order-service
+              filters:
+                - SetPath=/v3/api-docs
+                - OpenApiServer
+
+            - id: payment-service-openapi
+              uri: lb://payment-service
+              predicates:
+                - Path=/openapi/payment-service
+              filters:
+                - SetPath=/v3/api-docs
+                - OpenApiServer
+
+  r2dbc:
+    url: ${GATEWAY_DATABASE_URL:r2dbc:postgresql://localhost:5436/gateway_db}
+    username: ${GATEWAY_DATABASE_USERNAME:eshop}
+    password: ${GATEWAY_DATABASE_PASSWORD:eshop}
+    pool:
+      initial-size: 0
+      max-size: 5
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      repositories:
+        enabled: false
+  sql:
+    init:
+      mode: always
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 5
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 6s
+
+gateway:
+  dynamic-routes-enabled: ${GATEWAY_DYNAMIC_ROUTES_ENABLED:true}
+  security:
+    authentication-enabled: ${GATEWAY_AUTH_ENABLED:true}
+    cookie-allowed-origins: ${GATEWAY_CORS_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080}
+    jwt-secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+    admin-key: ${GATEWAY_ADMIN_KEY:}
+    public-paths:
+      - /api/v1/promotions/**
+      - /api/v1/public/session/login
+      - /api/v1/public/session/verify
+      - /api/v1/public/session/refresh
+      - /api/v1/public/session/logout
+      - /api/v1/auth
+      - /api/v1/public/accounts/register
+      - /api/v1/public/register
+      - /api/v1/public/verify
+      - /api/v1/public/resend
+      - /api/v1/public/email/username/login
+      - /api/v1/public/refresh
+      - /api/v1/public/forgot-password
+      - /api/v1/public/reset-password
+      - /api/v1/public/reset-password-page
+      - /api/v1/public/check-user
+      - /openapi/**
+  logging:
+    database-enabled: ${GATEWAY_DATABASE_LOGGING_ENABLED:true}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    urls:
+      - name: API Gateway
+        url: /v3/api-docs
+      - name: Authentication
+        url: /openapi/auth-service
+      - name: Catalog
+        url: /openapi/catalog-service
+      - name: Orders
+        url: /openapi/order-service
+      - name: Payments
+        url: /openapi/payment-service
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=api-gateway requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"

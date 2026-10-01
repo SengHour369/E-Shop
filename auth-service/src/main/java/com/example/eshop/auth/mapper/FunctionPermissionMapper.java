@@ -1,0 +1,32 @@
+package com.example.eshop.auth.mapper;
+
+import com.example.eshop.auth.model.FunctionPermission;
+import com.example.eshop.auth.dto.response.FunctionPermissionResponse;
+
+public class FunctionPermissionMapper {
+
+    public static FunctionPermissionResponse toResponse(FunctionPermission function) {
+        return FunctionPermissionResponse.builder()
+                .funcId(function.getFuncId())
+                .funcCode(function.getFuncCode())
+                .funcName(function.getFuncName())
+                .description(function.getDescription())
+                .module(function.getModule())
+                .isActive(function.getIsActive())
+                .createdAt(function.getCreatedAt())
+                .updatedAt(function.getUpdatedAt())
+                .build();
+    }
+
+    public static FunctionPermission toEntity(Long funcId, String funcCode, String funcName,
+                                              String description, String module) {
+        return FunctionPermission.builder()
+                .funcId(funcId)
+                .funcCode(funcCode)
+                .funcName(funcName)
+                .description(description)
+                .module(module)
+                .isActive(true)
+                .build();
+    }
+}

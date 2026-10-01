@@ -1,0 +1,64 @@
+server:
+  forward-headers-strategy: none
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth_db
+    username: senghour
+    password: senghour369
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:seanghour097328@gmail.com}
+    password: ${MAIL_PASSWORD:changeme}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+jwt:
+  url: /api/v1/auth
+  header: Authorization
+  prefix: Bearer
+  expiration: ${JWT_EXPIRATION:900}
+  refresh-expiration: 60480011
+  secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+auth:
+  cookies:
+    secure: ${AUTH_COOKIE_SECURE:true}
+    allowed-origins: ${GATEWAY_CORS_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=auth-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"

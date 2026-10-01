@@ -1,0 +1,1568 @@
+[
+  {
+    "module": "auth-service",
+    "controller": "AddressController",
+    "handler": "getUserAddresses",
+    "method": "GET",
+    "path": "/api/v1/addresses/user/{userId}",
+    "consumes": "",
+    "request": "Get user addresses"
+  },
+  {
+    "module": "auth-service",
+    "controller": "AddressController",
+    "handler": "getUserAddressesPaged",
+    "method": "GET",
+    "path": "/api/v1/addresses/user/{userId}/paged",
+    "consumes": "",
+    "request": "Get user addresses paged"
+  },
+  {
+    "module": "auth-service",
+    "controller": "AddressController",
+    "handler": "getAddressById",
+    "method": "GET",
+    "path": "/api/v1/addresses/{id}",
+    "consumes": "",
+    "request": "Get address by id"
+  },
+  {
+    "module": "auth-service",
+    "controller": "AddressController",
+    "handler": "createAddress",
+    "method": "POST",
+    "path": "/api/v1/addresses/user/{userId}",
+    "consumes": "",
+    "request": "Create address"
+  },
+  {
+    "module": "auth-service",
+    "controller": "AddressController",
+    "handler": "updateAddress",
+    "method": "PUT",
+    "path": "/api/v1/addresses/{id}/user/{userId}",
+    "consumes": "",
+    "request": "Update address"
+  },
+  {
+    "module": "auth-service",
+    "controller": "AddressController",
+    "handler": "deleteAddress",
+    "method": "DELETE",
+    "path": "/api/v1/addresses/{id}/user/{userId}",
+    "consumes": "",
+    "request": "Delete address"
+  },
+  {
+    "module": "auth-service",
+    "controller": "FunctionPermissionController",
+    "handler": "getFunctions",
+    "method": "POST",
+    "path": "/api/v1/functions/get/all",
+    "consumes": "",
+    "request": "Get functions"
+  },
+  {
+    "module": "auth-service",
+    "controller": "FunctionPermissionController",
+    "handler": "getFunctionById",
+    "method": "POST",
+    "path": "/api/v1/functions/get/id/",
+    "consumes": "",
+    "request": "Get function by id"
+  },
+  {
+    "module": "auth-service",
+    "controller": "FunctionPermissionController",
+    "handler": "createFunction",
+    "method": "POST",
+    "path": "/api/v1/functions/create/",
+    "consumes": "",
+    "request": "Create function"
+  },
+  {
+    "module": "auth-service",
+    "controller": "FunctionPermissionController",
+    "handler": "updateFunction",
+    "method": "POST",
+    "path": "/api/v1/functions/update/",
+    "consumes": "",
+    "request": "Update function"
+  },
+  {
+    "module": "auth-service",
+    "controller": "FunctionPermissionController",
+    "handler": "deleteFunction",
+    "method": "POST",
+    "path": "/api/v1/functions/delete/",
+    "consumes": "",
+    "request": "Delete function"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupController",
+    "handler": "createGroup",
+    "method": "POST",
+    "path": "/api/v1/groups/create",
+    "consumes": "",
+    "request": "Create group"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupController",
+    "handler": "getAllGroups",
+    "method": "GET",
+    "path": "/api/v1/groups/get/all",
+    "consumes": "",
+    "request": "Get all groups"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupController",
+    "handler": "getGroupById",
+    "method": "GET",
+    "path": "/api/v1/groups/get/{id}",
+    "consumes": "",
+    "request": "Get group by id"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupController",
+    "handler": "updateGroup",
+    "method": "PUT",
+    "path": "/api/v1/groups/update/{id}",
+    "consumes": "",
+    "request": "Update group"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupController",
+    "handler": "deleteGroup",
+    "method": "DELETE",
+    "path": "/api/v1/groups/delete/{id}",
+    "consumes": "",
+    "request": "Delete group"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupController",
+    "handler": "toggleActive",
+    "method": "PATCH",
+    "path": "/api/v1/groups/activate/{id}",
+    "consumes": "",
+    "request": "Toggle active"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupPermissionController",
+    "handler": "getGroupPermissions",
+    "method": "POST",
+    "path": "/api/v1/group-permissions/get/all",
+    "consumes": "",
+    "request": "Get group permissions"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupPermissionController",
+    "handler": "getGroupPermissionById",
+    "method": "POST",
+    "path": "/api/v1/group-permissions/get/id/",
+    "consumes": "",
+    "request": "Get group permission by id"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupPermissionController",
+    "handler": "createGroupPermission",
+    "method": "POST",
+    "path": "/api/v1/group-permissions/create/",
+    "consumes": "",
+    "request": "Create group permission"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupPermissionController",
+    "handler": "updateGroupPermission",
+    "method": "POST",
+    "path": "/api/v1/group-permissions/update/",
+    "consumes": "",
+    "request": "Update group permission"
+  },
+  {
+    "module": "auth-service",
+    "controller": "GroupPermissionController",
+    "handler": "deleteGroupPermission",
+    "method": "POST",
+    "path": "/api/v1/group-permissions/delete/",
+    "consumes": "",
+    "request": "Delete group permission"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "register",
+    "method": "POST",
+    "path": "/api/v1/public/register",
+    "consumes": "",
+    "request": "Register"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "verify",
+    "method": "POST",
+    "path": "/api/v1/public/verify",
+    "consumes": "",
+    "request": "Verify"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "resend",
+    "method": "POST",
+    "path": "/api/v1/public/resend",
+    "consumes": "",
+    "request": "Resend"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "loginByEmail",
+    "method": "POST",
+    "path": "/api/v1/public/email/username/login",
+    "consumes": "",
+    "request": "Login by email"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "refreshToken",
+    "method": "POST",
+    "path": "/api/v1/public/refresh",
+    "consumes": "",
+    "request": "Refresh token"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "logout",
+    "method": "POST",
+    "path": "/api/v1/public/logout",
+    "consumes": "",
+    "request": "Logout"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "forgotPassword",
+    "method": "POST",
+    "path": "/api/v1/public/forgot-password",
+    "consumes": "",
+    "request": "Forgot password"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "resetPassword",
+    "method": "POST",
+    "path": "/api/v1/public/reset-password",
+    "consumes": "",
+    "request": "Reset password"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "resetPasswordPage",
+    "method": "GET",
+    "path": "/api/v1/public/reset-password-page",
+    "consumes": "",
+    "request": "Reset password page"
+  },
+  {
+    "module": "auth-service",
+    "controller": "LoginController",
+    "handler": "checkUserExists",
+    "method": "POST",
+    "path": "/api/v1/public/check-user",
+    "consumes": "",
+    "request": "Check user exists"
+  },
+  {
+    "module": "auth-service",
+    "controller": "RegisterController",
+    "handler": "register",
+    "method": "POST",
+    "path": "/api/v1/public/accounts/register",
+    "consumes": "",
+    "request": "Register"
+  },
+  {
+    "module": "auth-service",
+    "controller": "SessionController",
+    "handler": "login",
+    "method": "POST",
+    "path": "/api/v1/public/session/login",
+    "consumes": "",
+    "request": "Login"
+  },
+  {
+    "module": "auth-service",
+    "controller": "SessionController",
+    "handler": "verify",
+    "method": "POST",
+    "path": "/api/v1/public/session/verify",
+    "consumes": "",
+    "request": "Verify"
+  },
+  {
+    "module": "auth-service",
+    "controller": "SessionController",
+    "handler": "refresh",
+    "method": "POST",
+    "path": "/api/v1/public/session/refresh",
+    "consumes": "",
+    "request": "Refresh"
+  },
+  {
+    "module": "auth-service",
+    "controller": "SessionController",
+    "handler": "logout",
+    "method": "POST",
+    "path": "/api/v1/public/session/logout",
+    "consumes": "",
+    "request": "Logout"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "createUser",
+    "method": "POST",
+    "path": "/api/v1/user/create",
+    "consumes": "",
+    "request": "Create user"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "updateUserStatus",
+    "method": "POST",
+    "path": "/api/v1/user/id",
+    "consumes": "",
+    "request": "Update user status"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "updateUserImage",
+    "method": "POST",
+    "path": "/api/v1/user/id/image",
+    "consumes": "multipart",
+    "request": "Update user image (multipart)"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "getUserByIdAllUser",
+    "method": "GET",
+    "path": "/api/v1/user/id/user",
+    "consumes": "",
+    "request": "Get user by id all user"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "getAllUser",
+    "method": "POST",
+    "path": "/api/v1/user/All",
+    "consumes": "",
+    "request": "Get all user"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "updateUser",
+    "method": "POST",
+    "path": "/api/v1/user/id/update",
+    "consumes": "",
+    "request": "Update user"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "deleteUser",
+    "method": "POST",
+    "path": "/api/v1/user/id/delete",
+    "consumes": "",
+    "request": "Delete user"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserController",
+    "handler": "getAllCountUser",
+    "method": "POST",
+    "path": "/api/v1/user/count",
+    "consumes": "",
+    "request": "Get all count user"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserGroupController",
+    "handler": "getUserGroups",
+    "method": "POST",
+    "path": "/api/v1/user-groups/get/all",
+    "consumes": "",
+    "request": "Get user groups"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserGroupController",
+    "handler": "getUserGroupById",
+    "method": "POST",
+    "path": "/api/v1/user-groups/get/id/",
+    "consumes": "",
+    "request": "Get user group by id"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserGroupController",
+    "handler": "createUserGroup",
+    "method": "POST",
+    "path": "/api/v1/user-groups/create/",
+    "consumes": "",
+    "request": "Create user group"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserGroupController",
+    "handler": "updateUserGroup",
+    "method": "POST",
+    "path": "/api/v1/user-groups/update/",
+    "consumes": "",
+    "request": "Update user group"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserGroupController",
+    "handler": "deleteUserGroup",
+    "method": "POST",
+    "path": "/api/v1/user-groups/delete/",
+    "consumes": "",
+    "request": "Delete user group"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserPermissionController",
+    "handler": "getUserPermissions",
+    "method": "POST",
+    "path": "/api/v1/user-permissions/get/all",
+    "consumes": "",
+    "request": "Get user permissions"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserPermissionController",
+    "handler": "getUserPermissionById",
+    "method": "POST",
+    "path": "/api/v1/user-permissions/get/id/",
+    "consumes": "",
+    "request": "Get user permission by id"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserPermissionController",
+    "handler": "createUserPermission",
+    "method": "POST",
+    "path": "/api/v1/user-permissions/create/",
+    "consumes": "",
+    "request": "Create user permission"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserPermissionController",
+    "handler": "updateUserPermission",
+    "method": "POST",
+    "path": "/api/v1/user-permissions/update/",
+    "consumes": "",
+    "request": "Update user permission"
+  },
+  {
+    "module": "auth-service",
+    "controller": "UserPermissionController",
+    "handler": "deleteUserPermission",
+    "method": "POST",
+    "path": "/api/v1/user-permissions/delete/",
+    "consumes": "",
+    "request": "Delete user permission"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CatalogCheckoutController",
+    "handler": "quote",
+    "method": "POST",
+    "path": "/internal/catalog/checkouts/quote",
+    "consumes": "",
+    "request": "Quote"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CatalogCheckoutController",
+    "handler": "reserve",
+    "method": "POST",
+    "path": "/internal/catalog/checkouts",
+    "consumes": "",
+    "request": "Reserve"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CatalogCheckoutController",
+    "handler": "confirm",
+    "method": "POST",
+    "path": "/internal/catalog/checkouts/{orderId}/confirm",
+    "consumes": "",
+    "request": "Confirm"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CatalogCheckoutController",
+    "handler": "release",
+    "method": "POST",
+    "path": "/internal/catalog/checkouts/{orderId}/release",
+    "consumes": "",
+    "request": "Release"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "getAllCategories",
+    "method": "POST",
+    "path": "/api/v1/categories/get/all",
+    "consumes": "",
+    "request": "Get all categories"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "getCategoryById",
+    "method": "POST",
+    "path": "/api/v1/categories/id/get/",
+    "consumes": "",
+    "request": "Get category by id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "getCategoryByName",
+    "method": "POST",
+    "path": "/api/v1/categories/name/",
+    "consumes": "",
+    "request": "Get category by name"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "getCategoryWithSubCategories",
+    "method": "POST",
+    "path": "/api/v1/categories/with-subcategories",
+    "consumes": "",
+    "request": "Get category with sub categories"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "createCategory",
+    "method": "POST",
+    "path": "/api/v1/categories/create/",
+    "consumes": "",
+    "request": "Create category"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "updateCategory",
+    "method": "PUT",
+    "path": "/api/v1/categories/id/update",
+    "consumes": "",
+    "request": "Update category"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "uploadCategoryIcon",
+    "method": "PUT",
+    "path": "/api/v1/categories/id/icon",
+    "consumes": "multipart",
+    "request": "Upload category icon (multipart)"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryController",
+    "handler": "deleteCategory",
+    "method": "DELETE",
+    "path": "/api/v1/categories/delete",
+    "consumes": "",
+    "request": "Delete category"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryIconController",
+    "handler": "getAllIcons",
+    "method": "GET",
+    "path": "/api/v1/category-icons/get/all",
+    "consumes": "",
+    "request": "Get all icons"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryIconController",
+    "handler": "getIconById",
+    "method": "GET",
+    "path": "/api/v1/category-icons/id",
+    "consumes": "",
+    "request": "Get icon by id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "CategoryIconController",
+    "handler": "uploadIcon",
+    "method": "POST",
+    "path": "/api/v1/category-icons/upload",
+    "consumes": "multipart",
+    "request": "Upload icon (multipart)"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "createInventory",
+    "method": "POST",
+    "path": "/api/v1/inventory",
+    "consumes": "",
+    "request": "Create inventory"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "getAllInventory",
+    "method": "POST",
+    "path": "/api/v1/inventory/all/",
+    "consumes": "",
+    "request": "Get all inventory"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "getInventoryById",
+    "method": "POST",
+    "path": "/api/v1/inventory/id/",
+    "consumes": "",
+    "request": "Get inventory by id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "getInventoryBySkuId",
+    "method": "POST",
+    "path": "/api/v1/inventory/sku/",
+    "consumes": "",
+    "request": "Get inventory by sku id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "getInventoryByProductId",
+    "method": "POST",
+    "path": "/api/v1/inventory/product/",
+    "consumes": "",
+    "request": "Get inventory by product id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "getLowStock",
+    "method": "POST",
+    "path": "/api/v1/inventory/low-stock",
+    "consumes": "",
+    "request": "Get low stock"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "restock",
+    "method": "PATCH",
+    "path": "/api/v1/inventory/restock",
+    "consumes": "",
+    "request": "Restock"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "adjustInventory",
+    "method": "POST",
+    "path": "/api/v1/inventory/exact",
+    "consumes": "",
+    "request": "Adjust inventory"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "deleteInventory",
+    "method": "POST",
+    "path": "/api/v1/inventory/delete",
+    "consumes": "",
+    "request": "Delete inventory"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "getInventorySummary",
+    "method": "GET",
+    "path": "/api/v1/inventory/summary",
+    "consumes": "",
+    "request": "Get inventory summary"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "searchInventory",
+    "method": "POST",
+    "path": "/api/v1/inventory/search",
+    "consumes": "",
+    "request": "Search inventory"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "InventoryController",
+    "handler": "getInventoryHistory",
+    "method": "GET",
+    "path": "/api/v1/inventory/history/{inventoryId}",
+    "consumes": "",
+    "request": "Get inventory history"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeController",
+    "handler": "getAttributeById",
+    "method": "GET",
+    "path": "/api/v1/attributes/{id}",
+    "consumes": "",
+    "request": "Get attribute by id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeController",
+    "handler": "getAttributeByName",
+    "method": "GET",
+    "path": "/api/v1/attributes/name/{name}",
+    "consumes": "",
+    "request": "Get attribute by name"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeController",
+    "handler": "getAllAttributes",
+    "method": "GET",
+    "path": "/api/v1/attributes",
+    "consumes": "",
+    "request": "Get all attributes"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeController",
+    "handler": "deleteAttribute",
+    "method": "DELETE",
+    "path": "/api/v1/attributes/{id}",
+    "consumes": "",
+    "request": "Delete attribute"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeValueController",
+    "handler": "getAttributeValueById",
+    "method": "GET",
+    "path": "/api/v1/attribute-values/{id}",
+    "consumes": "",
+    "request": "Get attribute value by id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeValueController",
+    "handler": "getValuesByAttributeId",
+    "method": "GET",
+    "path": "/api/v1/attribute-values/attribute/{attributeId}",
+    "consumes": "",
+    "request": "Get values by attribute id"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeValueController",
+    "handler": "updateAttributeValue",
+    "method": "PUT",
+    "path": "/api/v1/attribute-values/{id}",
+    "consumes": "",
+    "request": "Update attribute value"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeValueController",
+    "handler": "deleteAttributeValue",
+    "method": "DELETE",
+    "path": "/api/v1/attribute-values/{id}",
+    "consumes": "",
+    "request": "Delete attribute value"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductAttributeValueController",
+    "handler": "getAttributeValueByAttributeAndValue",
+    "method": "GET",
+    "path": "/api/v1/attribute-values",
+    "consumes": "",
+    "request": "Get attribute value by attribute and value"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductController",
+    "handler": "getProducts",
+    "method": "POST",
+    "path": "/api/v1/products/get/all",
+    "consumes": "",
+    "request": "Get products"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductController",
+    "handler": "createProduct",
+    "method": "POST",
+    "path": "/api/v1/products/create/",
+    "consumes": "multipart",
+    "request": "Create product (multipart)"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductController",
+    "handler": "updateProduct",
+    "method": "PUT",
+    "path": "/api/v1/products/update/",
+    "consumes": "multipart",
+    "request": "Update product (multipart)"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductController",
+    "handler": "updateProductJson",
+    "method": "PUT",
+    "path": "/api/v1/products/update/",
+    "consumes": "json",
+    "request": "Update product json (JSON)"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductController",
+    "handler": "updateProductStatus",
+    "method": "POST",
+    "path": "/api/v1/products/update/status/",
+    "consumes": "",
+    "request": "Update product status"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductController",
+    "handler": "deleteProduct",
+    "method": "POST",
+    "path": "/api/v1/products/delete/",
+    "consumes": "",
+    "request": "Delete product"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "create",
+    "method": "POST",
+    "path": "/api/v1/admin/promotions",
+    "consumes": "",
+    "request": "Create"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "update",
+    "method": "PUT",
+    "path": "/api/v1/admin/promotions/{id}",
+    "consumes": "",
+    "request": "Update"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "get",
+    "method": "GET",
+    "path": "/api/v1/admin/promotions/{id}",
+    "consumes": "",
+    "request": "Get"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "list",
+    "method": "GET",
+    "path": "/api/v1/admin/promotions",
+    "consumes": "",
+    "request": "List"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "archive",
+    "method": "DELETE",
+    "path": "/api/v1/admin/promotions/{id}",
+    "consumes": "",
+    "request": "Archive"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "assign",
+    "method": "POST",
+    "path": "/api/v1/admin/promotions/{id}/skus",
+    "consumes": "",
+    "request": "Assign"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "assigned",
+    "method": "GET",
+    "path": "/api/v1/admin/promotions/{id}/skus",
+    "consumes": "",
+    "request": "Assigned"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "remove",
+    "method": "DELETE",
+    "path": "/api/v1/admin/promotions/{id}/skus/{skuId}",
+    "consumes": "",
+    "request": "Remove"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "schedule",
+    "method": "POST",
+    "path": "/api/v1/admin/promotions/{id}/schedule",
+    "consumes": "",
+    "request": "Schedule"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "activate",
+    "method": "POST",
+    "path": "/api/v1/admin/promotions/{id}/activate",
+    "consumes": "",
+    "request": "Activate"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionAdminController",
+    "handler": "disable",
+    "method": "POST",
+    "path": "/api/v1/admin/promotions/{id}/disable",
+    "consumes": "",
+    "request": "Disable"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionController",
+    "handler": "active",
+    "method": "GET",
+    "path": "/api/v1/promotions/active",
+    "consumes": "",
+    "request": "Active"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "PromotionController",
+    "handler": "products",
+    "method": "GET",
+    "path": "/api/v1/promotions/{id}/products",
+    "consumes": "",
+    "request": "Products"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "SubCategoryController",
+    "handler": "getSubCategories",
+    "method": "POST",
+    "path": "/api/v1/subcategories/get/all",
+    "consumes": "",
+    "request": "Get sub categories"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "SubCategoryController",
+    "handler": "createSubCategory",
+    "method": "POST",
+    "path": "/api/v1/subcategories/create/",
+    "consumes": "multipart",
+    "request": "Create sub category (multipart)"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "SubCategoryController",
+    "handler": "updateSubCategory",
+    "method": "POST",
+    "path": "/api/v1/subcategories/update/",
+    "consumes": "multipart",
+    "request": "Update sub category (multipart)"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "SubCategoryController",
+    "handler": "deleteSubCategory",
+    "method": "POST",
+    "path": "/api/v1/subcategories/delete/",
+    "consumes": "",
+    "request": "Delete sub category"
+  },
+  {
+    "module": "order-service",
+    "controller": "CancelationController",
+    "handler": "getCancelationSummary",
+    "method": "GET",
+    "path": "/api/v1/cancelations/summary",
+    "consumes": "",
+    "request": "Get cancelation summary"
+  },
+  {
+    "module": "order-service",
+    "controller": "CancelationController",
+    "handler": "getCancelationList",
+    "method": "POST",
+    "path": "/api/v1/cancelations/list",
+    "consumes": "",
+    "request": "Get cancelation list"
+  },
+  {
+    "module": "order-service",
+    "controller": "CancelationController",
+    "handler": "getCancelationDetail",
+    "method": "GET",
+    "path": "/api/v1/cancelations/{orderNo}",
+    "consumes": "",
+    "request": "Get cancelation detail"
+  },
+  {
+    "module": "order-service",
+    "controller": "CartController",
+    "handler": "getCartByUserId",
+    "method": "POST",
+    "path": "/api/v1/cart/user/id",
+    "consumes": "",
+    "request": "Get cart by user id"
+  },
+  {
+    "module": "order-service",
+    "controller": "CartController",
+    "handler": "getOrCreateCart",
+    "method": "POST",
+    "path": "/api/v1/cart/user/id/get-or-create",
+    "consumes": "",
+    "request": "Get or create cart"
+  },
+  {
+    "module": "order-service",
+    "controller": "CartController",
+    "handler": "addItemToCart",
+    "method": "POST",
+    "path": "/api/v1/cart/user/id/items",
+    "consumes": "",
+    "request": "Add item to cart"
+  },
+  {
+    "module": "order-service",
+    "controller": "CartController",
+    "handler": "updateCartItem",
+    "method": "POST",
+    "path": "/api/v1/cart/user/id/items/cartItemId",
+    "consumes": "",
+    "request": "Update cart item"
+  },
+  {
+    "module": "order-service",
+    "controller": "CartController",
+    "handler": "removeItemFromCart",
+    "method": "POST",
+    "path": "/api/v1/cart/user/userId/items/cartItemId",
+    "consumes": "",
+    "request": "Remove item from cart"
+  },
+  {
+    "module": "order-service",
+    "controller": "CartController",
+    "handler": "clearCart",
+    "method": "POST",
+    "path": "/api/v1/cart/user/userId/clear",
+    "consumes": "",
+    "request": "Clear cart"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getAllOrders",
+    "method": "GET",
+    "path": "/api/v1/orders",
+    "consumes": "",
+    "request": "Get all orders"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getOrders",
+    "method": "POST",
+    "path": "/api/v1/orders/get/all",
+    "consumes": "",
+    "request": "Get orders"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getUserOrders",
+    "method": "POST",
+    "path": "/api/v1/orders/user/id/",
+    "consumes": "",
+    "request": "Get user orders"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getOrderById",
+    "method": "POST",
+    "path": "/api/v1/orders/id/",
+    "consumes": "",
+    "request": "Get order by id"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getOrderByNumber",
+    "method": "POST",
+    "path": "/api/v1/orders/number/",
+    "consumes": "",
+    "request": "Get order by number"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getOrderDetailByUser",
+    "method": "POST",
+    "path": "/api/v1/orders/user/detail",
+    "consumes": "",
+    "request": "Get order detail by user"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getOrderDetailHistory",
+    "method": "POST",
+    "path": "/api/v1/orders/user/history",
+    "consumes": "",
+    "request": "Get order detail history"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "updateOrderStatus",
+    "method": "POST",
+    "path": "/api/v1/orders/status/",
+    "consumes": "",
+    "request": "Update order status"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "cancelOrder",
+    "method": "POST",
+    "path": "/api/v1/orders/user/cancel",
+    "consumes": "",
+    "request": "Cancel order"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getOrderSummary",
+    "method": "GET",
+    "path": "/api/v1/orders/summary",
+    "consumes": "",
+    "request": "Get order summary"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "getOrderItems",
+    "method": "POST",
+    "path": "/api/v1/orders/items",
+    "consumes": "",
+    "request": "Get order items"
+  },
+  {
+    "module": "order-service",
+    "controller": "OrderController",
+    "handler": "createOrderFromCart",
+    "method": "POST",
+    "path": "/api/v1/orders/user/from-cart",
+    "consumes": "",
+    "request": "Create order from cart"
+  },
+  {
+    "module": "order-service",
+    "controller": "RefundController",
+    "handler": "getRefundSummary",
+    "method": "GET",
+    "path": "/api/v1/refunds/summary",
+    "consumes": "",
+    "request": "Get refund summary"
+  },
+  {
+    "module": "order-service",
+    "controller": "RefundController",
+    "handler": "getRefundList",
+    "method": "POST",
+    "path": "/api/v1/refunds/list",
+    "consumes": "",
+    "request": "Get refund list"
+  },
+  {
+    "module": "order-service",
+    "controller": "RefundController",
+    "handler": "getRefundDetail",
+    "method": "GET",
+    "path": "/api/v1/refunds/{refundId}",
+    "consumes": "",
+    "request": "Get refund detail"
+  },
+  {
+    "module": "order-service",
+    "controller": "RefundController",
+    "handler": "processRefund",
+    "method": "POST",
+    "path": "/api/v1/refunds/{refundId}/process",
+    "consumes": "",
+    "request": "Process refund"
+  },
+  {
+    "module": "order-service",
+    "controller": "RefundController",
+    "handler": "cancelRefund",
+    "method": "POST",
+    "path": "/api/v1/refunds/{refundId}/cancel",
+    "consumes": "",
+    "request": "Cancel refund"
+  },
+  {
+    "module": "order-service",
+    "controller": "RefundController",
+    "handler": "getRefundHistory",
+    "method": "GET",
+    "path": "/api/v1/refunds/{refundId}/history",
+    "consumes": "",
+    "request": "Get refund history"
+  },
+  {
+    "module": "order-service",
+    "controller": "RefundController",
+    "handler": "getSimilarProducts",
+    "method": "GET",
+    "path": "/api/v1/refunds/{refundId}/similar-products",
+    "consumes": "",
+    "request": "Get similar products"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "createReturn",
+    "method": "POST",
+    "path": "/api/v1/returns/user",
+    "consumes": "",
+    "request": "Create return"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "getReturnSummary",
+    "method": "GET",
+    "path": "/api/v1/returns/summary",
+    "consumes": "",
+    "request": "Get return summary"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "getReturns",
+    "method": "POST",
+    "path": "/api/v1/returns/returns",
+    "consumes": "",
+    "request": "Get returns"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "getReturnDetail",
+    "method": "GET",
+    "path": "/api/v1/returns/{returnId}",
+    "consumes": "",
+    "request": "Get return detail"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "getReturnHistory",
+    "method": "GET",
+    "path": "/api/v1/returns/{returnId}/history",
+    "consumes": "",
+    "request": "Get return history"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "approveReturn",
+    "method": "POST",
+    "path": "/api/v1/returns/{returnId}/approve",
+    "consumes": "",
+    "request": "Approve return"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "rejectReturn",
+    "method": "POST",
+    "path": "/api/v1/returns/{returnId}/reject",
+    "consumes": "",
+    "request": "Reject return"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "receiveReturn",
+    "method": "POST",
+    "path": "/api/v1/returns/{returnId}/receive",
+    "consumes": "",
+    "request": "Receive return"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "startInspection",
+    "method": "POST",
+    "path": "/api/v1/returns/{returnId}/inspect/start",
+    "consumes": "",
+    "request": "Start inspection"
+  },
+  {
+    "module": "order-service",
+    "controller": "ReturnController",
+    "handler": "completeInspection",
+    "method": "POST",
+    "path": "/api/v1/returns/{returnId}/inspect/complete",
+    "consumes": "",
+    "request": "Complete inspection"
+  },
+  {
+    "module": "payment-service",
+    "controller": "BakongController",
+    "handler": "getQRImage",
+    "method": "POST",
+    "path": "/api/v1/bakong/get-qr-image",
+    "consumes": "",
+    "request": "Get q r image"
+  },
+  {
+    "module": "payment-service",
+    "controller": "BakongController",
+    "handler": "checkTransaction",
+    "method": "POST",
+    "path": "/api/v1/bakong/check-transaction",
+    "consumes": "",
+    "request": "Check transaction"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentController",
+    "handler": "getPaymentsByUser",
+    "method": "POST",
+    "path": "/api/v1/payments/user/id",
+    "consumes": "",
+    "request": "Get payments by user"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentController",
+    "handler": "getPaymentDetailByUser",
+    "method": "POST",
+    "path": "/api/v1/payments/user/detail",
+    "consumes": "",
+    "request": "Get payment detail by user"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentController",
+    "handler": "getPayments",
+    "method": "POST",
+    "path": "/api/v1/payments/get/all",
+    "consumes": "",
+    "request": "Get payments"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentController",
+    "handler": "getPaymentByOrder",
+    "method": "POST",
+    "path": "/api/v1/payments/order/",
+    "consumes": "",
+    "request": "Get payment by order"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentController",
+    "handler": "getPaymentByTransaction",
+    "method": "POST",
+    "path": "/api/v1/payments/transaction/",
+    "consumes": "",
+    "request": "Get payment by transaction"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentController",
+    "handler": "getPaymentHistory",
+    "method": "POST",
+    "path": "/api/v1/payments/user/history",
+    "consumes": "",
+    "request": "Get payment history"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "getTransactions",
+    "method": "POST",
+    "path": "/api/v1/payment-transactions/get/all",
+    "consumes": "",
+    "request": "Get transactions"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "getTransactionById",
+    "method": "GET",
+    "path": "/api/v1/payment-transactions/{id}",
+    "consumes": "",
+    "request": "Get transaction by id"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "getTransactionByNo",
+    "method": "GET",
+    "path": "/api/v1/payment-transactions/no/{transactionNo}",
+    "consumes": "",
+    "request": "Get transaction by no"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "getTransactionsByOrder",
+    "method": "GET",
+    "path": "/api/v1/payment-transactions/order/{orderId}",
+    "consumes": "",
+    "request": "Get transactions by order"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "getTransactionsByCustomer",
+    "method": "GET",
+    "path": "/api/v1/payment-transactions/customer/{customerId}",
+    "consumes": "",
+    "request": "Get transactions by customer"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "getTransactionStatusHistory",
+    "method": "GET",
+    "path": "/api/v1/payment-transactions/{id}/status-history",
+    "consumes": "",
+    "request": "Get transaction status history"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "createTransaction",
+    "method": "POST",
+    "path": "/api/v1/payment-transactions",
+    "consumes": "",
+    "request": "Create transaction"
+  },
+  {
+    "module": "payment-service",
+    "controller": "PaymentTransactionController",
+    "handler": "updateTransactionStatus",
+    "method": "PUT",
+    "path": "/api/v1/payment-transactions/{id}/status",
+    "consumes": "",
+    "request": "Update transaction status"
+  },
+  {
+    "module": "api-gateway",
+    "controller": "FallbackController",
+    "handler": "fallback",
+    "method": "GET",
+    "path": "/fallback/{service}",
+    "consumes": "",
+    "request": "Fallback"
+  },
+  {
+    "module": "api-gateway",
+    "controller": "GatewayRouteController",
+    "handler": "findAll",
+    "method": "GET",
+    "path": "/api/v1/gateway/routes",
+    "consumes": "",
+    "request": "Find all"
+  },
+  {
+    "module": "api-gateway",
+    "controller": "GatewayRouteController",
+    "handler": "create",
+    "method": "POST",
+    "path": "/api/v1/gateway/routes",
+    "consumes": "",
+    "request": "Create"
+  },
+  {
+    "module": "api-gateway",
+    "controller": "GatewayRouteController",
+    "handler": "update",
+    "method": "PUT",
+    "path": "/api/v1/gateway/routes/{id}",
+    "consumes": "",
+    "request": "Update"
+  },
+  {
+    "module": "api-gateway",
+    "controller": "GatewayRouteController",
+    "handler": "delete",
+    "method": "DELETE",
+    "path": "/api/v1/gateway/routes/{id}",
+    "consumes": "",
+    "request": "Delete"
+  },
+  {
+    "module": "api-gateway",
+    "controller": "GatewayRouteController",
+    "handler": "refresh",
+    "method": "POST",
+    "path": "/api/v1/gateway/routes/refresh",
+    "consumes": "",
+    "request": "Refresh"
+  }
+]

@@ -1,0 +1,55 @@
+server:
+  forward-headers-strategy: none
+  port: 8083
+
+spring:
+  application:
+    name: order-service
+  cloud:
+    openfeign:
+      client:
+        config:
+          catalog-service:
+            connectTimeout: 2000
+            readTimeout: 5000
+    compatibility-verifier:
+      enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_db
+    username: senghour
+    password: senghour369
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  header: Authorization
+  prefix: Bearer
+  secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# Internal traffic bypasses the public gateway and uses signed service JWTs.
+catalog-service:
+  url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=order-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"
