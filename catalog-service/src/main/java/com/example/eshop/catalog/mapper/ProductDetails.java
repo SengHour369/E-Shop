@@ -9,4 +9,5 @@ public record ProductDetails(Map<Long, List<ProductSku>> skus,
                              Map<Long, List<ProductAttribute>> attributes,
                              Map<Long, List<ProductAttributeValue>> values,
                              Map<Long, Inventory> inventories,
-                             Map<Long, com.example.eshop.catalog.dto.response.PriceResult> prices) {}
+                             Map<Long, com.example.eshop.catalog.dto.response.PriceResult> prices,
+                             Map<Long, List<String>> images) {}

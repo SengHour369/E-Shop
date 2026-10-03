@@ -16,7 +16,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "product_skus")
+@Table(name = "product_skus", indexes = @Index(name = "idx_sku_product_id", columnList = "product_id,id"))
 public class ProductSku extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

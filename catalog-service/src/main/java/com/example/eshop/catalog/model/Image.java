@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Data
-@Table(name = "images")
+@Table(name = "images", indexes = @Index(name = "idx_image_product_id", columnList = "product_id,id"))
 @Setter
 @Getter
 @AllArgsConstructor

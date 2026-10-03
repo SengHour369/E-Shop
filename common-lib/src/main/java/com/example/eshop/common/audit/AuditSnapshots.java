@@ -12,7 +12,8 @@ public class AuditSnapshots {
             "discountValue", "discountType", "promotionType", "maxDiscountAmount", "minimumOrderAmount",
             "startAt", "endAt", "priority", "usageLimit", "usagePerCustomer", "stackable", "skuId",
             "productId", "categoryId", "subCategoryId", "quantity", "reservedQuantity", "lowStockThreshold",
-            "isDefault", "roleId", "permissionId", "groupId", "count");
+            "isDefault", "roleId", "permissionId", "groupId", "count",
+            "intent", "toolName", "executionStatus", "serviceName", "aiExecutionId");
     private final ObjectMapper mapper;
     public AuditSnapshots(ObjectMapper mapper) { this.mapper = mapper; }
     public String json(Map<String, ?> values) {

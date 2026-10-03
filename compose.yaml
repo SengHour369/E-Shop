@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   auth-db:
     image: postgres:18
@@ -11,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - auth_db_data:/var/lib/postgresql/data
+      - auth_db_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U senghour -d auth_db"]
       interval: 5s
@@ -27,7 +25,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - catalog_db_data:/var/lib/postgresql/data
+      - catalog_db_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U senghour -d catalog_db"]
       interval: 5s
@@ -43,7 +41,7 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - order_db_data:/var/lib/postgresql/data
+      - order_db_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U senghour -d order_db"]
       interval: 5s
@@ -59,7 +57,7 @@ services:
     ports:
       - "5435:5432"
     volumes:
-      - payment_db_data:/var/lib/postgresql/data
+      - payment_db_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U senghour -d payment_db"]
       interval: 5s

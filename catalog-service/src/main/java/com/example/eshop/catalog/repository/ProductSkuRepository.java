@@ -13,8 +13,12 @@ import java.util.Optional;
 
 @Repository
 public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
-    @Query("SELECT s FROM ProductSku s JOIN FETCH s.product LEFT JOIN FETCH s.image WHERE s.product.id IN :ids ORDER BY s.id")
-    List<ProductSku> findForProducts(@Param("ids") List<Long> ids);
+    interface SkuInventory {
+        ProductSku getSku();
+        com.example.eshop.catalog.model.Inventory getInventory();
+    }
+    @Query("SELECT s AS sku, i AS inventory FROM ProductSku s JOIN FETCH s.product LEFT JOIN FETCH s.image LEFT JOIN Inventory i ON i.productSku = s WHERE s.product.id IN :ids ORDER BY s.id")
+    List<SkuInventory> findWithInventoryForProducts(@Param("ids") List<Long> ids);
 
     Optional<ProductSku> findBySku(String sku);
 

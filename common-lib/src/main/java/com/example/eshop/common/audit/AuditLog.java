@@ -25,7 +25,9 @@ public class AuditLog {
     @Column(nullable = false, length = 64) private String resourceType;
     @Column(length = 128) private String resourceId;
     @Column(length = 256) private String description;
+    @com.fasterxml.jackson.annotation.JsonRawValue
     @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String oldValue;
+    @com.fasterxml.jackson.annotation.JsonRawValue
     @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String newValue;
     @Column(length = 64) private String ipAddress;
     @Column(length = 512) private String userAgent;

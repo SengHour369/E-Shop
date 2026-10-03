@@ -1,0 +1,397 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.42kB done
+#1 DONE 0.0s
+
+#2 [ai-service internal] load build definition from Dockerfile
+#2 transferring dockerfile: 572B 0.0s done
+#2 DONE 0.1s
+
+#3 [auth-service internal] load build definition from Dockerfile
+#3 transferring dockerfile: 585B 0.0s done
+#3 DONE 0.1s
+
+#4 [api-gateway internal] load build definition from Dockerfile
+#4 transferring dockerfile: 566B 0.0s done
+#4 DONE 0.1s
+
+#5 [api-gateway internal] load metadata for docker.io/library/maven:3.9-amazoncorretto-17
+#5 DONE 0.7s
+
+#6 [api-gateway internal] load metadata for docker.io/library/eclipse-temurin:17-jre-alpine
+#6 DONE 0.7s
+
+#7 [auth-service internal] load .dockerignore
+#7 transferring context: 72B 0.1s done
+#7 transferring context: 72B 0.1s done
+#7 DONE 0.1s
+
+#8 [api-gateway stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jre-alpine@sha256:3c472129dc75a8d1d7a3f2df5b2093a8077e4493deff046754d4764d0371de63
+#8 resolve docker.io/library/eclipse-temurin:17-jre-alpine@sha256:3c472129dc75a8d1d7a3f2df5b2093a8077e4493deff046754d4764d0371de63 0.1s done
+#8 DONE 0.1s
+
+#9 [api-gateway builder 1/4] FROM docker.io/library/maven:3.9-amazoncorretto-17@sha256:046784a9c83821fc3e9ded94c2f18155e0daf1981c8a0813d0ff693a9dc4a51b
+#9 resolve docker.io/library/maven:3.9-amazoncorretto-17@sha256:046784a9c83821fc3e9ded94c2f18155e0daf1981c8a0813d0ff693a9dc4a51b 0.1s done
+#9 DONE 0.1s
+
+#10 [api-gateway builder 2/4] WORKDIR /build
+#10 CACHED
+
+#11 [auth-service internal] load build context
+#11 transferring context: 304.53kB 0.5s done
+#11 DONE 0.6s
+
+#12 [ai-service builder 3/4] COPY . .
+#12 DONE 1.5s
+
+#12 [api-gateway builder 3/4] COPY . .
+#12 DONE 1.5s
+
+#13 [ai-service builder 3/4] COPY . .
+#13 CACHED
+
+#14 [ai-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl ai-service -am -DskipTests package
+#14 ...
+
+#15 [ai-service stage-1 2/3] WORKDIR /app
+#15 CACHED
+
+#16 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#16 ...
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 ...
+
+#14 [ai-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl ai-service -am -DskipTests package
+#14 93.74 [INFO] Scanning for projects...
+#14 94.64 [INFO] ------------------------------------------------------------------------
+#14 94.64 [INFO] Reactor Build Order:
+#14 94.64 [INFO] 
+#14 94.64 [INFO] eshop-microservices                                                [pom]
+#14 94.64 [INFO] common-lib                                                         [jar]
+#14 94.64 [INFO] ai-service                                                         [jar]
+#14 94.67 [INFO] 
+#14 94.67 [INFO] ---------------< com.example.eshop:eshop-microservices >----------------
+#14 94.67 [INFO] Building eshop-microservices 0.0.1-SNAPSHOT                        [1/3]
+#14 94.67 [INFO]   from pom.xml
+#14 94.67 [INFO] --------------------------------[ pom ]---------------------------------
+#14 94.67 [INFO] 
+#14 94.67 [INFO] --------------------< com.example.eshop:common-lib >--------------------
+#14 94.67 [INFO] Building common-lib 0.0.1-SNAPSHOT                                 [2/3]
+#14 94.67 [INFO]   from common-lib/pom.xml
+#14 94.67 [INFO] --------------------------------[ jar ]---------------------------------
+#14 95.78 [INFO] 
+#14 95.78 [INFO] --- resources:3.3.1:resources (default-resources) @ common-lib ---
+#14 96.12 [INFO] skip non existing resourceDirectory /build/common-lib/src/main/resources
+#14 96.12 [INFO] skip non existing resourceDirectory /build/common-lib/src/main/resources
+#14 96.13 [INFO] 
+#14 96.13 [INFO] --- compiler:3.14.0:compile (default-compile) @ common-lib ---
+#14 96.54 [INFO] Recompiling the module because of changed source code.
+#14 96.56 [INFO] Compiling 33 source files with javac [debug parameters release 17] to target/classes
+#14 101.4 [INFO] 
+#14 101.4 [INFO] --- resources:3.3.1:testResources (default-testResources) @ common-lib ---
+#14 101.4 [INFO] skip non existing resourceDirectory /build/common-lib/src/test/resources
+#14 101.4 [INFO] 
+#14 101.4 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ common-lib ---
+#14 101.4 [INFO] Recompiling the module because of changed dependency.
+#14 101.4 [INFO] Compiling 3 source files with javac [debug parameters release 17] to target/test-classes
+#14 104.0 [INFO] 
+#14 104.0 [INFO] --- surefire:3.5.3:test (default-test) @ common-lib ---
+#14 104.2 [INFO] Tests are skipped.
+#14 104.2 [INFO] 
+#14 104.2 [INFO] --- jar:3.4.2:jar (default-jar) @ common-lib ---
+#14 104.7 [INFO] Building jar: /build/common-lib/target/common-lib-0.0.1-SNAPSHOT.jar
+#14 104.8 [INFO] 
+#14 104.8 [INFO] --------------------< com.example.eshop:ai-service >--------------------
+#14 104.8 [INFO] Building ai-service 0.0.1-SNAPSHOT                                 [3/3]
+#14 104.8 [INFO]   from ai-service/pom.xml
+#14 104.8 [INFO] --------------------------------[ jar ]---------------------------------
+#14 105.4 [INFO] 
+#14 105.4 [INFO] --- resources:3.3.1:resources (default-resources) @ ai-service ---
+#14 105.4 [INFO] Copying 1 resource from src/main/resources to target/classes
+#14 105.4 [INFO] Copying 2 resources from src/main/resources to target/classes
+#14 105.4 [INFO] 
+#14 105.4 [INFO] --- compiler:3.14.0:compile (default-compile) @ ai-service ---
+#14 105.5 [INFO] Recompiling the module because of changed dependency.
+#14 105.5 [INFO] Compiling 24 source files with javac [debug parameters release 17] to target/classes
+#14 107.4 [INFO] /build/ai-service/src/main/java/com/example/eshop/ai/client/OpenAiProviderClient.java: /build/ai-service/src/main/java/com/example/eshop/ai/client/OpenAiProviderClient.java uses or overrides a deprecated API.
+#14 107.4 [INFO] /build/ai-service/src/main/java/com/example/eshop/ai/client/OpenAiProviderClient.java: Recompile with -Xlint:deprecation for details.
+#14 107.4 [INFO] 
+#14 107.4 [INFO] --- resources:3.3.1:testResources (default-testResources) @ ai-service ---
+#14 107.4 [INFO] skip non existing resourceDirectory /build/ai-service/src/test/resources
+#14 107.4 [INFO] 
+#14 107.4 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ ai-service ---
+#14 107.5 [INFO] Recompiling the module because of changed dependency.
+#14 107.5 [INFO] Compiling 2 source files with javac [debug parameters release 17] to target/test-classes
+#14 108.9 [INFO] /build/ai-service/src/test/java/com/example/eshop/ai/OutboxPublisherTest.java: /build/ai-service/src/test/java/com/example/eshop/ai/OutboxPublisherTest.java uses unchecked or unsafe operations.
+#14 108.9 [INFO] /build/ai-service/src/test/java/com/example/eshop/ai/OutboxPublisherTest.java: Recompile with -Xlint:unchecked for details.
+#14 108.9 [INFO] 
+#14 108.9 [INFO] --- surefire:3.5.3:test (default-test) @ ai-service ---
+#14 108.9 [INFO] Tests are skipped.
+#14 108.9 [INFO] 
+#14 108.9 [INFO] --- jar:3.4.2:jar (default-jar) @ ai-service ---
+#14 109.0 [INFO] Building jar: /build/ai-service/target/ai-service-0.0.1-SNAPSHOT.jar
+#14 109.0 [INFO] 
+#14 109.0 [INFO] --- spring-boot:3.5.0:repackage (repackage) @ ai-service ---
+#14 111.4 [INFO] Replacing main artifact /build/ai-service/target/ai-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+#14 111.4 [INFO] The original artifact has been renamed to /build/ai-service/target/ai-service-0.0.1-SNAPSHOT.jar.original
+#14 111.4 [INFO] ------------------------------------------------------------------------
+#14 111.4 [INFO] Reactor Summary for eshop-microservices 0.0.1-SNAPSHOT:
+#14 111.4 [INFO] 
+#14 111.4 [INFO] eshop-microservices ................................ SUCCESS [  0.009 s]
+#14 111.4 [INFO] common-lib ......................................... SUCCESS [ 10.096 s]
+#14 111.4 [INFO] ai-service ......................................... SUCCESS [  6.625 s]
+#14 111.4 [INFO] ------------------------------------------------------------------------
+#14 111.4 [INFO] BUILD SUCCESS
+#14 111.4 [INFO] ------------------------------------------------------------------------
+#14 111.4 [INFO] Total time:  17.732 s
+#14 111.4 [INFO] Finished at: 2026-10-03T05:16:51Z
+#14 111.4 [INFO] ------------------------------------------------------------------------
+#14 DONE 111.9s
+
+#16 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#16 ...
+
+#18 [ai-service stage-1 3/3] COPY --from=builder /build/ai-service/target/*.jar app.jar
+#18 DONE 0.6s
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 ...
+
+#19 [ai-service] exporting to image
+#19 exporting layers
+#19 ...
+
+#16 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#16 143.7 [INFO] Scanning for projects...
+#16 144.7 [INFO] ------------------------------------------------------------------------
+#16 144.7 [INFO] Reactor Build Order:
+#16 144.7 [INFO] 
+#16 144.7 [INFO] eshop-microservices                                                [pom]
+#16 144.7 [INFO] api-gateway                                                        [jar]
+#16 144.7 [INFO] 
+#16 144.7 [INFO] ---------------< com.example.eshop:eshop-microservices >----------------
+#16 144.7 [INFO] Building eshop-microservices 0.0.1-SNAPSHOT                        [1/2]
+#16 144.7 [INFO]   from pom.xml
+#16 144.7 [INFO] --------------------------------[ pom ]---------------------------------
+#16 144.7 [INFO] 
+#16 144.7 [INFO] -------------------< com.example.eshop:api-gateway >--------------------
+#16 144.7 [INFO] Building api-gateway 0.0.1-SNAPSHOT                                [2/2]
+#16 144.7 [INFO]   from api-gateway/pom.xml
+#16 144.7 [INFO] --------------------------------[ jar ]---------------------------------
+#16 147.0 [INFO] 
+#16 147.0 [INFO] --- resources:3.3.1:resources (default-resources) @ api-gateway ---
+#16 147.2 [INFO] Copying 1 resource from src/main/resources to target/classes
+#16 147.3 [INFO] Copying 1 resource from src/main/resources to target/classes
+#16 147.3 [INFO] 
+#16 147.3 [INFO] --- compiler:3.14.0:compile (default-compile) @ api-gateway ---
+#16 147.5 [INFO] Recompiling the module because of changed source code.
+#16 147.5 [INFO] Compiling 25 source files with javac [debug parameters release 17] to target/classes
+#16 ...
+
+#19 [ai-service] exporting to image
+#19 exporting layers 9.1s done
+#19 exporting manifest sha256:b499283545015284d981564ab1c976b8813f41bb156e38af14a98ef50e91e2fa 0.0s done
+#19 exporting config sha256:70daf944b41e84f2caafb00f54f86786d4604c271c2fffbb3ecc4ef81ef5aa11 0.0s done
+#19 exporting attestation manifest sha256:220f982a312bc096cd5d56c3e9cfbb486681396606e475e92a1de522fc6af8a0
+#19 exporting attestation manifest sha256:220f982a312bc096cd5d56c3e9cfbb486681396606e475e92a1de522fc6af8a0 0.1s done
+#19 exporting manifest list sha256:91343c56ebf556ade29d8040cde54fd050dd259cb7dd3d0ff69e1c49087b0f3e 0.0s done
+#19 naming to docker.io/library/e-shop-ai-service:latest
+#19 naming to docker.io/library/e-shop-ai-service:latest done
+#19 unpacking to docker.io/library/e-shop-ai-service:latest
+#19 unpacking to docker.io/library/e-shop-ai-service:latest 1.2s done
+#19 DONE 10.6s
+
+#16 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#16 151.9 [INFO] 
+#16 151.9 [INFO] --- resources:3.3.1:testResources (default-testResources) @ api-gateway ---
+#16 151.9 [INFO] skip non existing resourceDirectory /build/api-gateway/src/test/resources
+#16 151.9 [INFO] 
+#16 151.9 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ api-gateway ---
+#16 151.9 [INFO] Recompiling the module because of changed dependency.
+#16 152.0 [INFO] Compiling 9 source files with javac [debug parameters release 17] to target/test-classes
+#16 ...
+
+#20 [ai-service] resolving provenance for metadata file
+#20 DONE 0.0s
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 ...
+
+#16 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#16 156.5 [INFO] /build/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java: /build/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java uses unchecked or unsafe operations.
+#16 156.5 [INFO] /build/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java: Recompile with -Xlint:unchecked for details.
+#16 156.5 [INFO] 
+#16 156.5 [INFO] --- surefire:3.5.3:test (default-test) @ api-gateway ---
+#16 156.7 [INFO] Tests are skipped.
+#16 156.7 [INFO] 
+#16 156.7 [INFO] --- jar:3.4.2:jar (default-jar) @ api-gateway ---
+#16 157.4 [INFO] Building jar: /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
+#16 157.5 [INFO] 
+#16 157.5 [INFO] --- spring-boot:3.5.0:repackage (repackage) @ api-gateway ---
+#16 159.4 [INFO] Replacing main artifact /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+#16 159.4 [INFO] The original artifact has been renamed to /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar.original
+#16 159.4 [INFO] ------------------------------------------------------------------------
+#16 159.4 [INFO] Reactor Summary for eshop-microservices 0.0.1-SNAPSHOT:
+#16 159.4 [INFO] 
+#16 159.4 [INFO] eshop-microservices ................................ SUCCESS [  0.008 s]
+#16 159.4 [INFO] api-gateway ........................................ SUCCESS [ 14.702 s]
+#16 159.4 [INFO] ------------------------------------------------------------------------
+#16 159.4 [INFO] BUILD SUCCESS
+#16 159.4 [INFO] ------------------------------------------------------------------------
+#16 159.4 [INFO] Total time:  15.816 s
+#16 159.4 [INFO] Finished at: 2026-10-03T05:17:12Z
+#16 159.4 [INFO] ------------------------------------------------------------------------
+#16 DONE 159.8s
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 ...
+
+#21 [api-gateway stage-1 3/3] COPY --from=builder /build/api-gateway/target/*.jar app.jar
+#21 DONE 0.4s
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 ...
+
+#22 [api-gateway] exporting to image
+#22 exporting layers
+#22 ...
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 164.5 [INFO] Scanning for projects...
+#17 165.5 [INFO] ------------------------------------------------------------------------
+#17 165.5 [INFO] Reactor Build Order:
+#17 165.5 [INFO] 
+#17 165.5 [INFO] eshop-microservices                                                [pom]
+#17 165.5 [INFO] common-lib                                                         [jar]
+#17 165.5 [INFO] auth-service                                                       [jar]
+#17 165.5 [INFO] 
+#17 165.5 [INFO] ---------------< com.example.eshop:eshop-microservices >----------------
+#17 165.5 [INFO] Building eshop-microservices 0.0.1-SNAPSHOT                        [1/3]
+#17 165.5 [INFO]   from pom.xml
+#17 165.5 [INFO] --------------------------------[ pom ]---------------------------------
+#17 165.5 [INFO] 
+#17 165.5 [INFO] --------------------< com.example.eshop:common-lib >--------------------
+#17 165.5 [INFO] Building common-lib 0.0.1-SNAPSHOT                                 [2/3]
+#17 165.5 [INFO]   from common-lib/pom.xml
+#17 165.5 [INFO] --------------------------------[ jar ]---------------------------------
+#17 166.6 [INFO] 
+#17 166.6 [INFO] --- resources:3.3.1:resources (default-resources) @ common-lib ---
+#17 166.9 [INFO] skip non existing resourceDirectory /build/common-lib/src/main/resources
+#17 166.9 [INFO] skip non existing resourceDirectory /build/common-lib/src/main/resources
+#17 166.9 [INFO] 
+#17 166.9 [INFO] --- compiler:3.14.0:compile (default-compile) @ common-lib ---
+#17 167.2 [INFO] Recompiling the module because of changed source code.
+#17 167.3 [INFO] Compiling 33 source files with javac [debug parameters release 17] to target/classes
+#17 ...
+
+#22 [api-gateway] exporting to image
+#22 exporting layers 5.7s done
+#22 exporting manifest sha256:ecf96b178a302e5e066960280a4c196ef2c02b6dcf17cd69b062896242594e00 0.0s done
+#22 exporting config sha256:59302682c97f2844a89580d9aeba86242e20e404ce2a170856615006edda4cfe 0.0s done
+#22 exporting attestation manifest sha256:b064cc127df69d91ba26d51a6ddb6cd03571f041a6e91426c5bda616bd9df9da 0.1s done
+#22 exporting manifest list sha256:e414008b0e40d04467848a28db65ff608e77c8b0ec4d067a8339cc4371fb4708 0.1s done
+#22 naming to docker.io/library/e-shop-api-gateway:latest done
+#22 unpacking to docker.io/library/e-shop-api-gateway:latest 1.3s done
+#22 DONE 7.4s
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 ...
+
+#23 [api-gateway] resolving provenance for metadata file
+#23 DONE 0.1s
+
+#17 [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package
+#17 173.4 [INFO] 
+#17 173.4 [INFO] --- resources:3.3.1:testResources (default-testResources) @ common-lib ---
+#17 173.4 [INFO] skip non existing resourceDirectory /build/common-lib/src/test/resources
+#17 173.4 [INFO] 
+#17 173.4 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ common-lib ---
+#17 173.5 [INFO] Recompiling the module because of changed dependency.
+#17 173.5 [INFO] Compiling 3 source files with javac [debug parameters release 17] to target/test-classes
+#17 176.7 [INFO] 
+#17 176.7 [INFO] --- surefire:3.5.3:test (default-test) @ common-lib ---
+#17 177.2 [INFO] Tests are skipped.
+#17 177.2 [INFO] 
+#17 177.2 [INFO] --- jar:3.4.2:jar (default-jar) @ common-lib ---
+#17 178.0 [INFO] Building jar: /build/common-lib/target/common-lib-0.0.1-SNAPSHOT.jar
+#17 178.2 [INFO] 
+#17 178.2 [INFO] -------------------< com.example.eshop:auth-service >-------------------
+#17 178.2 [INFO] Building auth-service 0.0.1-SNAPSHOT                               [3/3]
+#17 178.2 [INFO]   from auth-service/pom.xml
+#17 178.2 [INFO] --------------------------------[ jar ]---------------------------------
+#17 179.1 [INFO] 
+#17 179.1 [INFO] --- resources:3.3.1:resources (default-resources) @ auth-service ---
+#17 179.1 [INFO] Copying 1 resource from src/main/resources to target/classes
+#17 179.1 [INFO] Copying 2 resources from src/main/resources to target/classes
+#17 179.1 [INFO] 
+#17 179.1 [INFO] --- compiler:3.14.0:compile (default-compile) @ auth-service ---
+#17 179.2 [INFO] Recompiling the module because of changed dependency.
+#17 179.2 [INFO] Compiling 136 source files with javac [debug parameters release 17] to target/classes
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/Group.java:[29,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/Group.java:[32,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/dto/request/GroupRequest.java:[27,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/Address.java:[34,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/Address.java:[39,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/User.java:[42,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/User.java:[50,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/dto/request/AddressRequest.java:[29,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/UserGroup.java:[26,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/UserGroup.java:[27,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#17 186.6 [WARNING] /build/auth-service/src/main/java/com/example/eshop/auth/model/User.java:[18,1] Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+#17 186.6 [INFO] /build/auth-service/src/main/java/com/example/eshop/auth/jwt/impl/JwtServiceImpl.java: /build/auth-service/src/main/java/com/example/eshop/auth/jwt/impl/JwtServiceImpl.java uses or overrides a deprecated API.
+#17 186.6 [INFO] /build/auth-service/src/main/java/com/example/eshop/auth/jwt/impl/JwtServiceImpl.java: Recompile with -Xlint:deprecation for details.
+#17 186.6 [INFO] /build/auth-service/src/main/java/com/example/eshop/auth/security/filter/JwtAuthenticationInternalFilter.java: /build/auth-service/src/main/java/com/example/eshop/auth/security/filter/JwtAuthenticationInternalFilter.java uses unchecked or unsafe operations.
+#17 186.6 [INFO] /build/auth-service/src/main/java/com/example/eshop/auth/security/filter/JwtAuthenticationInternalFilter.java: Recompile with -Xlint:unchecked for details.
+#17 186.6 [INFO] 
+#17 186.6 [INFO] --- resources:3.3.1:testResources (default-testResources) @ auth-service ---
+#17 186.6 [INFO] skip non existing resourceDirectory /build/auth-service/src/test/resources
+#17 186.6 [INFO] 
+#17 186.6 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ auth-service ---
+#17 186.6 [INFO] Recompiling the module because of changed dependency.
+#17 186.6 [INFO] Compiling 3 source files with javac [debug parameters release 17] to target/test-classes
+#17 187.8 [INFO] -------------------------------------------------------------
+#17 187.8 [ERROR] COMPILATION ERROR : 
+#17 187.8 [INFO] -------------------------------------------------------------
+#17 187.8 [ERROR] /build/auth-service/src/test/java/com/example/eshop/auth/service/InternalNotificationSecurityTest.java:[46,35] unreported exception java.io.IOException; must be caught or declared to be thrown
+#17 187.8 [INFO] 1 error
+#17 187.8 [INFO] -------------------------------------------------------------
+#17 187.8 [INFO] ------------------------------------------------------------------------
+#17 187.8 [INFO] Reactor Summary for eshop-microservices 0.0.1-SNAPSHOT:
+#17 187.8 [INFO] 
+#17 187.8 [INFO] eshop-microservices ................................ SUCCESS [  0.013 s]
+#17 187.8 [INFO] common-lib ......................................... SUCCESS [ 12.646 s]
+#17 187.8 [INFO] auth-service ....................................... FAILURE [  9.630 s]
+#17 187.8 [INFO] ------------------------------------------------------------------------
+#17 187.8 [INFO] BUILD FAILURE
+#17 187.8 [INFO] ------------------------------------------------------------------------
+#17 187.8 [INFO] Total time:  23.330 s
+#17 187.8 [INFO] Finished at: 2026-10-03T05:17:40Z
+#17 187.8 [INFO] ------------------------------------------------------------------------
+#17 187.8 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.0:testCompile (default-testCompile) on project auth-service: Compilation failure
+#17 187.8 [ERROR] /build/auth-service/src/test/java/com/example/eshop/auth/service/InternalNotificationSecurityTest.java:[46,35] unreported exception java.io.IOException; must be caught or declared to be thrown
+#17 187.8 [ERROR] -> [Help 1]
+#17 187.8 [ERROR] 
+#17 187.8 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+#17 187.8 [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+#17 187.8 [ERROR] 
+#17 187.8 [ERROR] For more information about the errors and possible solutions, please read the following articles:
+#17 187.8 [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+#17 187.8 [ERROR] 
+#17 187.8 [ERROR] After correcting the problems, you can resume the build with the command
+#17 187.8 [ERROR]   mvn <args> -rf :auth-service
+#17 ERROR: process "/bin/sh -c mvn -B -ntp -pl auth-service -am -DskipTests package" did not complete successfully: exit code: 1
+------
+ > [auth-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl auth-service -am -DskipTests package:
+187.8 [ERROR] -> [Help 1]
+187.8 [ERROR] 
+187.8 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+187.8 [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+187.8 [ERROR] 
+187.8 [ERROR] For more information about the errors and possible solutions, please read the following articles:
+187.8 [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+187.8 [ERROR] 
+187.8 [ERROR] After correcting the problems, you can resume the build with the command
+187.8 [ERROR]   mvn <args> -rf :auth-service
+------
+target auth-service: failed to solve: process "/bin/sh -c mvn -B -ntp -pl auth-service -am -DskipTests package" did not complete successfully: exit code: 1
+

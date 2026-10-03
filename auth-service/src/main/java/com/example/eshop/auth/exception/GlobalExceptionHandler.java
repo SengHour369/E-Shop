@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
+@org.springframework.stereotype.Component("authGlobalExceptionHandler")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)

@@ -8,7 +8,6 @@ import com.example.eshop.catalog.model.*;
 import com.example.eshop.catalog.repository.*;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,8 +20,6 @@ public class ProductResponseService {
     private final ProductRepository products;
     private final ProductSkuRepository skus;
     private final ProductAttributeRepository attributes;
-    private final ProductAttributeValueRepository values;
-    private final InventoryRepository inventories;
     private final ProductMapper mapper;
     private final PromotionPricingService pricing;
 
@@ -30,21 +27,34 @@ public class ProductResponseService {
     public List<ProductResponse> toProductResponses(List<Product> page) {
         if (page.isEmpty()) return List.of();
         List<Long> productIds = page.stream().map(Product::getId).toList();
-        products.fetchImages(productIds);
-        List<ProductSku> skuList = skus.findForProducts(productIds);
+        Map<Long, List<String>> images = new java.util.HashMap<>();
+        for (var image : products.findImageUrls(productIds)) {
+            images.computeIfAbsent(image.getProductId(), key -> new java.util.ArrayList<>()).add(image.getUrl());
+        }
+        var skuRows = skus.findWithInventoryForProducts(productIds);
+        List<ProductSku> skuList = skuRows.stream().map(ProductSkuRepository.SkuInventory::getSku).toList();
         List<Long> skuIds = skuList.stream().map(ProductSku::getId).toList();
-        List<ProductAttribute> attributeList = skuIds.isEmpty() ? List.of()
-                : attributes.findByProductSkuIdInOrderById(skuIds);
-        List<Long> attributeIds = attributeList.stream().map(ProductAttribute::getId).toList();
-        List<ProductAttributeValue> valueList = attributeIds.isEmpty() ? List.of()
-                : values.findByAttributeIdInOrderByValueAsc(attributeIds);
-        List<Inventory> inventoryList = skuIds.isEmpty() ? List.of() : inventories.findByProductSkuIdIn(skuIds);
+        Map<Long, Inventory> inventoryBySku = new java.util.HashMap<>();
+        for (var row : skuRows) {
+            if (row.getInventory() != null) inventoryBySku.put(row.getSku().getId(), row.getInventory());
+        }
+        // Left joins retain SKUs without inventory and attributes without values.
+        Map<Long, ProductAttribute> attributeById = new java.util.LinkedHashMap<>();
+        Map<Long, List<ProductAttributeValue>> valuesByAttribute = new java.util.HashMap<>();
+        if (!skuIds.isEmpty()) {
+            for (var row : attributes.findWithValuesForSkus(skuIds)) {
+                var attribute = row.getAttribute();
+                attributeById.putIfAbsent(attribute.getId(), attribute);
+                if (row.getAttributeValue() != null) {
+                    valuesByAttribute.computeIfAbsent(attribute.getId(), key -> new java.util.ArrayList<>())
+                            .add(row.getAttributeValue());
+                }
+            }
+        }
         ProductDetails details = new ProductDetails(
                 skuList.stream().collect(Collectors.groupingBy(sku -> sku.getProduct().getId())),
-                attributeList.stream().collect(Collectors.groupingBy(ProductAttribute::getProductSkuId)),
-                valueList.stream().collect(Collectors.groupingBy(ProductAttributeValue::getAttributeId)),
-                inventoryList.stream().collect(Collectors.toMap(inventory -> inventory.getProductSku().getId(), Function.identity())),
-                pricing.calculatePrices(skuList));
+                attributeById.values().stream().collect(Collectors.groupingBy(ProductAttribute::getProductSkuId)),
+                valuesByAttribute, inventoryBySku, pricing.calculatePrices(skuList), images);
         return page.stream().map(product -> mapper.toProductResponse(product, details)).toList();
     }
 

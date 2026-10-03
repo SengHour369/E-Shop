@@ -1,0 +1,376 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/C:/Program%20Files/apache-maven-3.9.11/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] eshop-microservices                                                [pom]
+[INFO] common-lib                                                         [jar]
+[INFO] discovery-server                                                   [jar]
+[INFO] api-gateway                                                        [jar]
+[INFO] auth-service                                                       [jar]
+[INFO] catalog-service                                                    [jar]
+[INFO] order-service                                                      [jar]
+[INFO] payment-service                                                    [jar]
+[INFO] ai-service                                                         [jar]
+[INFO] notification-service                                               [jar]
+[INFO] 
+[INFO] ---------------< com.example.eshop:eshop-microservices >----------------
+[INFO] Building eshop-microservices 0.0.1-SNAPSHOT                       [1/10]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --------------------< com.example.eshop:common-lib >--------------------
+[INFO] Building common-lib 0.0.1-SNAPSHOT                                [2/10]
+[INFO]   from common-lib\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ common-lib ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\common-lib\src\main\resources
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\common-lib\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ common-lib ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 33 source files with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ common-lib ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\common-lib\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ common-lib ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.3:test (default-test) @ common-lib ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.eshop.common.audit.AuditIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-10-03T12:02:18.800+07:00  INFO 28860 --- [           main] c.e.e.common.audit.AuditIntegrationTest  : Starting AuditIntegrationTest using Java 25.0.1 with PID 28860 (started by seng hour in D:\spring boot\E-Shop\common-lib)
+2026-10-03T12:02:18.805+07:00  INFO 28860 --- [           main] c.e.e.common.audit.AuditIntegrationTest  : No active profile set, falling back to 1 default profile: "default"
+2026-10-03T12:02:19.606+07:00  INFO 28860 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-03T12:02:19.843+07:00  INFO 28860 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 200 ms. Found 1 JPA repository interface.
+2026-10-03T12:02:20.996+07:00  INFO 28860 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-03T12:02:21.152+07:00  INFO 28860 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.15.Final
+2026-10-03T12:02:21.246+07:00  INFO 28860 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-03T12:02:22.280+07:00  INFO 28860 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-03T12:02:22.472+07:00  INFO 28860 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-03T12:02:23.182+07:00  INFO 28860 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:audit user=SA
+2026-10-03T12:02:23.191+07:00  INFO 28860 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-03T12:02:23.411+07:00  INFO 28860 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-03T12:02:26.315+07:00  INFO 28860 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-03T12:02:26.473+07:00  INFO 28860 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-03T12:02:27.720+07:00  INFO 28860 --- [           main] c.e.e.common.audit.AuditIntegrationTest  : Started AuditIntegrationTest in 9.807 seconds (process running for 12.268)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\seng hour\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.5\byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.11 s -- in com.example.eshop.common.audit.AuditIntegrationTest
+[INFO] Running com.example.eshop.common.request.RequestIdTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.369 s -- in com.example.eshop.common.request.RequestIdTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ common-lib ---
+[INFO] Building jar: D:\spring boot\E-Shop\common-lib\target\common-lib-0.0.1-SNAPSHOT.jar
+[INFO] 
+[INFO] -----------------< com.example.eshop:discovery-server >-----------------
+[INFO] Building discovery-server 0.0.1-SNAPSHOT                          [3/10]
+[INFO]   from discovery-server\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ discovery-server ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ discovery-server ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ discovery-server ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\discovery-server\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ discovery-server ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- surefire:3.5.3:test (default-test) @ discovery-server ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ discovery-server ---
+[INFO] 
+[INFO] --- spring-boot:3.5.0:repackage (repackage) @ discovery-server ---
+[INFO] Replacing main artifact D:\spring boot\E-Shop\discovery-server\target\discovery-server-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\spring boot\E-Shop\discovery-server\target\discovery-server-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] -------------------< com.example.eshop:api-gateway >--------------------
+[INFO] Building api-gateway 0.0.1-SNAPSHOT                               [4/10]
+[INFO]   from api-gateway\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ api-gateway ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ api-gateway ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 25 source files with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ api-gateway ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\api-gateway\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ api-gateway ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 9 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] /D:/spring boot/E-Shop/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java: D:\spring boot\E-Shop\api-gateway\src\test\java\com\example\eshop\gateway\service\ratelimit\ReactiveRateLimiterServiceTest.java uses unchecked or unsafe operations.
+[INFO] /D:/spring boot/E-Shop/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.5.3:test (default-test) @ api-gateway ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.eshop.gateway.filter.CorrelationIdFilterTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.635 s -- in com.example.eshop.gateway.filter.CorrelationIdFilterTest
+[INFO] Running com.example.eshop.gateway.filter.GatewayAuthenticationFilterTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.666 s -- in com.example.eshop.gateway.filter.GatewayAuthenticationFilterTest
+[INFO] Running com.example.eshop.gateway.GatewayRouteConfigurationTest
+12:02:47.119 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.eshop.gateway.GatewayRouteConfigurationTest]: GatewayRouteConfigurationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+12:02:47.496 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.eshop.gateway.ApiGatewayApplication for test class com.example.eshop.gateway.GatewayRouteConfigurationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-10-03 12:02:49.344+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] c.e.e.g.GatewayRouteConfigurationTest - Starting GatewayRouteConfigurationTest using Java 25.0.1 with PID 25876 (started by seng hour in D:\spring boot\E-Shop\api-gateway)
+2026-10-03 12:02:49.348+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] c.e.e.g.GatewayRouteConfigurationTest - No active profile set, falling back to 1 default profile: "default"
+2026-10-03 12:02:55.564+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-10-03 12:02:55.572+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data R2DBC repositories in DEFAULT mode.
+2026-10-03 12:02:55.817+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 219 ms. Found 2 R2DBC repository interfaces.
+2026-10-03 12:02:57.037+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.cloud.context.scope.GenericScope - BeanFactory id=fa42d6a7-4b53-3e3b-b2ab-8c96f3d30d3f
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\seng hour\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.5\byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-10-03 12:03:08.612+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [After]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Before]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Between]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Cookie]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Header]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Host]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Method]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Path]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Query]
+2026-10-03 12:03:08.613+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [ReadBody]
+2026-10-03 12:03:08.614+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [RemoteAddr]
+2026-10-03 12:03:08.614+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [XForwardedRemoteAddr]
+2026-10-03 12:03:08.614+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [Weight]
+2026-10-03 12:03:08.614+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.g.r.RouteDefinitionRouteLocator - Loaded RoutePredicateFactory [CloudFoundryRouteService]
+2026-10-03 12:03:09.883+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.b.a.e.web.EndpointLinksResolver - Exposing 2 endpoints beneath base path '/actuator'
+2026-10-03 12:03:12.077+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] o.s.c.n.e.c.DiscoveryClientOptionalArgsConfiguration - Eureka HTTP Client uses RestTemplate.
+2026-10-03 12:03:12.237+07:00 WARN  service=api-gateway requestId= traceId= spanId= [main] o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger - Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-10-03 12:03:13.103+07:00 INFO  service=api-gateway requestId= traceId= spanId= [main] c.e.e.g.GatewayRouteConfigurationTest - Started GatewayRouteConfigurationTest in 24.904 seconds (process running for 30.449)
+2026-10-03 12:03:14.698+07:00 INFO  service=api-gateway requestId=447c4082-e977-41ac-ba8d-3e16437e0bce traceId= spanId= [parallel-2] c.e.e.g.f.RequestCompletionLoggingFilter - gateway_request requestId=447c4082-e977-41ac-ba8d-3e16437e0bce method=POST path=/api/v1/public/email/username/login status=503 durationMs=869
+2026-10-03 12:03:15.188+07:00 INFO  service=api-gateway requestId=800e8cb3-51f0-4dcd-ae1a-a6a668dce640 traceId= spanId= [parallel-5] c.e.e.g.f.RequestCompletionLoggingFilter - gateway_request requestId=800e8cb3-51f0-4dcd-ae1a-a6a668dce640 method=GET path=/api/v1/orders status=401 durationMs=5
+[ERROR] Tests run: 6, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 28.41 s <<< FAILURE! -- in com.example.eshop.gateway.GatewayRouteConfigurationTest
+[ERROR] com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths -- Time elapsed: 0.163 s <<< FAILURE!
+java.lang.AssertionError: 
+
+Expecting all elements of:
+  [RouteDefinition{id='catalog-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/admin/promotions/**, _genkey_1=/api/v1/promotions/**, _genkey_2=/api/v1/products/**, _genkey_3=/api/v1/categories/**, _genkey_4=/api/v1/category-icons/**, _genkey_5=/api/v1/subcategories/**, _genkey_6=/api/v1/attributes/**, _genkey_7=/api/v1/attribute-values/**, _genkey_8=/api/v1/inventory/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=catalogServiceCB, fallbackUri=forward:/fallback/catalog}}], uri=lb://catalog-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='notification-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/notification}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://notification-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='ai-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/ai}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://ai-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='ai-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/ai/**}}], filters=[], uri=lb://ai-service, order=0, metadata={response-timeout=30000}, enabled=true},
+    RouteDefinition{id='notification-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/notifications/**}}], filters=[], uri=lb://notification-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='catalog-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/catalog}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=catalogServiceCB, fallbackUri=forward:/fallback/catalog}}], uri=lb://catalog-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='auth-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/auth/**, _genkey_1=/api/v1/public/**, _genkey_2=/api/v1/functions/**, _genkey_3=/api/v1/user-groups/**, _genkey_4=/api/v1/user-permissions/**, _genkey_5=/api/v1/group-permissions/**, _genkey_6=/api/v1/user/**, _genkey_7=/api/v1/addresses/**, _genkey_8=/api/v1/admin/users/**, _genkey_9=/api/v1/groups/**, _genkey_10=/api/v1/permissions/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=authServiceCB, fallbackUri=forward:/fallback/auth}}], uri=lb://auth-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='payment-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/payment}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=paymentServiceCB, fallbackUri=forward:/fallback/payment}}], uri=lb://payment-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='payment-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/payments/**, _genkey_1=/api/v1/payment-transactions/**, _genkey_2=/api/v1/bakong/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=paymentServiceCB, fallbackUri=forward:/fallback/payment}}], uri=lb://payment-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='order-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/order}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=orderServiceCB, fallbackUri=forward:/fallback/order}}], uri=lb://order-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='auth-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/auth}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=authServiceCB, fallbackUri=forward:/fallback/auth}}], uri=lb://auth-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='order-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/cart/**, _genkey_1=/api/v1/orders/**, _genkey_2=/api/v1/cancelations/**, _genkey_3=/api/v1/returns/**, _genkey_4=/api/v1/refunds/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=orderServiceCB, fallbackUri=forward:/fallback/order}}], uri=lb://order-service, order=0, metadata={}, enabled=true}]
+to satisfy given requirements, but these elements did not:
+
+RouteDefinition{id='notification-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/notification}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://notification-service, order=0, metadata={}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  [FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}]
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+
+RouteDefinition{id='ai-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/ai}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://ai-service, order=0, metadata={}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  [FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}]
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+
+RouteDefinition{id='ai-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/ai/**}}], filters=[], uri=lb://ai-service, order=0, metadata={response-timeout=30000}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  []
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+
+RouteDefinition{id='notification-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/notifications/**}}], filters=[], uri=lb://notification-service, order=0, metadata={}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  []
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+[INFO] Running com.example.eshop.gateway.route.DynamicRouteDefinitionLocatorTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.578 s -- in com.example.eshop.gateway.route.DynamicRouteDefinitionLocatorTest
+[INFO] Running com.example.eshop.gateway.route.GatewayRouteServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.182 s -- in com.example.eshop.gateway.route.GatewayRouteServiceTest
+[INFO] Running com.example.eshop.gateway.service.GatewayFallbackServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in com.example.eshop.gateway.service.GatewayFallbackServiceTest
+[INFO] Running com.example.eshop.gateway.service.ratelimit.ReactiveRateLimiterServiceTest
+2026-10-03 12:03:16.669+07:00 WARN  service=api-gateway requestId= traceId= spanId= [main] c.e.e.g.s.r.ReactiveRateLimiterService - Rate limiter unavailable; allowing request: offline
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.619 s -- in com.example.eshop.gateway.service.ratelimit.ReactiveRateLimiterServiceTest
+[INFO] Running com.example.eshop.gateway.service.security.GatewayAdminKeyPostgresTest
+[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0 s -- in com.example.eshop.gateway.service.security.GatewayAdminKeyPostgresTest
+[INFO] Running com.example.eshop.gateway.service.security.GatewayAdminKeyServiceTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.632 s -- in com.example.eshop.gateway.service.security.GatewayAdminKeyServiceTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths:35 
+Expecting all elements of:
+  [RouteDefinition{id='catalog-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/admin/promotions/**, _genkey_1=/api/v1/promotions/**, _genkey_2=/api/v1/products/**, _genkey_3=/api/v1/categories/**, _genkey_4=/api/v1/category-icons/**, _genkey_5=/api/v1/subcategories/**, _genkey_6=/api/v1/attributes/**, _genkey_7=/api/v1/attribute-values/**, _genkey_8=/api/v1/inventory/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=catalogServiceCB, fallbackUri=forward:/fallback/catalog}}], uri=lb://catalog-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='notification-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/notification}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://notification-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='ai-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/ai}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://ai-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='ai-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/ai/**}}], filters=[], uri=lb://ai-service, order=0, metadata={response-timeout=30000}, enabled=true},
+    RouteDefinition{id='notification-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/notifications/**}}], filters=[], uri=lb://notification-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='catalog-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/catalog}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=catalogServiceCB, fallbackUri=forward:/fallback/catalog}}], uri=lb://catalog-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='auth-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/auth/**, _genkey_1=/api/v1/public/**, _genkey_2=/api/v1/functions/**, _genkey_3=/api/v1/user-groups/**, _genkey_4=/api/v1/user-permissions/**, _genkey_5=/api/v1/group-permissions/**, _genkey_6=/api/v1/user/**, _genkey_7=/api/v1/addresses/**, _genkey_8=/api/v1/admin/users/**, _genkey_9=/api/v1/groups/**, _genkey_10=/api/v1/permissions/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=authServiceCB, fallbackUri=forward:/fallback/auth}}], uri=lb://auth-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='payment-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/payment}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=paymentServiceCB, fallbackUri=forward:/fallback/payment}}], uri=lb://payment-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='payment-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/payments/**, _genkey_1=/api/v1/payment-transactions/**, _genkey_2=/api/v1/bakong/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=paymentServiceCB, fallbackUri=forward:/fallback/payment}}], uri=lb://payment-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='order-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/order}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=orderServiceCB, fallbackUri=forward:/fallback/order}}], uri=lb://order-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='auth-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/auth}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}, FilterDefinition{name='CircuitBreaker', args={name=authServiceCB, fallbackUri=forward:/fallback/auth}}], uri=lb://auth-service, order=0, metadata={}, enabled=true},
+    RouteDefinition{id='order-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/v1/cart/**, _genkey_1=/api/v1/orders/**, _genkey_2=/api/v1/cancelations/**, _genkey_3=/api/v1/returns/**, _genkey_4=/api/v1/refunds/**}}], filters=[FilterDefinition{name='CircuitBreaker', args={name=orderServiceCB, fallbackUri=forward:/fallback/order}}], uri=lb://order-service, order=0, metadata={}, enabled=true}]
+to satisfy given requirements, but these elements did not:
+
+RouteDefinition{id='notification-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/notification}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://notification-service, order=0, metadata={}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  [FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}]
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+
+RouteDefinition{id='ai-audit-search', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/admin/audit-logs/ai}}], filters=[FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}], uri=lb://ai-service, order=0, metadata={}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  [FilterDefinition{name='SetPath', args={_genkey_0=/api/admin/audit-logs}}]
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+
+RouteDefinition{id='ai-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/ai/**}}], filters=[], uri=lb://ai-service, order=0, metadata={response-timeout=30000}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  []
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+
+RouteDefinition{id='notification-service', predicates=[PredicateDefinition{name='Path', args={_genkey_0=/api/notifications/**}}], filters=[], uri=lb://notification-service, order=0, metadata={}, enabled=true}
+error: java.lang.AssertionError: 
+Expecting any elements of:
+  []
+to match given predicate but none did.
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.lambda$routesMatchEshopControllersAndPreservePaths$5(GatewayRouteConfigurationTest.java:36)
+	at com.example.eshop.gateway.GatewayRouteConfigurationTest.routesMatchEshopControllersAndPreservePaths(GatewayRouteConfigurationTest.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	...(73 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+[INFO] 
+[ERROR] Tests run: 28, Failures: 1, Errors: 0, Skipped: 1
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for eshop-microservices 0.0.1-SNAPSHOT:
+[INFO] 
+[INFO] eshop-microservices ................................ SUCCESS [  0.004 s]
+[INFO] common-lib ......................................... SUCCESS [ 32.246 s]
+[INFO] discovery-server ................................... SUCCESS [  2.417 s]
+[INFO] api-gateway ........................................ FAILURE [ 44.117 s]
+[INFO] auth-service ....................................... SKIPPED
+[INFO] catalog-service .................................... SKIPPED
+[INFO] order-service ...................................... SKIPPED
+[INFO] payment-service .................................... SKIPPED
+[INFO] ai-service ......................................... SKIPPED
+[INFO] notification-service ............................... SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:19 min
+[INFO] Finished at: 2026-10-03T12:03:18+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.3:test (default-test) on project api-gateway: There are test failures.
+[ERROR] 
+[ERROR] See D:\spring boot\E-Shop\api-gateway\target\surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :api-gateway

@@ -6,8 +6,18 @@ Catalog owns promotions, SKU assignments, pricing, inventory reservations and pr
 Order owns orders and immutable line-price snapshots. Cross-service references are scalar IDs.
 The original ProductSku.price and existing response price field remain base prices.
 Product SKU responses add originalPrice, finalPrice, discountAmount, discountPercentage,
-hasPromotion and a structured promotion result. Product pages use one additional batch query:
-8 queries for both 2-product and 20-product test pages, including pagination.
+hasPromotion and a structured promotion result. Full product pages use six queries for
+both 2-product and 20-product test pages, including pagination and live promotion pricing
+(previously eight). SKU/inventory and attribute/value rows are loaded together, while
+product images use URL projections without initializing entity collections. Stock and
+promotion results are not cached; response fields and pagination remain unchanged.
+
+For existing catalog databases with schema validation, apply
+src/main/resources/db/upgrade/20261003_product_read_indexes.sql before deployment.
+It adds indexes for the batch lookups on product_skus, attributes and images.
+Development Hibernate schema updates also create these indexes. Query-count tests
+measure database round trips, not end-to-end latency; actual response time still depends
+on page size, SKU counts, database load and network latency.
 
 Existing cart unit_price input is accepted but ignored. Checkout always reprices the complete
 basket through Catalog. New orders contain baseUnitPrice, discountAmount (per unit),

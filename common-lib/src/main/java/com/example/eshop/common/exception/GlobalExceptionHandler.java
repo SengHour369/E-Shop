@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(403).body(APIResponse.error("Forbidden", 403));
     }
 
-    @ExceptionHandler({org.springframework.web.bind.MethodArgumentNotValidException.class,
+    @ExceptionHandler({org.springframework.validation.BindException.class,
         org.springframework.http.converter.HttpMessageNotReadableException.class,
         org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
     public ResponseEntity<APIResponse<Object>> handleValidation(Exception ex) {

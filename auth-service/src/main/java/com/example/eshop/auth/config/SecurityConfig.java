@@ -63,6 +63,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers("/api/admin/audit-logs/**").hasAnyAuthority("ADMIN", "AUDIT_READ")
 
                         .requestMatchers("/api/v1/user/**").authenticated()
                         .requestMatchers("/api/v1/addresses/**").authenticated()

@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.sql.init.mode=never", "gateway.security.admin-key=test-admin"
 })
 class GatewayRouteConfigurationTest {
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
+  com.example.eshop.gateway.service.security.GatewayAdminKeyService adminKeys;
   @Autowired RouteDefinitionLocator definitions;
   @Autowired WebTestClient client;
   @Autowired org.springframework.cloud.gateway.config.GlobalCorsProperties cors;
@@ -48,6 +50,8 @@ class GatewayRouteConfigurationTest {
   }
 
   @Test void dynamicRouteAdminRequiresCorrectKey() {
+    org.mockito.Mockito.doThrow(new org.springframework.web.server.ResponseStatusException(
+        org.springframework.http.HttpStatus.FORBIDDEN)).when(adminKeys).requireAdmin("wrong");
     client.get().uri("/api/v1/gateway/routes").header("X-Gateway-Admin-Key", "wrong")
         .exchange().expectStatus().isForbidden();
   }

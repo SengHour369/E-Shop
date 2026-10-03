@@ -41,7 +41,7 @@ class ProductReadQueryTest {
     @Autowired ProductRepository products;
     @Autowired ProductResponseService responses;
 
-    @Test void fullPagesUseEightQueriesRegardlessOfProductCount() {
+    @Test void fullPagesUseSixQueriesRegardlessOfProductCount() {
         for (int i = 0; i < 21; i++) seedProduct(i);
         em.flush();
         for (int size : new int[]{2, 20}) {
@@ -50,7 +50,8 @@ class ProductReadQueryTest {
             statistics.clear();
             var page = products.findAllNotDeleted(PageRequest.of(0, size, Sort.by("id").descending()));
             var result = responses.toProductResponses(page.getContent());
-            assertThat(statistics.getPrepareStatementCount()).isEqualTo(8);
+            assertThat(statistics.getPrepareStatementCount()).isEqualTo(6);
+            assertThat(org.hibernate.Hibernate.isInitialized(page.getContent().get(0).getImage())).isFalse();
             assertThat(result).hasSize(size);
             assertThat(result.get(0).getName()).isEqualTo("Product 20");
             assertThat(result.get(0).getImage()).containsExactly("https://example.test/main-20");
@@ -68,6 +69,42 @@ class ProductReadQueryTest {
         statistics.clear();
         assertThat(responses.toProductResponses(java.util.List.of())).isEmpty();
         assertThat(statistics.getPrepareStatementCount()).isZero();
+    }
+
+    @Test void preservesProductsWithoutSkusAndSkusWithoutInventoryOrAttributeValues() {
+        Product empty = new Product(); empty.setName("Empty"); em.persist(empty);
+        Product product = new Product(); product.setName("Partial"); em.persist(product);
+        ProductSku sku = new ProductSku(); sku.setProduct(product); sku.setSku("partial");
+        sku.setDescription("Partial"); sku.setPrice(BigDecimal.TEN); em.persist(sku);
+        ProductAttribute attribute = new ProductAttribute(); attribute.setName("Size");
+        attribute.setProductSkuId(sku.getId()); em.persist(attribute);
+        em.flush(); em.clear();
+        var result = responses.toProductResponses(products.findAllNotDeleted(
+            PageRequest.of(0, 20, Sort.by("id"))).getContent());
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getSkus()).isEmpty();
+        assertThat(result.get(1).getImage()).isEmpty();
+        var response = result.get(1).getSkus().get(0);
+        assertThat(response.getInventory()).isNull();
+        assertThat(response.getQuantity()).isNull();
+        assertThat(response.getImageUrl()).isNull();
+        assertThat(response.getProductAttributeResponse()).hasSize(1);
+        assertThat(response.getProductAttributeResponse().get(0).getAttributes()).isEmpty();
+    }
+
+    @Test void joinsDoNotDuplicateSkusAndKeepAttributeValueOrdering() {
+        seedProduct(0);
+        em.flush();
+        var attribute = em.createQuery("select a from ProductAttribute a order by a.id", ProductAttribute.class)
+            .setMaxResults(1).getSingleResult();
+        ProductAttributeValue value = new ProductAttributeValue();
+        value.setAttributeId(attribute.getId()); value.setValue("Amber"); em.persist(value);
+        em.flush(); em.clear();
+        var result = responses.toProductResponses(products.findAllNotDeleted(PageRequest.of(0, 20)).getContent());
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getSkus()).hasSize(2);
+        assertThat(result.get(0).getSkus().get(0).getProductAttributeResponse().get(0).getAttributes())
+            .extracting(v -> v.getValue()).containsExactly("Amber", "Blue");
     }
 
     private void seedProduct(int index) {

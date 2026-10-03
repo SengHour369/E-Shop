@@ -1,0 +1,308 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/C:/Program%20Files/apache-maven-3.9.11/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] eshop-microservices                                                [pom]
+[INFO] common-lib                                                         [jar]
+[INFO] ai-service                                                         [jar]
+[INFO] notification-service                                               [jar]
+[INFO] 
+[INFO] ---------------< com.example.eshop:eshop-microservices >----------------
+[INFO] Building eshop-microservices 0.0.1-SNAPSHOT                        [1/4]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --------------------< com.example.eshop:common-lib >--------------------
+[INFO] Building common-lib 0.0.1-SNAPSHOT                                 [2/4]
+[INFO]   from common-lib\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ common-lib ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\common-lib\src\main\resources
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\common-lib\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ common-lib ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 33 source files with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ common-lib ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\common-lib\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ common-lib ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 3 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.3:test (default-test) @ common-lib ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.eshop.common.audit.AuditIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-10-03T12:05:59.799+07:00  INFO 26684 --- [           main] c.e.e.common.audit.AuditIntegrationTest  : Starting AuditIntegrationTest using Java 25.0.1 with PID 26684 (started by seng hour in D:\spring boot\E-Shop\common-lib)
+2026-10-03T12:05:59.804+07:00  INFO 26684 --- [           main] c.e.e.common.audit.AuditIntegrationTest  : No active profile set, falling back to 1 default profile: "default"
+2026-10-03T12:06:00.704+07:00  INFO 26684 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-03T12:06:00.971+07:00  INFO 26684 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 226 ms. Found 1 JPA repository interface.
+2026-10-03T12:06:01.979+07:00  INFO 26684 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-03T12:06:02.143+07:00  INFO 26684 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.15.Final
+2026-10-03T12:06:02.235+07:00  INFO 26684 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-03T12:06:02.998+07:00  INFO 26684 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-03T12:06:03.175+07:00  INFO 26684 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-03T12:06:03.681+07:00  INFO 26684 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:audit user=SA
+2026-10-03T12:06:03.685+07:00  INFO 26684 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-03T12:06:04.042+07:00  INFO 26684 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-03T12:06:06.008+07:00  INFO 26684 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-03T12:06:06.100+07:00  INFO 26684 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-03T12:06:06.887+07:00  INFO 26684 --- [           main] c.e.e.common.audit.AuditIntegrationTest  : Started AuditIntegrationTest in 8.071 seconds (process running for 10.313)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\seng hour\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.5\byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.50 s -- in com.example.eshop.common.audit.AuditIntegrationTest
+[INFO] Running com.example.eshop.common.request.RequestIdTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.206 s -- in com.example.eshop.common.request.RequestIdTest
+[INFO] Running com.example.eshop.common.request.TracePropagationTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.example.eshop.common.request.TracePropagationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ common-lib ---
+[INFO] Building jar: D:\spring boot\E-Shop\common-lib\target\common-lib-0.0.1-SNAPSHOT.jar
+[INFO] 
+[INFO] --------------------< com.example.eshop:ai-service >--------------------
+[INFO] Building ai-service 0.0.1-SNAPSHOT                                 [3/4]
+[INFO]   from ai-service\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ ai-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ ai-service ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 24 source files with javac [debug parameters release 17] to target\classes
+[INFO] /D:/spring boot/E-Shop/ai-service/src/main/java/com/example/eshop/ai/client/OpenAiProviderClient.java: D:\spring boot\E-Shop\ai-service\src\main\java\com\example\eshop\ai\client\OpenAiProviderClient.java uses or overrides a deprecated API.
+[INFO] /D:/spring boot/E-Shop/ai-service/src/main/java/com/example/eshop/ai/client/OpenAiProviderClient.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ ai-service ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\ai-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ ai-service ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] /D:/spring boot/E-Shop/ai-service/src/test/java/com/example/eshop/ai/OutboxPublisherTest.java: D:\spring boot\E-Shop\ai-service\src\test\java\com\example\eshop\ai\OutboxPublisherTest.java uses unchecked or unsafe operations.
+[INFO] /D:/spring boot/E-Shop/ai-service/src/test/java/com/example/eshop/ai/OutboxPublisherTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.5.3:test (default-test) @ ai-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.eshop.ai.AiOrchestrationTest
+12:06:21.782 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.eshop.ai.AiOrchestrationTest]: AiOrchestrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+12:06:22.087 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.eshop.ai.AiServiceApplication for test class com.example.eshop.ai.AiOrchestrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-10-03 12:06:23.741+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] c.e.eshop.ai.AiOrchestrationTest - Starting AiOrchestrationTest using Java 25.0.1 with PID 24764 (started by seng hour in D:\spring boot\E-Shop\ai-service)
+2026-10-03 12:06:23.744+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] c.e.eshop.ai.AiOrchestrationTest - No active profile set, falling back to 1 default profile: "default"
+2026-10-03 12:06:25.429+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-03 12:06:25.818+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 363 ms. Found 3 JPA repository interfaces.
+2026-10-03 12:06:27.370+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.cloud.context.scope.GenericScope - BeanFactory id=e2b5c1c3-f4cc-3485-a90f-03ab4cfadd0e
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\seng hour\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.5\byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-10-03 12:06:30.812+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-03 12:06:31.037+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.15.Final
+2026-10-03 12:06:31.167+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-10-03 12:06:31.520+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-03 12:06:31.607+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-10-03 12:06:32.124+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:ai user=SA
+2026-10-03 12:06:32.129+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-10-03 12:06:32.307+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-03 12:06:34.365+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-03 12:06:34.487+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-03 12:06:35.051+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-10-03 12:06:36.239+07:00 WARN  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 01d7fbd0-6e45-4acb-ab39-573be08b2405
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-10-03 12:06:36.250+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-10-03 12:06:38.665+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-10-03 12:06:38.665+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-10-03 12:06:38.667+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-10-03 12:06:38.765+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.c.n.e.c.DiscoveryClientOptionalArgsConfiguration - Eureka HTTP Client uses RestTemplate.
+2026-10-03 12:06:38.854+07:00 WARN  service=ai-service requestId= traceId= spanId= eventId= [main] o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger - Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-10-03 12:06:38.980+07:00 INFO  service=ai-service requestId= traceId= spanId= eventId= [main] c.e.eshop.ai.AiOrchestrationTest - Started AiOrchestrationTest in 16.239 seconds (process running for 19.389)
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 19.91 s -- in com.example.eshop.ai.AiOrchestrationTest
+[INFO] Running com.example.eshop.ai.OutboxPublisherTest
+2026-10-03 12:06:41.979+07:00 WARN  service=ai-service requestId= traceId= spanId= eventId= [main] c.e.e.a.s.NotificationOutboxPublisher - Notification publish deferred eventId=f56c8e38-10a5-4a70-ab78-530e144b3afb
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.599 s -- in com.example.eshop.ai.OutboxPublisherTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ ai-service ---
+[INFO] Building jar: D:\spring boot\E-Shop\ai-service\target\ai-service-0.0.1-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:3.5.0:repackage (repackage) @ ai-service ---
+[INFO] Replacing main artifact D:\spring boot\E-Shop\ai-service\target\ai-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\spring boot\E-Shop\ai-service\target\ai-service-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] ---------------< com.example.eshop:notification-service >---------------
+[INFO] Building notification-service 0.0.1-SNAPSHOT                       [4/4]
+[INFO]   from notification-service\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ notification-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ notification-service ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 13 source files with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ notification-service ---
+[INFO] skip non existing resourceDirectory D:\spring boot\E-Shop\notification-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ notification-service ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.3:test (default-test) @ notification-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.eshop.notification.EmailDeliveryTest
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\seng hour\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.5\byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+12:06:58.274 [main] WARN com.example.eshop.notification.service.EmailNotificationService -- Email delivery deferred eventId=d09c2b57-b633-44c1-b7c0-f2774f9d1089
+12:06:58.469 [main] WARN com.example.eshop.notification.service.EmailNotificationService -- Email delivery deferred eventId=d09c2b57-b633-44c1-b7c0-f2774f9d1089
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.843 s -- in com.example.eshop.notification.EmailDeliveryTest
+[INFO] Running com.example.eshop.notification.NotificationIntegrationTest
+12:06:58.865 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.eshop.notification.NotificationIntegrationTest]: NotificationIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+12:06:59.212 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.eshop.notification.NotificationServiceApplication for test class com.example.eshop.notification.NotificationIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-10-03 12:07:01.200+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] c.e.e.n.NotificationIntegrationTest - Starting NotificationIntegrationTest using Java 25.0.1 with PID 4328 (started by seng hour in D:\spring boot\E-Shop\notification-service)
+2026-10-03 12:07:01.203+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] c.e.e.n.NotificationIntegrationTest - No active profile set, falling back to 1 default profile: "default"
+2026-10-03 12:07:03.258+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-03 12:07:03.681+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 392 ms. Found 3 JPA repository interfaces.
+2026-10-03 12:07:05.274+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.cloud.context.scope.GenericScope - BeanFactory id=1c970b41-95d8-325c-bcc7-1dff959b1d39
+2026-10-03 12:07:06.738+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-03 12:07:06.922+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.15.Final
+2026-10-03 12:07:07.042+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-10-03 12:07:07.510+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-03 12:07:07.710+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-10-03 12:07:08.392+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:notifications user=SA
+2026-10-03 12:07:08.397+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-10-03 12:07:08.754+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-03 12:07:13.736+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-03 12:07:13.974+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-03 12:07:15.830+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-10-03 12:07:20.723+07:00 WARN  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 72a61bc6-36a3-4b27-a4f4-fff25499c507
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-10-03 12:07:20.752+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-10-03 12:07:24.127+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.c.n.e.c.DiscoveryClientOptionalArgsConfiguration - Eureka HTTP Client uses RestTemplate.
+2026-10-03 12:07:24.308+07:00 WARN  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger - Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-10-03 12:07:24.631+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] c.e.e.n.NotificationIntegrationTest - Started NotificationIntegrationTest in 24.679 seconds (process running for 31.475)
+2026-10-03 12:07:24.957+07:00 INFO  service=notification-service requestId= traceId= spanId= eventId= [main] o.s.c.o.FeignClientFactoryBean - For 'auth-service' URL not provided. Will try picking an instance via load-balancing.
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 28.16 s -- in com.example.eshop.notification.NotificationIntegrationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ notification-service ---
+[INFO] Building jar: D:\spring boot\E-Shop\notification-service\target\notification-service-0.0.1-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:3.5.0:repackage (repackage) @ notification-service ---
+[INFO] Replacing main artifact D:\spring boot\E-Shop\notification-service\target\notification-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\spring boot\E-Shop\notification-service\target\notification-service-0.0.1-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for eshop-microservices 0.0.1-SNAPSHOT:
+[INFO] 
+[INFO] eshop-microservices ................................ SUCCESS [  0.006 s]
+[INFO] common-lib ......................................... SUCCESS [ 27.429 s]
+[INFO] ai-service ......................................... SUCCESS [ 34.561 s]
+[INFO] notification-service ............................... SUCCESS [ 44.279 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:47 min
+[INFO] Finished at: 2026-10-03T12:07:28+07:00
+[INFO] ------------------------------------------------------------------------

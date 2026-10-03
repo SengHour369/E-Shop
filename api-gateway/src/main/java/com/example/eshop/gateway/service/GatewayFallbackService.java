@@ -26,7 +26,7 @@ public class GatewayFallbackService {
             Instant.now(clock),
             HttpStatus.SERVICE_UNAVAILABLE.value(),
             service,
-            service + " is temporarily unavailable — please retry shortly.", context.getOrDefault("requestId", "unknown"))));
+            "ai".equals(service) ? "AI response unavailable. Check execution history and reuse the same Idempotency-Key if retrying." : service + " is temporarily unavailable — please retry shortly.", context.getOrDefault("requestId", "unknown"))));
   }
 
   public record FallbackResponse(Instant timestamp, int status, String service, String message, String requestId) {}

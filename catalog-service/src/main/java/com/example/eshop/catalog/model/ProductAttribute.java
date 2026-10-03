@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "attributes")
+@Table(name = "attributes", indexes = @Index(name = "idx_attribute_sku_id", columnList = "product_sku_id,id"))
 @Getter
 @Setter
 @NoArgsConstructor

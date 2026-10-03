@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -25,7 +24,8 @@ public class AppConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(apiPermissionInterceptor);
+        // Service identities are authorized by InternalNotificationSecurityConfig and method security.
+        registry.addInterceptor(apiPermissionInterceptor).excludePathPatterns("/internal/notifications/**");
     }
 
     @Bean
@@ -38,8 +38,8 @@ public class AppConfig implements WebMvcConfigurer {
         return objectMapper;
     }
     @Bean
-    public HttpMessageConverter<Object> mappingJackson2HttpMessageConverter() {
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
         converter.setSupportedMediaTypes(List.of(
                 MediaType.APPLICATION_JSON,
                 MediaType.APPLICATION_OCTET_STREAM,
@@ -48,10 +48,6 @@ public class AppConfig implements WebMvcConfigurer {
         return converter;
     }
 
-    @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        converters.add(new MappingJackson2HttpMessageConverter());
-    }
     @Bean
     public Validator validator() {
         return Validation.buildDefaultValidatorFactory().getValidator();

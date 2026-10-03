@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @RequiredArgsConstructor
-@lombok.RequiredArgsConstructor
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     private static final String[] PUBLIC_PATHS = {
@@ -45,6 +45,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers("/api/admin/audit-logs/**").hasAnyAuthority("ADMIN", "AUDIT_READ")
                         .requestMatchers("/api/v1/payments/**").authenticated()
                         .requestMatchers("/api/v1/payment-transactions/**").authenticated()
                         .requestMatchers("/api/v1/bakong/**").authenticated()
@@ -53,6 +54,7 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->
                                 auditSecurityHandlers.reject(request, response, 401))
+                        .accessDeniedHandler((request, response, exception) -> auditSecurityHandlers.reject(request, response, 403))
                 )
                 .addFilterBefore(
                         new JwtAuthFilter(jwtTokenValidator, jwtProperties),

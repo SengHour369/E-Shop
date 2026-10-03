@@ -44,7 +44,32 @@ and logout requests use `refreshToken` in their JSON body instead.
 | payment-service | 16 | Payments, transactions, status history and Bakong QR/status |
 | api-gateway | 13 | Dynamic route administration, fallback diagnostic, health and API specifications |
 
-Gateway administration requires `gatewayAdminKey` to match the server's `GATEWAY_ADMIN_KEY`.
+Gateway administration requires gatewayAdminKey to match the key stored in the
+gateway database. On startup, the gateway automatically creates the
+gateway_admin_keys table and inserts a cryptographically random key if no row
+exists. Subsequent starts reuse that row; simultaneous starts cannot overwrite it.
+
+Using your database administration connection to gateway_db, retrieve the key:
+
+    SELECT admin_key FROM gateway_admin_keys WHERE id = 1;
+
+Set the Postman environment variable gatewayAdminKey to that value. Requests
+send it as X-Gateway-Admin-Key. Keep the value private; it is not logged or
+returned by the HTTP APIs.
+
+GATEWAY_ADMIN_KEY is now an optional **initial seed** for an empty table, for
+compatibility with existing installations. Once the row exists, the database
+value wins even if that environment variable changes. To rotate, update the
+database key securely and restart all gateway instances. Do not delete the row
+during ordinary restarts. Gateway startup fails if key initialization cannot
+complete within 30 seconds.
+
+The table stores the recoverable credential, so restrict database/table and backup
+access to trusted administrators and the gateway runtime. Existing installations
+use the project's spring.sql.init.mode=always schema initialization. If SQL init
+is disabled in deployment, apply the table definition from
+api-gateway/src/main/resources/schema.sql before startup.
+
 Create/update examples target `lb://recommendation-service`; that service must be registered
 before the example route can forward traffic. The fallback diagnostic deliberately returns 503.
 
@@ -105,3 +130,16 @@ Internal catalog requests use catalogBaseUrl and a separately supplied short-liv
 SERVICE_ORDER token in serviceToken. They cannot be called through the gateway with a
 normal customer/admin token. See ../PROMOTIONS.md for the lifecycle and deployment steps.
 
+
+### Gateway admin key tests
+
+The standard gateway build tests generation, existing-key reuse, concurrent
+initialization, configured seeds, failure handling, and endpoint authorization.
+An optional PostgreSQL test accepts GATEWAY_KEY_TEST_URL, GATEWAY_KEY_TEST_USER,
+and GATEWAY_KEY_TEST_PASSWORD. Its database name must start with
+gateway_key_verification_ and contain only lowercase letters/digits afterward.
+Use a disposable database: the test creates tables from schema.sql.
+
+During this implementation, the PostgreSQL schema and insert-if-absent SQL were
+verified directly. The optional Java/R2DBC test could not connect because the
+local Windows Java runtime failed to create a loopback selector.

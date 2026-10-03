@@ -34,6 +34,46 @@ spring:
                 allowedHeaders: "*"
                 allowCredentials: true
           routes:
+            - id: ai-service
+              uri: lb://ai-service
+              predicates:
+                - Path=/api/ai/**
+              metadata:
+                response-timeout: 30000
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: aiServiceCB
+                    fallbackUri: forward:/fallback/ai
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: notificationServiceCB
+                    fallbackUri: forward:/fallback/notification
+            - id: ai-audit-search
+              uri: lb://ai-service
+              predicates:
+                - Path=/api/admin/audit-logs/ai
+              filters:
+                - SetPath=/api/admin/audit-logs
+                - name: CircuitBreaker
+                  args:
+                    name: aiServiceCB
+                    fallbackUri: forward:/fallback/ai
+            - id: notification-audit-search
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/admin/audit-logs/notification
+              filters:
+                - SetPath=/api/admin/audit-logs
+                - name: CircuitBreaker
+                  args:
+                    name: notificationServiceCB
+                    fallbackUri: forward:/fallback/notification
             - id: auth-audit-search
               uri: lb://auth-service
               predicates:
@@ -186,6 +226,9 @@ resilience4j:
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 5
   timelimiter:
+    instances:
+      aiServiceCB:
+        timeout-duration: 30s
     configs:
       default:
         timeout-duration: 6s

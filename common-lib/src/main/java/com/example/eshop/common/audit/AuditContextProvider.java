@@ -33,7 +33,7 @@ public class AuditContextProvider {
             type = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))
                     ? AuditActorType.ADMIN : AuditActorType.USER;
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().startsWith("SERVICE_")))
-                type = AuditActorType.API_CLIENT;
+                { type = AuditActorType.API_CLIENT; actorId = safeText(auth.getName(), 128); }
         }
         return new Context(RequestIds.current(), MDC.get("traceId"), actorId, type,
                 request == null ? null : request.getRemoteAddr(),

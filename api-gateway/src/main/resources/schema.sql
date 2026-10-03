@@ -36,3 +36,10 @@ ALTER TABLE gateway_request_logs
 
 CREATE INDEX IF NOT EXISTS idx_gateway_request_logs_correlation
     ON gateway_request_logs (correlation_id);
+
+-- Private bootstrap credential. Never expose through route APIs or application logs.
+CREATE TABLE IF NOT EXISTS gateway_admin_keys (
+    id SMALLINT PRIMARY KEY CHECK (id = 1),
+    admin_key VARCHAR(512) NOT NULL CHECK (length(trim(admin_key)) > 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

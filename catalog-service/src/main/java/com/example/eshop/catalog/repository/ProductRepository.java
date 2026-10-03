@@ -16,9 +16,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("select p from Product p where p.isActive = true and (p.deleted = false or p.deleted is null) and exists (select ps.id from PromotionSku ps where ps.promotion.id = :promotionId and ps.productSku.product = p)")
     org.springframework.data.domain.Page<Product> findPromotionProducts(
         @Param("promotionId") Long promotionId, org.springframework.data.domain.Pageable pageable);
-    // Fetch a collection only after pagination, never in the pageable query.
-    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.image WHERE p.id IN :ids")
-    List<Product> fetchImages(@Param("ids") List<Long> ids);
+    interface ProductImage {
+        Long getProductId();
+        String getUrl();
+    }
+    @Query("SELECT i.product.id AS productId, i.url AS url FROM Image i WHERE i.product.id IN :ids ORDER BY i.id")
+    List<ProductImage> findImageUrls(@Param("ids") List<Long> ids);
 
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND (p.deleted IS NULL OR p.deleted = false)")
     Page<Product> findByIsActiveTrue(Pageable pageable);
