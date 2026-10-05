@@ -48,6 +48,14 @@ spring:
         max.partition.fetch.bytes: 65536
     listener:
       ack-mode: record
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 1s
+      connect-timeout: 1s
+      repositories:
+        enabled: false
 jwt:
   secret: ${JWT_SECRET}
 eureka:
@@ -60,5 +68,5 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=ai-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} eventId=%X{eventId:-} [%thread] %logger{36} - %msg%n"
 ai:
-  api-key: ${OPENAI_API_KEY:}
-  model: ${OPENAI_MODEL:gpt-4.1-mini}
+  inference-url: ${AI_INFERENCE_URL:http://localhost:8000}
+  inference-timeout-seconds: ${AI_INFERENCE_TIMEOUT_SECONDS:25}

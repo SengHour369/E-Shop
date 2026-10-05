@@ -16,7 +16,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "product_skus", indexes = @Index(name = "idx_sku_product_id", columnList = "product_id,id"))
+@Table(name = "product_skus", indexes = {
+        @Index(name = "idx_sku_product_id", columnList = "product_id,id"),
+        @Index(name = "idx_product_sku_barcode", columnList = "barcode")
+})
 public class ProductSku extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +31,10 @@ public class ProductSku extends BaseEntity {
 
     @Column( nullable = false)
     private String sku;
+
+    /** Retail barcode or QR payload. Distinct from the internal sku code. Null until a code is assigned. */
+    @Column(length = 64)
+    private String barcode;
 
     @Column( nullable = false,columnDefinition = "TEXT")
     private String description;

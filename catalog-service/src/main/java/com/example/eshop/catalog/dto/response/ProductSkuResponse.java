@@ -13,6 +13,7 @@ package com.example.eshop.catalog.dto.response;
     public class ProductSkuResponse {
         private Long id;
         private String sku;
+        private String barcode;
         private String description;
         private BigDecimal price;
         private BigDecimal originalPrice;

@@ -1,64 +1,163 @@
 package com.example.eshop.ai.service;
+
 import com.example.eshop.ai.client.AiProviderClient;
-import com.example.eshop.ai.dto.*;
-import com.example.eshop.ai.registry.*;
-import com.example.eshop.ai.enums.*;
+import com.example.eshop.ai.dto.AiIntentResult;
+import com.example.eshop.ai.dto.AiRequest;
+import com.example.eshop.ai.dto.AiResponse;
+import com.example.eshop.ai.enums.AiExecutionStatus;
+import com.example.eshop.ai.enums.AiIntent;
+import com.example.eshop.ai.enums.AiToolRisk;
 import com.example.eshop.ai.model.AiExecution;
+import com.example.eshop.ai.registry.AiToolDefinition;
+import com.example.eshop.ai.registry.AiToolRegistry;
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.dao.DataIntegrityViolationException;
 import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 import java.util.UUID;
-import static com.example.eshop.ai.enums.AiExecutionStatus.*;
-@Service @RequiredArgsConstructor
+
+import static com.example.eshop.ai.enums.AiExecutionStatus.DENIED;
+import static com.example.eshop.ai.enums.AiExecutionStatus.FAILURE;
+import static com.example.eshop.ai.enums.AiExecutionStatus.NEEDS_INPUT;
+import static com.example.eshop.ai.enums.AiExecutionStatus.SUCCESS;
+import static com.example.eshop.ai.enums.AiExecutionStatus.UNKNOWN;
+
+/**
+ * One request follows a fixed path: replay an accepted key, detect an intent,
+ * authorize and validate it, then call the registered client. The model never
+ * chooses a URL, and a replay does not run the tool again.
+ */
+@Service
+@RequiredArgsConstructor
 public class AiRouterService {
+
+    private static final double MIN_CONFIDENCE = 0.8;
+
     private final AiProviderClient provider;
     private final AiToolRegistry registry;
     private final AiToolExecutor executor;
     private final AiExecutionService history;
+
     public AiResponse execute(AiRequest request, UUID id, String bearer) {
-        var previous = history.existing(id);
-        if (previous.isPresent()) return replay(previous.get());
+        Optional<AiExecution> previous = history.existing(id);
+        if (previous.isPresent()) {
+            return replay(previous.get());
+        }
+
         AiExecution execution;
-        try { execution = history.start(id); }
-        catch (DataIntegrityViolationException e) { return replay(history.existing(id).orElseThrow()); }
+        try {
+            execution = history.start(id);
+        } catch (DataIntegrityViolationException ex) {
+            return replay(history.existing(id).orElseThrow());
+        }
+
+        Outcome outcome = run(request, bearer);
+        history.finish(id, outcome.intent(), outcome.tool(), outcome.status(), outcome.code(), outcome.resourceId());
+        return response(id, execution, outcome);
+    }
+
+    private Outcome run(AiRequest request, String bearer) {
         AiIntent intent = AiIntent.UNKNOWN;
         AiToolDefinition tool = null;
-        AiExecutionStatus status = FAILURE;
-        String code = null, message = "Operation completed.", resourceId = null;
-        JsonNode data = null;
         boolean dispatched = false;
         try {
-            var result = provider.detect(request.message(), registry.available());
-            if (result == null || result.intent() == null || !Double.isFinite(result.confidence()) || result.confidence() < 0.8 || result.confidence() > 1)
-                throw new AiFailure("UNCERTAIN_INTENT", NEEDS_INPUT, "Please clarify the operation and its parameters.");
-            intent = result.intent();
+            AiIntentResult detected = provider.detect(request.message(), registry.available());
+            requireConfident(detected);
+            intent = detected.intent();
             tool = registry.authorize(intent);
-            registry.validate(tool, result.parameters());
+            registry.validate(tool, detected.parameters());
             dispatched = true;
-            data = executor.execute(tool, result.parameters(), bearer);
-            if (data == null || data.has("code") && !"200".equals(data.path("code").asText()) && !"201".equals(data.path("code").asText()) || data.path("status").isInt() && data.path("status").asInt() >= 400
-                    || data.path("errorCode").isInt() && data.path("errorCode").asInt() != 0)
+            JsonNode data = executor.execute(tool, detected.parameters(), bearer);
+            if (rejected(data)) {
                 throw new AiFailure("DOWNSTREAM_REJECTED", FAILURE, "The operation was rejected by the service.");
-            status = SUCCESS;
-            if (intent == AiIntent.PROMOTION_CREATE && data.path("id").isIntegralNumber()) resourceId = data.path("id").asText();
-        } catch (AiFailure e) { status = e.status(); code = e.code(); message = e.getMessage(); }
-        catch (FeignException e) {
-            boolean uncertainWrite = dispatched && tool != null && tool.risk() != AiToolRisk.READ_ONLY && (e.status() < 0 || e.status() >= 500);
-            status = uncertainWrite ? UNKNOWN : e.status() == 403 || e.status() == 401 ? DENIED : FAILURE;
-            code = uncertainWrite ? "OUTCOME_UNKNOWN" : "DOWNSTREAM_FAILURE";
-            message = uncertainWrite ? "The service outcome is uncertain. Check execution history and promotions before submitting another request." : "The service could not complete the operation.";
-        } catch (Exception e) {
-            status = dispatched && tool != null && tool.risk() != AiToolRisk.READ_ONLY ? UNKNOWN : FAILURE;
-            code = "EXECUTION_FAILURE"; message = "The operation could not be completed safely.";
+            }
+            return Outcome.success(intent, tool, data, promotionId(intent, data));
+        } catch (AiFailure ex) {
+            return Outcome.of(intent, tool, ex.status(), ex.code(), ex.getMessage());
+        } catch (FeignException ex) {
+            return feignOutcome(intent, tool, dispatched, ex);
+        } catch (Exception ex) {
+            return unexpectedOutcome(intent, tool, dispatched);
         }
-        history.finish(id, intent, tool, status, code, resourceId);
-        return new AiResponse(id, execution.getRequestId(), execution.getTraceId(), intent, status, message, code, status == SUCCESS ? data : null);
     }
-    private AiResponse replay(AiExecution e) {
-        return new AiResponse(e.getId(), e.getRequestId(), e.getTraceId(), e.getIntent(), e.getStatus(),
-            "This request was already accepted; it has not been executed again. RUNNING executions may require reconciliation after an interrupted request.",
-            e.getErrorCode(), null);
+
+    private static void requireConfident(AiIntentResult result) {
+        if (result == null
+                || result.intent() == null
+                || !Double.isFinite(result.confidence())
+                || result.confidence() < MIN_CONFIDENCE
+                || result.confidence() > 1) {
+            throw new AiFailure("UNCERTAIN_INTENT", NEEDS_INPUT, "Please clarify the operation and its parameters.");
+        }
+    }
+
+    /** A body is rejected when it is missing or carries a non-success code, HTTP status, or error code. */
+    private static boolean rejected(JsonNode data) {
+        if (data == null) {
+            return true;
+        }
+        if (data.has("code")) {
+            String code = data.path("code").asText();
+            if (!"200".equals(code) && !"201".equals(code)) {
+                return true;
+            }
+        }
+        if (data.path("status").isInt() && data.path("status").asInt() >= 400) {
+            return true;
+        }
+        return data.path("errorCode").isInt() && data.path("errorCode").asInt() != 0;
+    }
+
+    private static String promotionId(AiIntent intent, JsonNode data) {
+        if (intent == AiIntent.PROMOTION_CREATE && data.path("id").isIntegralNumber()) {
+            return data.path("id").asText();
+        }
+        return null;
+    }
+
+    private static Outcome feignOutcome(AiIntent intent, AiToolDefinition tool, boolean dispatched, FeignException ex) {
+        if (uncertainWrite(dispatched, tool) && (ex.status() < 0 || ex.status() >= 500)) {
+            return Outcome.of(intent, tool, UNKNOWN, "OUTCOME_UNKNOWN",
+                    "The service outcome is uncertain. Check execution history and promotions before submitting another request.");
+        }
+        AiExecutionStatus status = ex.status() == 401 || ex.status() == 403 ? DENIED : FAILURE;
+        return Outcome.of(intent, tool, status, "DOWNSTREAM_FAILURE", "The service could not complete the operation.");
+    }
+
+    private static Outcome unexpectedOutcome(AiIntent intent, AiToolDefinition tool, boolean dispatched) {
+        AiExecutionStatus status = uncertainWrite(dispatched, tool) ? UNKNOWN : FAILURE;
+        return Outcome.of(intent, tool, status, "EXECUTION_FAILURE", "The operation could not be completed safely.");
+    }
+
+    private static boolean uncertainWrite(boolean dispatched, AiToolDefinition tool) {
+        return dispatched && tool != null && tool.risk() != AiToolRisk.READ_ONLY;
+    }
+
+    private static AiResponse response(UUID id, AiExecution execution, Outcome outcome) {
+        JsonNode data = outcome.status() == SUCCESS ? outcome.data() : null;
+        return new AiResponse(id, execution.getRequestId(), execution.getTraceId(),
+                outcome.intent(), outcome.status(), outcome.message(), outcome.code(), data);
+    }
+
+    private AiResponse replay(AiExecution execution) {
+        return new AiResponse(execution.getId(), execution.getRequestId(), execution.getTraceId(),
+                execution.getIntent(), execution.getStatus(),
+                "This request was already accepted; it has not been executed again. RUNNING executions may require reconciliation after an interrupted request.",
+                execution.getErrorCode(), null);
+    }
+
+    private record Outcome(AiIntent intent, AiToolDefinition tool, AiExecutionStatus status,
+            String code, String message, String resourceId, JsonNode data) {
+
+        static Outcome success(AiIntent intent, AiToolDefinition tool, JsonNode data, String resourceId) {
+            return new Outcome(intent, tool, SUCCESS, null, "Operation completed.", resourceId, data);
+        }
+
+        static Outcome of(AiIntent intent, AiToolDefinition tool, AiExecutionStatus status, String code, String message) {
+            return new Outcome(intent, tool, status, code, message, null, null);
+        }
     }
 }

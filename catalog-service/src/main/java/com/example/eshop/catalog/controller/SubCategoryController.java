@@ -30,11 +30,13 @@ public class SubCategoryController extends BaseController {
             @RequestParam String name,
             @RequestParam Long categoryId,
             @RequestParam String description,
+            @RequestParam(required = false) Long logoId,
             @RequestParam(required = false) MultipartFile image) throws Exception {
         SubCategoryRequest request = new SubCategoryRequest();
         request.setName(name);
         request.setCategoryId(categoryId);
         request.setDescription(description);
+        request.setLogoId(logoId);
         ResponseErrorTemplate response = subCategoryService.createSubCategory(request, image);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -45,11 +47,13 @@ public class SubCategoryController extends BaseController {
             @RequestParam String name,
             @RequestParam Long categoryId,
             @RequestParam String description,
+            @RequestParam(required = false) Long logoId,
             @RequestParam(required = false) MultipartFile file) {
         SubCategoryRequest request = new SubCategoryRequest();
         request.setCategoryId(categoryId);
         request.setName(name);
         request.setDescription(description);
+        request.setLogoId(logoId);
         ResponseErrorTemplate response = subCategoryService.updateSubCategory(id, request, file);
         return ResponseEntity.ok(response);
     }

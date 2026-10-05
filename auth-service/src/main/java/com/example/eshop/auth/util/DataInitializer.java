@@ -470,6 +470,11 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("POST", "/api/v1/category-icons/upload", 1001L);
         createApiPermissionIfNotExists("DELETE", "/api/v1/category-icons/delete", 1001L);
 
+        // ── BRAND LOGOS (same lookup as category icons, for subcategories) ─
+        createApiPermissionIfNotExists("GET", "/api/v1/brand-logos/get/all", 1008L);
+        createApiPermissionIfNotExists("GET", "/api/v1/brand-logos/id", 1008L);
+        createApiPermissionIfNotExists("POST", "/api/v1/brand-logos/upload", 1002L);
+
         // ── USER MANAGEMENT (admin only) ─────────────────────────────
         createApiPermissionIfNotExists("POST", "/api/v1/user/create", 601L);
         createApiPermissionIfNotExists("POST", "/api/v1/user/id", 601L);

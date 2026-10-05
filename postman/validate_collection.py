@@ -10,7 +10,8 @@ manifest=json.loads((OUT/'endpoint-coverage.json').read_text(encoding='utf-8'))
 requests=[r for module in collection['item'] for group in module['item'] for r in group['item']]
 assert collection['info']['schema'].endswith('/v2.1.0/collection.json')
 assert collection['auth']['type']=='noauth'
-assert len({(r['module'],r['controller'],r['handler']) for r in manifest})==len(manifest)
+identity=lambda r:(r['module'],r['controller'],r['handler'],r['method'],r['path'],r['consumes'])
+assert len({identity(r) for r in manifest})==len(manifest)
 for module in collection['item']:
     for path in (ROOT/module['name']/'src/main/java').rglob('*Controller.java'):
         source=path.read_text(encoding='utf-8-sig')
@@ -33,7 +34,7 @@ for env_path in OUT.glob('*.postman_environment.json'):
     for item in requests:
         request=item['request']
         assert request['method'] in ('GET','POST','PUT','PATCH','DELETE','OPTIONS')
-        assert request['url']['raw'].startswith(('{{baseUrl}}/','{{catalogBaseUrl}}/'))
+        assert request['url']['raw'].startswith(('{{baseUrl}}/','{{catalogBaseUrl}}/','{{authBaseUrl}}/','{{orderBaseUrl}}/','{{inferenceBaseUrl}}/'))
         resolved=resolve(request['url']['raw'])
         assert not re.search(r'[{}]',resolved),item['name']
         for header in request['header']: resolve(header['value'])

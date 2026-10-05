@@ -5,10 +5,11 @@ Import `E-Shop-All.postman_collection.json`, then import and select one environm
 - `E-Shop-Local-Bearer.postman_environment.json` for bearer-token requests.
 - `E-Shop-Local-Cookie.postman_environment.json` for browser-style cookie requests.
 
-The collection contains **188 requests**, covering **174 current controller mappings**
-across auth, catalog, order, payment and gateway modules. It also includes the legacy
-security-filter login, six product-filter examples, gateway health/info and OpenAPI requests.
-The older root collections are retained but may contain obsolete endpoints.
+The collection contains **214 requests**, covering **190 current controller mappings**
+across auth, catalog, order, payment, AI, and notification, plus the shared audit
+search on each service. It also includes the legacy security-filter login, six
+product-filter examples, the product scanner, AI inference calls, gateway health/info,
+and OpenAPI requests. The older root collections are retained but may contain obsolete endpoints.
 
 ## Start with authentication
 
@@ -38,11 +39,13 @@ and logout requests use `refreshToken` in their JSON body instead.
 
 | Folder | Requests | Includes |
 | --- | ---: | --- |
-| auth-service | 56 | Registration, verification, bearer and cookie sessions, users, addresses, groups, permissions |
-| catalog-service | 48 | Categories, icons, subcategories, products, attributes, values, inventory |
-| order-service | 38 | Cart, orders, cancellations, returns, refunds and lifecycle actions |
+| auth-service | 57 | Registration, verification, bearer and cookie sessions, users, addresses, groups, permissions, internal notification mail |
+| catalog-service | 70 | Categories, icons, subcategories, products, attributes, values, inventory, promotions, product scanner, internal checkout and AI catalog |
+| order-service | 39 | Cart, orders, cancellations, returns, refunds, lifecycle actions, internal AI order lookup |
 | payment-service | 16 | Payments, transactions, status history and Bakong QR/status |
-| api-gateway | 13 | Dynamic route administration, fallback diagnostic, health and API specifications |
+| ai-service | 6 | AI execute and execution history, plus direct ai-inference route, vision, health, and ready |
+| notification-service | 7 | Notification list, read, unread count, and email preference |
+| api-gateway | 19 | Dynamic route administration, fallback diagnostic, health, API specifications, and audit search for every service |
 
 Gateway administration requires gatewayAdminKey to match the key stored in the
 gateway database. On startup, the gateway automatically creates the
@@ -126,9 +129,20 @@ Change the promotion dates before creating a sale; assign SKU IDs, then schedule
 Cart unit_price is now ignored. Send a stable checkout_key when retrying order creation.
 Sign in again after upgrading so the token includes the verified customer ID.
 
-Internal catalog requests use catalogBaseUrl and a separately supplied short-lived
-SERVICE_ORDER token in serviceToken. They cannot be called through the gateway with a
-normal customer/admin token. See ../PROMOTIONS.md for the lifecycle and deployment steps.
+Internal catalog requests use catalogBaseUrl (`http://localhost:8082`). Internal order
+requests use orderBaseUrl (`http://localhost:8083`). Internal auth mail uses authBaseUrl
+(`http://localhost:8081`). Put a short-lived service JWT in serviceToken. These paths are
+not on the gateway. See ../PROMOTIONS.md for promotion lifecycle and deployment steps.
+
+Shop AI requests use the gateway: `POST /api/ai/execute` and `GET /api/ai/executions/{{executionId}}`.
+Send the same `Idempotency-Key` to replay an execution. Notification requests use
+`/api/notifications`. Audit search uses `/api/admin/audit-logs/{service}` and requires
+ADMIN or AUDIT_READ. The ai-inference folder calls `inferenceBaseUrl`
+(`http://127.0.0.1:8000`) directly. Its ready request may return 503 until a provider is configured.
+
+The product scanner requests are `POST /api/v1/product-scanner/scan` and multipart
+`POST /api/v1/product-scanner/recognize`. The scan example uses barcode `8850123456787`
+and format `EAN_13`. Choose a real image file on the recognize request.
 
 
 ### Gateway admin key tests

@@ -49,6 +49,24 @@ services:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d notification_db"]
       interval: 5s
       retries: 10
+  ai-inference:
+    build:
+      context: ./ai-inference
+    ports: ["127.0.0.1:8000:8000"]
+    environment:
+      AI_PROVIDER: ${AI_PROVIDER:-OPENAI}
+      AI_REQUEST_TIMEOUT_SECONDS: ${AI_REQUEST_TIMEOUT_SECONDS:-20}
+      AI_MIN_CONFIDENCE: ${AI_MIN_CONFIDENCE:-0.70}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      LOG_LEVEL: ${AI_LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
   ai-service:
     build:
       context: .
@@ -61,12 +79,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
       EUREKA_URL: http://discovery-server:8761/eureka/
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      AI_INFERENCE_URL: http://ai-inference:8000
+      REDIS_HOST: gateway-redis
     depends_on:
       ai-db: {condition: service_healthy}
       kafka: {condition: service_healthy}
       discovery-server: {condition: service_started}
+      ai-inference: {condition: service_healthy}
+      gateway-redis: {condition: service_healthy}
     restart: unless-stopped
   notification-service:
     build:
@@ -80,15 +100,16 @@ services:
       JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
       EUREKA_URL: http://discovery-server:8761/eureka/
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      REDIS_HOST: gateway-redis
     depends_on:
       notification-db: {condition: service_healthy}
       kafka: {condition: service_healthy}
       discovery-server: {condition: service_started}
+      gateway-redis: {condition: service_healthy}
     restart: unless-stopped
-  auth-service:
+  catalog-service:
     environment:
-      MAIL_USERNAME: ${MAIL_USERNAME:-}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      SCANNER_AI_INFERENCE_URL: http://ai-inference:8000
 volumes:
   kafka_data:
   ai_db_data:

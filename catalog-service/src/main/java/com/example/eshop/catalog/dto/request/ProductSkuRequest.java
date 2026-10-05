@@ -28,13 +28,17 @@ public class ProductSkuRequest {
 
     private String description;
 
+    /** Optional retail barcode. Omitted on update leaves the stored barcode unchanged. Blank clears it. */
+    @jakarta.validation.constraints.Size(max = 64, message = "Barcode is too long")
+    private String barcode;
+
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
     private BigDecimal price;
 
 
     @NotNull(message = "Quantity is required")
-    @Positive(message = "Quantity must be positive")
+    @jakarta.validation.constraints.PositiveOrZero(message = "Quantity must be zero or positive")
     private Long quantity;
 
     @JsonProperty("low_stock_threshold")

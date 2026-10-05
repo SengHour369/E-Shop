@@ -126,7 +126,7 @@ spring:
             - id: catalog-service
               uri: lb://catalog-service
               predicates:
-                - Path=/api/v1/admin/promotions/**, /api/v1/promotions/**, /api/v1/products/**, /api/v1/categories/**, /api/v1/category-icons/**, /api/v1/subcategories/**, /api/v1/attributes/**, /api/v1/attribute-values/**, /api/v1/inventory/**
+                - Path=/api/v1/admin/promotions/**, /api/v1/promotions/**, /api/v1/products/**, /api/v1/categories/**, /api/v1/category-icons/**, /api/v1/brand-logos/**, /api/v1/subcategories/**, /api/v1/attributes/**, /api/v1/attribute-values/**, /api/v1/inventory/**, /api/v1/product-scanner/**
               filters:
                 - name: CircuitBreaker
                   args:
@@ -150,6 +150,27 @@ spring:
                   args:
                     name: paymentServiceCB
                     fallbackUri: forward:/fallback/payment
+            # Keep these paths exact. /api/v1/admin/users belongs to auth-service and
+            # /api/v1/admin/promotions belongs to catalog-service.
+            - id: admin-service
+              uri: lb://admin-service
+              predicates:
+                - Path=/api/v1/admin/session, /api/v1/admin/monitor, /api/v1/admin/settings
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: adminServiceCB
+                    fallbackUri: forward:/fallback/admin
+            - id: admin-audit-search
+              uri: lb://admin-service
+              predicates:
+                - Path=/api/admin/audit-logs/admin
+              filters:
+                - SetPath=/api/admin/audit-logs
+                - name: CircuitBreaker
+                  args:
+                    name: adminServiceCB
+                    fallbackUri: forward:/fallback/admin
 
 
             - id: auth-service-openapi
@@ -184,6 +205,14 @@ spring:
                 - SetPath=/v3/api-docs
                 - OpenApiServer
 
+            - id: admin-service-openapi
+              uri: lb://admin-service
+              predicates:
+                - Path=/openapi/admin-service
+              filters:
+                - SetPath=/v3/api-docs
+                - OpenApiServer
+
   r2dbc:
     url: ${GATEWAY_DATABASE_URL:r2dbc:postgresql://localhost:5436/gateway_db}
     username: ${GATEWAY_DATABASE_USERNAME:eshop}
@@ -195,6 +224,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      timeout: 1s
+      connect-timeout: 1s
       repositories:
         enabled: false
   sql:
@@ -276,6 +307,8 @@ springdoc:
         url: /openapi/order-service
       - name: Payments
         url: /openapi/payment-service
+      - name: Admin
+        url: /openapi/admin-service
 
 logging:
   pattern:

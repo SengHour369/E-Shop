@@ -15,6 +15,15 @@ public interface VariantAttributeRepository extends JpaRepository<VariantAttribu
     @Query("SELECT va FROM VariantAttribute va WHERE va.productSku.id = :skuId ORDER BY va.attribute.name ASC")
     List<VariantAttribute> findByProductSkuId(@Param("skuId") Long skuId);
 
+    @Query("""
+            select va from VariantAttribute va
+            join fetch va.attribute
+            join fetch va.attributeValue
+            where va.productSku.id = :skuId
+            order by va.attribute.name asc
+            """)
+    List<VariantAttribute> findDetailedByProductSkuId(@Param("skuId") Long skuId);
+
     @Query("SELECT va FROM VariantAttribute va WHERE va.productSku.id = :skuId AND va.attribute.id = :attributeId")
     Optional<VariantAttribute> findByProductSkuIdAndAttributeId(@Param("skuId") Long skuId, @Param("attributeId") Long attributeId);
 

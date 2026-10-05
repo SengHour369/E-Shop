@@ -6,7 +6,17 @@ from collections import OrderedDict
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'postman'
-MODULES = ['auth-service', 'catalog-service', 'order-service', 'payment-service', 'api-gateway']
+MODULES = ['auth-service', 'catalog-service', 'order-service', 'payment-service',
+          'ai-service', 'notification-service', 'api-gateway']
+OPENAPI = ['auth-service', 'catalog-service', 'order-service', 'payment-service']
+INTERNAL_BASE = {
+    'auth-service': ('authBaseUrl', 'http://localhost:8081'),
+    'catalog-service': ('catalogBaseUrl', 'http://localhost:8082'),
+    'order-service': ('orderBaseUrl', 'http://localhost:8083'),
+    'payment-service': ('paymentBaseUrl', 'http://localhost:8084'),
+    'ai-service': ('aiBaseUrl', 'http://localhost:8085'),
+    'notification-service': ('notificationBaseUrl', 'http://localhost:8086'),
+}
 
 def clean(text):
     return re.sub(r'"(?:\\.|[^"\\])*"|/\*[\s\S]*?\*/|//[^\n]*',
@@ -68,7 +78,8 @@ id_names = {'Product':'productId','Category':'categoryId','CategoryIcon':'iconId
             'Group':'groupId','FunctionPermission':'funcId','UserPermission':'userPermissionId',
             'GroupPermission':'groupPermissionId','UserGroup':'userGroupId',
             'Order':'orderId','Payment':'paymentId','PaymentTransaction':'transactionId',
-            'GatewayRoute':'routeId','PromotionAdmin':'promotionId','Promotion':'promotionId'}
+            'GatewayRoute':'routeId','PromotionAdmin':'promotionId','Promotion':'promotionId',
+            'Ai':'executionId'}
 
 def var(name, default='1'):
     variables.setdefault(name, default)
@@ -76,11 +87,24 @@ def var(name, default='1'):
 
 def scalar(name, typ='String', group=''):
     if '_' in name: name = re.sub(r'_([a-z])', lambda m:m[1].upper(), name)
+    if name == 'id' and group == 'Ai':
+        return var('executionId', '20000000-0000-4000-8000-000000000099')
     if name == 'id': return var(id_names.get(group, 'id'))
     if name in ('productSkuId', 'skuId'): return var('skuId')
     if name in ('customerId',): return var('userId')
+    if typ == 'UUID':
+        samples = {'eventId':'20000000-0000-4000-8000-000000000001',
+                   'aiExecutionId':'20000000-0000-4000-8000-000000000002'}
+        return var(name, samples.get(name, '20000000-0000-4000-8000-000000000099'))
+    if name == 'requestId': return 'req_example'
+    if name == 'traceId': return '0123456789abcdef0123456789abcdef'
+    if name == 'spanId': return '0123456789abcdef'
     if name.endswith('Id') or name.endswith('Ids'):
         return var(name)
+    if typ == 'Instant': return '2026-10-04T09:00:00Z'
+    if name == 'message': return 'Show my latest order'
+    if name == 'resourceType': return 'PROMOTION'
+    if group == 'AiOrder' and name == 'number': return var('orderNumber', '')
     if name in ('username','CriteriaValue'): return var('username', 'demo@example.test')
     if name.lower() == 'password': return var('password', '')
     if name == 'email': return var('email', 'demo@example.test')
@@ -117,7 +141,25 @@ def scalar(name, typ='String', group=''):
 
 sources = {}
 for module in MODULES:
-    sources[module] = {p.stem:p for p in (ROOT/module/'src/main/java').rglob('*.java')}
+    java = ROOT/module/'src/main/java'
+    sources[module] = {p.stem:p for p in java.rglob('*.java')} if java.exists() else {}
+common_sources = {p.stem:p for p in (ROOT/'common-lib'/'src/main/java').rglob('*.java')}
+file_text = {}
+
+def read_java(path):
+    if path not in file_text:
+        file_text[path] = clean(path.read_text(encoding='utf-8-sig'))
+    return file_text[path]
+
+type_index = {}
+for bucket in [common_sources, *sources.values()]:
+    for stem, path in bucket.items():
+        type_index.setdefault(stem, read_java(path))
+for bucket in [common_sources, *sources.values()]:
+    for path in bucket.values():
+        text = read_java(path)
+        for name in re.findall(r'\b(?:record|enum|class)\s+(\w+)', text):
+            type_index.setdefault(name, text)
 
 def dto(typ, module, depth=0):
     typ = typ.strip()
@@ -125,9 +167,8 @@ def dto(typ, module, depth=0):
         return {'orderId':var('orderId'), 'userId':var('userId'), 'items':[{'productSkuId':var('skuId'),'quantity':2}]}
     if depth > 5: raise ValueError('Recursive DTO: ' + typ)
     if typ.startswith(('List<','Set<')): return [dto(typ[typ.index('<')+1:-1], module, depth+1)]
-    path = sources[module].get(typ)
-    if not path: raise ValueError('Missing DTO: ' + module + '/' + typ)
-    text = clean(path.read_text(encoding='utf-8-sig'))
+    text = type_index.get(typ)
+    if not text: raise ValueError('Missing DTO: ' + module + '/' + typ)
     record = re.search(r'\brecord\s+' + typ + r'\s*\(', text)
     if record:
         chunks = split(balanced(text, record.end()-1)[0])
@@ -147,12 +188,14 @@ def dto(typ, module, depth=0):
         elif field_type in sources[module] and ('Request' in field_type or 'DTO' in field_type):
             val = dto(field_type,module,depth+1)
         else: val = scalar(name,field_type)
-        if field_type in sources[module]:
-            enum_text=clean(sources[module][field_type].read_text(encoding='utf-8-sig'))
-            enum_match=re.search(r'\benum\s+\w+\s*\{([^;}]+)[;}]',enum_text,re.S)
+        enum_text = type_index.get(field_type.split('.')[-1])
+        if enum_text:
+            enum_match=re.search(r'\benum\s+' + re.escape(field_type.split('.')[-1]) + r'\s*\{([^;}]+)[;}]',enum_text,re.S)
             if enum_match:
                 choices=re.findall(r'\b[A-Z][A-Z_0-9]*\b',enum_match[1])
                 if val not in choices: val='BAKONG' if 'BAKONG' in choices else choices[0]
+        if typ == 'ScanRequest' and name == 'code': val = '8850123456787'
+        if typ == 'DraftPromotion' and name == 'discount': val = 20
         if name == 'productSkuId' and typ == 'ProductSkuRequest': val = None
         if name == 'id' and typ in ('ProductAttributeRequest','ProductAttributeValueRequest'): val = None
         if typ == 'ProductSkuRequest' and name == 'OperatorProductAttribute': val = True
@@ -163,7 +206,7 @@ def dto(typ, module, depth=0):
             if name == 'discountValue': val = 20
             if name in ('maxDiscountAmount','minimumOrderAmount','usageLimit','usagePerCustomer'): val = None
         result[key] = val
-    if not result: raise ValueError('Empty DTO: ' + str(path))
+    if not result: raise ValueError('Empty DTO: ' + typ)
     return result
 
 def json_body(value):
@@ -173,7 +216,7 @@ def request_item(name, method, path, module, group, parameters='', source='', co
     headers, query, form, body, notes = [], [], [], None, []
     for param in split(parameters):
         bare = unannotated(param).strip()
-        match = re.search(r'([\w]+(?:<[^>]+>)?)\s+(\w+)\s*$', bare)
+        match = re.search(r'([\w.]+(?:<[^<>]+>)?)\s+(\w+)\s*$', bare)
         if not match: continue
         typ, java_name = match.groups()
         if typ == 'Pageable':
@@ -201,14 +244,26 @@ def request_item(name, method, path, module, group, parameters='', source='', co
                 path = path.replace('{'+key+'}', str(value))
             elif kind == 'RequestHeader':
                 if key == 'X-Gateway-Admin-Key': headers.append({'key':key,'value':var('gatewayAdminKey','')})
-            elif 'MultipartFile' in typ:
-                form.append({'key':key,'type':'file','src':[], 'disabled':optional,
-                             'description':'Select a local file in Postman. Repeated keys support multiple files.'})
+                elif key == 'Idempotency-Key':
+                    headers.append({'key':key,'value':var('idempotencyKey','20000000-0000-4000-8000-000000000099'),
+                                    'disabled':True,'description':'Optional UUID. Send the same value to replay an AI execution.'})
             else:
-                field = {'key':key, 'value':str(value).lower() if isinstance(value,bool) else str(value or ''), 'disabled':optional and not default}
-                if 'MULTIPART' in consumes:
-                    field['type']='text'; form.append(field)
-                else: query.append(field)
+                if kind == 'RequestParam':
+                    simple = typ.split('.')[-1]
+                    enum_text = type_index.get(simple)
+                    if enum_text:
+                        enum_match=re.search(r'\benum\s+' + re.escape(simple) + r'\s*\{([^;}]+)[;}]',enum_text,re.S)
+                        if enum_match:
+                            choices=re.findall(r'\b[A-Z][A-Z_0-9]*\b',enum_match[1])
+                            if choices and str(value) not in choices: value = choices[0]
+                if 'MultipartFile' in typ:
+                    form.append({'key':key,'type':'file','src':[], 'disabled':optional,
+                                 'description':'Select a local file in Postman. Repeated keys support multiple files.'})
+                else:
+                    field = {'key':key, 'value':str(value).lower() if isinstance(value,bool) else str(value or ''), 'disabled':optional and not default}
+                    if 'MULTIPART' in consumes:
+                        field['type']='text'; form.append(field)
+                    else: query.append(field)
             break
     if form:
         body={'mode':'formdata','formdata':form}
@@ -228,10 +283,15 @@ def request_item(name, method, path, module, group, parameters='', source='', co
     if group=='User':
         for field in query:
             if field['key']=='status': field['value']='ACT'
-    base = var('catalogBaseUrl','http://localhost:8082') if path.startswith('/internal/') else '{{baseUrl}}'
+    if group == 'AiCatalog' and '{{id}}' in path:
+        path = path.replace('{{id}}', var('skuId') if '/skus/' in path else var('productId'))
     if path.startswith('/internal/'):
+        key, default = INTERNAL_BASE[module]
+        base = var(key, default)
         var('serviceToken','')
-        notes.append('Internal service endpoint. Requires a short-lived SERVICE_ORDER token in serviceToken. Not exposed by the gateway.')
+        notes.append('Internal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path.')
+    else:
+        base = '{{baseUrl}}'
     raw = base+path
     enabled = [q for q in query if not q.get('disabled')]
     if enabled: raw+='?'+'&'.join(q['key']+'='+q['value'] for q in enabled)
@@ -272,7 +332,11 @@ for module in MODULES:
             item=request_item(display,method,route,module,group,params,src,args)
             if group=='Fallback':
                 item['request']['url']={'raw':'{{baseUrl}}/fallback/catalog','host':['{{baseUrl}}'],'path':['fallback','catalog']}
-            folders[module].setdefault(group,[]).append(item)
+            existing=folders[module].setdefault(group,[])
+            if any(i['name']==display for i in existing):
+                display=f'{display} ({method})'
+                item['name']=display
+            existing.append(item)
             manifest.append({'module':module,'controller':path.stem,'handler':method_name,'method':method,'path':route,
                              'consumes':'multipart' if 'MULTIPART' in args else 'json' if 'APPLICATION_JSON' in args else '',
                              'request':display})
@@ -288,15 +352,20 @@ prerequest = """const mode = pm.environment.get('authMode') || 'bearer';
 const url = pm.variables.replaceIn(pm.request.url.toString()).split('?')[0];
 pm.request.headers.remove('Authorization');
 pm.request.headers.upsert({key: 'Origin', value: pm.environment.get('origin') || 'http://localhost:5173'});
-if (url.includes('/internal/catalog/')) {
+const inferenceBase = pm.environment.get('inferenceBaseUrl') || 'http://127.0.0.1:8000';
+if (url.startsWith(inferenceBase)) {
+  // ai-inference is called only by shop services and does not accept a shop token.
+} else if (url.includes('/internal/')) {
   const token = pm.environment.get('serviceToken');
   if (token) pm.request.headers.upsert({key:'Authorization', value:'Bearer ' + token});
-}
-const publicPath = url.includes('/api/v1/public/') && !url.endsWith('/public/logout');
-const adminPath = url.includes('/api/v1/gateway/routes');
-if (mode === 'bearer' && url.includes('/api/v1/') && !publicPath && !adminPath && !url.endsWith('/api/v1/auth')) {
-  const token = pm.environment.get('accessToken');
-  if (token) pm.request.headers.upsert({key:'Authorization', value:'Bearer ' + token});
+} else {
+  const publicPath = url.includes('/api/v1/public/') && !url.endsWith('/public/logout');
+  const adminPath = url.includes('/api/v1/gateway/routes');
+  const shopApi = url.includes('/api/v1/') || url.includes('/api/ai') || url.includes('/api/notifications') || url.includes('/api/admin/');
+  if (mode === 'bearer' && shopApi && !publicPath && !adminPath && !url.endsWith('/api/v1/auth')) {
+    const token = pm.environment.get('accessToken');
+    if (token) pm.request.headers.upsert({key:'Authorization', value:'Bearer ' + token});
+  }
 }"""
 tests = """pm.test('HTTP request succeeded', () => pm.expect(pm.response.code).to.be.within(200, 299));
 const url = pm.variables.replaceIn(pm.request.url.toString()).split('?')[0];
@@ -334,8 +403,45 @@ for name,kind,value in [('Active products',4,None),('Search products by name',1,
 ops=[]
 for name,path in [('Gateway health','/actuator/health'),('Gateway info','/actuator/info'),('Gateway OpenAPI','/v3/api-docs')]:
     ops.append(request_item(name,'GET',path,'api-gateway','Operations'))
-for service in MODULES[:-1]: ops.append(request_item(service+' OpenAPI','GET','/openapi/'+service,'api-gateway','Operations'))
+for service in OPENAPI: ops.append(request_item(service+' OpenAPI','GET','/openapi/'+service,'api-gateway','Operations'))
 folders['api-gateway']['Operations']=ops
+audit_params = '''
+@RequestParam(required=false) String requestId, @RequestParam(required=false) String traceId,
+@RequestParam(required=false) String actorId, @RequestParam(required=false) String actorType,
+@RequestParam(required=false) String action, @RequestParam(required=false) String resourceType,
+@RequestParam(required=false) String resourceId, @RequestParam(required=false) String result,
+@RequestParam(required=false) String serviceName, @RequestParam(required=false) Instant from,
+@RequestParam(required=false) Instant to, @RequestParam(defaultValue="1") int page,
+@RequestParam(defaultValue="20") int size, @RequestParam(defaultValue="occurredAt") String sort,
+@RequestParam(defaultValue="DESC") String direction'''
+for service in ('auth','catalog','order','payment','ai','notification'):
+    item=request_item('Search '+service+' audit logs','GET','/api/admin/audit-logs/'+service,
+                      'api-gateway','AuditLog',audit_params,'common-lib/.../AuditLogController.java — search')
+    item['request']['description'] += ('\n\nThe gateway rewrites this path to '+service+
+        '-service GET /api/admin/audit-logs. The caller needs ADMIN or AUDIT_READ.')
+    folders['api-gateway'].setdefault('Audit logs',[]).append(item)
+manifest.append({'module':'common-lib','controller':'AuditLogController','handler':'search','method':'GET',
+                 'path':'/api/admin/audit-logs','consumes':'','request':'Search audit logs'})
+
+def inference_item(name, method, path, body=None, note=''):
+    base=var('inferenceBaseUrl','http://127.0.0.1:8000')
+    item={'name':name,'request':{'method':method,'header':[{'key':'X-Request-ID','value':'req_inference'}],
+        'url':{'raw':base+path,'host':[base],'path':[p for p in path.split('/') if p]},
+        'description':'ai-inference direct call on '+base+'. The gateway does not route this path. '+note},
+        'response':[]}
+    if body is not None:
+        item['request']['header'].insert(0,{'key':'Content-Type','value':'application/json'})
+        item['request']['body']=json_body(body)
+    return item
+folders['ai-service']['Inference']=[
+    inference_item('Route intent','POST','/api/v1/ai/route',
+        {'message':'Show my latest order','tools':[{'name':'ORDER_GET','description':'Read one order owned by the signed-in customer','parameters':{'number':'string'}}]},
+        'Spring Boot normally sends the allowed tools. This service never calls catalog or order itself.'),
+    inference_item('Recognize product image','POST','/api/v1/ai/vision/products',
+        {'mediaType':'image/png','imageBase64':'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='},
+        'Returns candidate product names. It does not choose a catalog id.'),
+    inference_item('Health','GET','/health',note='Process is up.'),
+    inference_item('Ready','GET','/ready',note='200 when a provider is configured, 503 NOT_READY otherwise.')]
 collection={'info':{'name':'E-Shop — All Microservices','schema':'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
                    'description':'Generated from current controllers and DTOs. Import one supplied environment. Start with Login or Session. See postman/README.md for cookie setup, IDs, files, lifecycle requests and known backend issues. Nothing in this collection has been sent automatically.'},
             'auth':{'type':'noauth'},
@@ -343,7 +449,7 @@ collection={'info':{'name':'E-Shop — All Microservices','schema':'https://sche
                      {'listen':'test','script':{'type':'text/javascript','exec':tests.splitlines()}}],
             'item':[{'name':module,'item':[{'name':group,'item':items} for group,items in groups.items()]} for module,groups in folders.items()]}
 # Fallback intentionally returns 503; override the normal success assertion for this diagnostic.
-collection['event'][1]['script']['exec'][0]="pm.test('Expected HTTP status', () => { const fallback = pm.request.url.toString().includes('/fallback/'); if (fallback) pm.expect(pm.response.code).to.equal(503); else pm.expect(pm.response.code).to.be.within(200, 299); });"
+collection['event'][1]['script']['exec'][0]="pm.test('Expected HTTP status', () => { const url = pm.variables.replaceIn(pm.request.url.toString()).split('?')[0]; if (url.includes('/fallback/')) pm.expect(pm.response.code).to.equal(503); else if (url.endsWith('/ready')) pm.expect(pm.response.code).to.be.oneOf([200, 503]); else pm.expect(pm.response.code).to.be.within(200, 299); });"
 
 OUT.mkdir(exist_ok=True)
 def write(name,value): (OUT/name).write_text(json.dumps(value,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')

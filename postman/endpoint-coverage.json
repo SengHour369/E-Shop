@@ -199,6 +199,15 @@
   },
   {
     "module": "auth-service",
+    "controller": "InternalNotificationController",
+    "handler": "email",
+    "method": "POST",
+    "path": "/internal/notifications/email",
+    "consumes": "",
+    "request": "Email"
+  },
+  {
+    "module": "auth-service",
     "controller": "LoginController",
     "handler": "register",
     "method": "POST",
@@ -493,6 +502,33 @@
     "path": "/api/v1/user-permissions/delete/",
     "consumes": "",
     "request": "Delete user permission"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "AiCatalogController",
+    "handler": "product",
+    "method": "GET",
+    "path": "/internal/ai/products/{id}",
+    "consumes": "",
+    "request": "Product"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "AiCatalogController",
+    "handler": "sku",
+    "method": "GET",
+    "path": "/internal/ai/skus/{id}",
+    "consumes": "",
+    "request": "Sku"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "AiCatalogController",
+    "handler": "create",
+    "method": "POST",
+    "path": "/internal/ai/promotions",
+    "consumes": "",
+    "request": "Create"
   },
   {
     "module": "catalog-service",
@@ -874,6 +910,24 @@
   },
   {
     "module": "catalog-service",
+    "controller": "ProductScannerController",
+    "handler": "scan",
+    "method": "POST",
+    "path": "/api/v1/product-scanner/scan",
+    "consumes": "",
+    "request": "Scan"
+  },
+  {
+    "module": "catalog-service",
+    "controller": "ProductScannerController",
+    "handler": "recognize",
+    "method": "POST",
+    "path": "/api/v1/product-scanner/recognize",
+    "consumes": "multipart",
+    "request": "Recognize (multipart)"
+  },
+  {
+    "module": "catalog-service",
     "controller": "PromotionAdminController",
     "handler": "create",
     "method": "POST",
@@ -1024,6 +1078,15 @@
     "path": "/api/v1/subcategories/delete/",
     "consumes": "",
     "request": "Delete sub category"
+  },
+  {
+    "module": "order-service",
+    "controller": "AiOrderController",
+    "handler": "get",
+    "method": "GET",
+    "path": "/internal/ai/orders/{number}",
+    "consumes": "",
+    "request": "Get"
   },
   {
     "module": "order-service",
@@ -1512,6 +1575,87 @@
     "request": "Update transaction status"
   },
   {
+    "module": "ai-service",
+    "controller": "AiController",
+    "handler": "execute",
+    "method": "POST",
+    "path": "/api/ai/execute",
+    "consumes": "",
+    "request": "Execute"
+  },
+  {
+    "module": "ai-service",
+    "controller": "AiController",
+    "handler": "execution",
+    "method": "GET",
+    "path": "/api/ai/executions/{id}",
+    "consumes": "",
+    "request": "Execution"
+  },
+  {
+    "module": "notification-service",
+    "controller": "NotificationController",
+    "handler": "list",
+    "method": "GET",
+    "path": "/api/notifications",
+    "consumes": "",
+    "request": "List"
+  },
+  {
+    "module": "notification-service",
+    "controller": "NotificationController",
+    "handler": "get",
+    "method": "GET",
+    "path": "/api/notifications/{id}",
+    "consumes": "",
+    "request": "Get"
+  },
+  {
+    "module": "notification-service",
+    "controller": "NotificationController",
+    "handler": "count",
+    "method": "GET",
+    "path": "/api/notifications/unread-count",
+    "consumes": "",
+    "request": "Count"
+  },
+  {
+    "module": "notification-service",
+    "controller": "NotificationController",
+    "handler": "read",
+    "method": "PATCH",
+    "path": "/api/notifications/{id}/read",
+    "consumes": "",
+    "request": "Read"
+  },
+  {
+    "module": "notification-service",
+    "controller": "NotificationController",
+    "handler": "readAll",
+    "method": "PATCH",
+    "path": "/api/notifications/read-all",
+    "consumes": "",
+    "request": "Read all"
+  },
+  {
+    "module": "notification-service",
+    "controller": "NotificationController",
+    "handler": "preferences",
+    "method": "GET",
+    "path": "/api/notifications/preferences",
+    "consumes": "",
+    "request": "Preferences"
+  },
+  {
+    "module": "notification-service",
+    "controller": "NotificationController",
+    "handler": "preferences",
+    "method": "PATCH",
+    "path": "/api/notifications/preferences",
+    "consumes": "",
+    "request": "Preferences (PATCH)"
+  },
+  {
     "module": "api-gateway",
     "controller": "FallbackController",
     "handler": "fallback",
@@ -1564,5 +1708,14 @@
     "path": "/api/v1/gateway/routes/refresh",
     "consumes": "",
     "request": "Refresh"
+  },
+  {
+    "module": "common-lib",
+    "controller": "AuditLogController",
+    "handler": "search",
+    "method": "GET",
+    "path": "/api/admin/audit-logs",
+    "consumes": "",
+    "request": "Search audit logs"
   }
 ]

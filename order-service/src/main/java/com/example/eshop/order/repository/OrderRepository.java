@@ -14,6 +14,34 @@ import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<OrderDetail, Long> {
+
+    @Query("""
+            select new com.example.eshop.order.dto.response.DailyReportResponse(
+                year(e.orderDate), month(e.orderDate), day(e.orderDate), count(e))
+            from OrderDetail e
+            where (e.deleted = false or e.deleted is null)
+              and e.orderDate >= :start and e.orderDate < :end
+              and e.status <> 'CHECKOUT_PENDING'
+            group by year(e.orderDate), month(e.orderDate), day(e.orderDate)
+            order by year(e.orderDate), month(e.orderDate), day(e.orderDate)
+            """)
+    List<com.example.eshop.order.dto.response.DailyReportResponse> dailyReport(
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+
+    @Query("""
+            select new com.example.eshop.order.dto.response.MonthlyReportResponse(
+                month(e.orderDate), count(e), sum(e.totalAmount), 'USD')
+            from OrderDetail e
+            where (e.deleted = false or e.deleted is null)
+              and e.orderDate >= :start and e.orderDate < :end
+              and e.status not in ('CANCELLED', 'FAILED', 'REFUNDED', 'CHECKOUT_PENDING')
+            group by month(e.orderDate)
+            order by month(e.orderDate)
+            """)
+    List<com.example.eshop.order.dto.response.MonthlyReportResponse> monthlyReport(
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
     Optional<OrderDetail> findByUserIdAndCheckoutKey(Long userId, String checkoutKey);
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from OrderDetail o where o.id = :id")

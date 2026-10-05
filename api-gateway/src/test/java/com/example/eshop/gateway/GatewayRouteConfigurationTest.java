@@ -25,12 +25,22 @@ class GatewayRouteConfigurationTest {
   @Test void routesMatchEshopControllersAndPreservePaths() {
     var routes = definitions.getRouteDefinitions().collectList().block().stream()
         .collect(Collectors.toMap(route -> route.getId(), Function.identity()));
-    assertThat(routes).containsKeys("auth-service", "catalog-service", "order-service", "payment-service");
+    assertThat(routes).containsKeys("auth-service", "catalog-service", "order-service", "payment-service", "admin-service");
+    assertThat(routes.get("admin-service").getUri().toString()).isEqualTo("lb://admin-service");
+    assertThat(routes.get("admin-service").getPredicates().get(0).getArgs().values())
+        .anyMatch(value -> value.contains("/api/v1/admin/session"))
+        .anyMatch(value -> value.contains("/api/v1/admin/monitor"))
+        .noneMatch(value -> value.contains("/api/v1/admin/**"));
+    assertThat(routes.values()).allSatisfy(route ->
+        assertThat(route.getPredicates()).allSatisfy(predicate ->
+            assertThat(predicate.getArgs().values()).noneMatch(value -> value.contains("/actuator"))));
     assertThat(routes.get("auth-service").getPredicates().get(0).getArgs().values())
         .anyMatch(value -> value.contains("/api/v1/public/**"))
         .anyMatch(value -> value.contains("/api/v1/user-permissions/**"));
     assertThat(routes.get("catalog-service").getPredicates().get(0).getArgs().values())
-        .anyMatch(value -> value.contains("/api/v1/category-icons/**"));
+        .anyMatch(value -> value.contains("/api/v1/category-icons/**"))
+        .anyMatch(value -> value.contains("/api/v1/brand-logos/**"))
+        .anyMatch(value -> value.contains("/api/v1/product-scanner/**"));
     assertThat(routes.values().stream().filter(route -> !route.getId().endsWith("-openapi")))
         .allSatisfy(route -> {
           assertThat(route.getFilters()).anyMatch(filter -> filter.getName().equals("CircuitBreaker"));

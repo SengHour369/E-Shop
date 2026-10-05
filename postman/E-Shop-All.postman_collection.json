@@ -17,15 +17,20 @@
           "const url = pm.variables.replaceIn(pm.request.url.toString()).split('?')[0];",
           "pm.request.headers.remove('Authorization');",
           "pm.request.headers.upsert({key: 'Origin', value: pm.environment.get('origin') || 'http://localhost:5173'});",
-          "if (url.includes('/internal/catalog/')) {",
+          "const inferenceBase = pm.environment.get('inferenceBaseUrl') || 'http://127.0.0.1:8000';",
+          "if (url.startsWith(inferenceBase)) {",
+          "  // ai-inference is called only by shop services and does not accept a shop token.",
+          "} else if (url.includes('/internal/')) {",
           "  const token = pm.environment.get('serviceToken');",
           "  if (token) pm.request.headers.upsert({key:'Authorization', value:'Bearer ' + token});",
-          "}",
-          "const publicPath = url.includes('/api/v1/public/') && !url.endsWith('/public/logout');",
-          "const adminPath = url.includes('/api/v1/gateway/routes');",
-          "if (mode === 'bearer' && url.includes('/api/v1/') && !publicPath && !adminPath && !url.endsWith('/api/v1/auth')) {",
-          "  const token = pm.environment.get('accessToken');",
-          "  if (token) pm.request.headers.upsert({key:'Authorization', value:'Bearer ' + token});",
+          "} else {",
+          "  const publicPath = url.includes('/api/v1/public/') && !url.endsWith('/public/logout');",
+          "  const adminPath = url.includes('/api/v1/gateway/routes');",
+          "  const shopApi = url.includes('/api/v1/') || url.includes('/api/ai') || url.includes('/api/notifications') || url.includes('/api/admin/');",
+          "  if (mode === 'bearer' && shopApi && !publicPath && !adminPath && !url.endsWith('/api/v1/auth')) {",
+          "    const token = pm.environment.get('accessToken');",
+          "    if (token) pm.request.headers.upsert({key:'Authorization', value:'Bearer ' + token});",
+          "  }",
           "}"
         ]
       }
@@ -35,7 +40,7 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "pm.test('Expected HTTP status', () => { const fallback = pm.request.url.toString().includes('/fallback/'); if (fallback) pm.expect(pm.response.code).to.equal(503); else pm.expect(pm.response.code).to.be.within(200, 299); });",
+          "pm.test('Expected HTTP status', () => { const url = pm.variables.replaceIn(pm.request.url.toString()).split('?')[0]; if (url.includes('/fallback/')) pm.expect(pm.response.code).to.equal(503); else if (url.endsWith('/ready')) pm.expect(pm.response.code).to.be.oneOf([200, 503]); else pm.expect(pm.response.code).to.be.within(200, 299); });",
           "const url = pm.variables.replaceIn(pm.request.url.toString()).split('?')[0];",
           "if (pm.response.code >= 200 && pm.response.code < 300) {",
           "  let data; try { data = pm.response.json(); } catch (_) {}",
@@ -782,6 +787,45 @@
                   ]
                 },
                 "description": "auth-service: auth-service/src/main/java/com/example/eshop/auth/controller/GroupPermissionController.java — deleteGroupPermission"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "InternalNotification",
+          "item": [
+            {
+              "name": "Email",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{authBaseUrl}}/internal/notifications/email",
+                  "host": [
+                    "{{authBaseUrl}}"
+                  ],
+                  "path": [
+                    "internal",
+                    "notifications",
+                    "email"
+                  ]
+                },
+                "description": "auth-service: auth-service/src/main/java/com/example/eshop/auth/controller/InternalNotificationController.java — email\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"version\": 1,\n  \"eventId\": \"{{eventId}}\",\n  \"requestId\": \"req_example\",\n  \"traceId\": \"0123456789abcdef0123456789abcdef\",\n  \"spanId\": \"0123456789abcdef\",\n  \"aiExecutionId\": \"{{aiExecutionId}}\",\n  \"userId\": \"{{userId}}\",\n  \"type\": \"AI_ACTION_COMPLETED\",\n  \"resourceType\": \"PROMOTION\",\n  \"resourceId\": \"{{resourceId}}\",\n  \"occurredAt\": \"2026-10-04T09:00:00Z\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
               },
               "response": []
             }
@@ -1921,6 +1965,87 @@
       "name": "catalog-service",
       "item": [
         {
+          "name": "AiCatalog",
+          "item": [
+            {
+              "name": "Product",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogBaseUrl}}/internal/ai/products/{{productId}}",
+                  "host": [
+                    "{{catalogBaseUrl}}"
+                  ],
+                  "path": [
+                    "internal",
+                    "ai",
+                    "products",
+                    "{{productId}}"
+                  ]
+                },
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/AiCatalogController.java — product\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path."
+              },
+              "response": []
+            },
+            {
+              "name": "Sku",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogBaseUrl}}/internal/ai/skus/{{skuId}}",
+                  "host": [
+                    "{{catalogBaseUrl}}"
+                  ],
+                  "path": [
+                    "internal",
+                    "ai",
+                    "skus",
+                    "{{skuId}}"
+                  ]
+                },
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/AiCatalogController.java — sku\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path."
+              },
+              "response": []
+            },
+            {
+              "name": "Create",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{catalogBaseUrl}}/internal/ai/promotions",
+                  "host": [
+                    "{{catalogBaseUrl}}"
+                  ],
+                  "path": [
+                    "internal",
+                    "ai",
+                    "promotions"
+                  ]
+                },
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/AiCatalogController.java — create\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"skuId\": \"{{skuId}}\",\n  \"name\": \"Example name\",\n  \"discount\": 20,\n  \"startAt\": \"2026-10-02T00:00:00\",\n  \"endAt\": \"2026-10-05T00:00:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "CatalogCheckout",
           "item": [
             {
@@ -1945,7 +2070,7 @@
                     "quote"
                   ]
                 },
-                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — quote\n\nInternal service endpoint. Requires a short-lived SERVICE_ORDER token in serviceToken. Not exposed by the gateway.",
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — quote\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"userId\": \"{{userId}}\",\n  \"items\": [\n    {\n      \"productSkuId\": \"{{skuId}}\",\n      \"quantity\": 2\n    }\n  ]\n}",
@@ -1979,7 +2104,7 @@
                     "checkouts"
                   ]
                 },
-                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — reserve\n\nInternal service endpoint. Requires a short-lived SERVICE_ORDER token in serviceToken. Not exposed by the gateway.",
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — reserve\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"userId\": \"{{userId}}\",\n  \"items\": [\n    {\n      \"productSkuId\": \"{{skuId}}\",\n      \"quantity\": 2\n    }\n  ]\n}",
@@ -2010,7 +2135,7 @@
                     "confirm"
                   ]
                 },
-                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — confirm\n\nInternal service endpoint. Requires a short-lived SERVICE_ORDER token in serviceToken. Not exposed by the gateway."
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — confirm\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path."
               },
               "response": []
             },
@@ -2032,7 +2157,7 @@
                     "release"
                   ]
                 },
-                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — release\n\nInternal service endpoint. Requires a short-lived SERVICE_ORDER token in serviceToken. Not exposed by the gateway."
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/CatalogCheckoutController.java — release\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path."
               },
               "response": []
             }
@@ -3151,7 +3276,7 @@
                     },
                     {
                       "key": "skus",
-                      "value": "[{\"productSkuId\": null, \"description\": \"Example description\", \"price\": 19.99, \"quantity\": 2, \"low_stock_threshold\": 5, \"is_default\": true, \"OperatorProductAttribute\": true, \"inventory\": {\"quantity\": 2, \"lowStockThreshold\": 5, \"warehouse_location\": \"Warehouse A\"}, \"product_attributes\": [{\"id\": null, \"name\": \"Example name\", \"attributes\": [{\"id\": null, \"value\": \"Blue\"}]}]}]",
+                      "value": "[{\"productSkuId\": null, \"description\": \"Example description\", \"barcode\": \"Example barcode\", \"price\": 19.99, \"quantity\": 2, \"low_stock_threshold\": 5, \"is_default\": true, \"OperatorProductAttribute\": true, \"inventory\": {\"quantity\": 2, \"lowStockThreshold\": 5, \"warehouse_location\": \"Warehouse A\"}, \"product_attributes\": [{\"id\": null, \"name\": \"Example name\", \"attributes\": [{\"id\": null, \"value\": \"Blue\"}]}]}]",
                       "disabled": false,
                       "type": "text"
                     },
@@ -3228,7 +3353,7 @@
                     },
                     {
                       "key": "skus",
-                      "value": "[{\"productSkuId\": \"{{skuId}}\", \"description\": \"Example description\", \"price\": 19.99, \"quantity\": 2, \"low_stock_threshold\": 5, \"is_default\": true, \"OperatorProductAttribute\": true, \"inventory\": {\"quantity\": 2, \"lowStockThreshold\": 5, \"warehouse_location\": \"Warehouse A\"}, \"product_attributes\": []}]",
+                      "value": "[{\"productSkuId\": \"{{skuId}}\", \"description\": \"Example description\", \"barcode\": \"Example barcode\", \"price\": 19.99, \"quantity\": 2, \"low_stock_threshold\": 5, \"is_default\": true, \"OperatorProductAttribute\": true, \"inventory\": {\"quantity\": 2, \"lowStockThreshold\": 5, \"warehouse_location\": \"Warehouse A\"}, \"product_attributes\": []}]",
                       "disabled": false,
                       "type": "text"
                     },
@@ -3284,7 +3409,7 @@
                 "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/ProductController.java — updateProductJson",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Example name\",\n  \"description\": \"Example description\",\n  \"is_active\": true,\n  \"sub_category_id\": \"{{subCategoryId}}\",\n  \"skus\": [\n    {\n      \"productSkuId\": \"{{skuId}}\",\n      \"description\": \"Example description\",\n      \"price\": 19.99,\n      \"quantity\": 2,\n      \"low_stock_threshold\": 5,\n      \"is_default\": true,\n      \"OperatorProductAttribute\": true,\n      \"inventory\": {\n        \"quantity\": 2,\n        \"lowStockThreshold\": 5,\n        \"warehouse_location\": \"Warehouse A\"\n      },\n      \"product_attributes\": []\n    }\n  ]\n}",
+                  "raw": "{\n  \"name\": \"Example name\",\n  \"description\": \"Example description\",\n  \"is_active\": true,\n  \"sub_category_id\": \"{{subCategoryId}}\",\n  \"skus\": [\n    {\n      \"productSkuId\": \"{{skuId}}\",\n      \"description\": \"Example description\",\n      \"barcode\": \"Example barcode\",\n      \"price\": 19.99,\n      \"quantity\": 2,\n      \"low_stock_threshold\": 5,\n      \"is_default\": true,\n      \"OperatorProductAttribute\": true,\n      \"inventory\": {\n        \"quantity\": 2,\n        \"lowStockThreshold\": 5,\n        \"warehouse_location\": \"Warehouse A\"\n      },\n      \"product_attributes\": []\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3577,6 +3702,79 @@
           ]
         },
         {
+          "name": "ProductScanner",
+          "item": [
+            {
+              "name": "Scan",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/product-scanner/scan",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "product-scanner",
+                    "scan"
+                  ]
+                },
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/ProductScannerController.java — scan",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"8850123456787\",\n  \"format\": \"EAN_13\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Recognize (multipart)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/product-scanner/recognize",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "product-scanner",
+                    "recognize"
+                  ]
+                },
+                "description": "catalog-service: catalog-service/src/main/java/com/example/eshop/catalog/controller/ProductScannerController.java — recognize",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": [],
+                      "disabled": false,
+                      "description": "Select a local file in Postman. Repeated keys support multiple files."
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "PromotionAdmin",
           "item": [
             {
@@ -3691,7 +3889,7 @@
                   "query": [
                     {
                       "key": "status",
-                      "value": "PENDING",
+                      "value": "DRAFT",
                       "disabled": true
                     },
                     {
@@ -4156,6 +4354,32 @@
     {
       "name": "order-service",
       "item": [
+        {
+          "name": "AiOrder",
+          "item": [
+            {
+              "name": "Get",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{orderBaseUrl}}/internal/ai/orders/{{orderNumber}}",
+                  "host": [
+                    "{{orderBaseUrl}}"
+                  ],
+                  "path": [
+                    "internal",
+                    "ai",
+                    "orders",
+                    "{{orderNumber}}"
+                  ]
+                },
+                "description": "order-service: order-service/src/main/java/com/example/eshop/order/controller/AiOrderController.java — get\n\nInternal service endpoint. Call this service directly. Put a short-lived service JWT in serviceToken. The gateway does not expose this path."
+              },
+              "response": []
+            }
+          ]
+        },
         {
           "name": "Cancelation",
           "item": [
@@ -5925,6 +6149,408 @@
       ]
     },
     {
+      "name": "ai-service",
+      "item": [
+        {
+          "name": "Ai",
+          "item": [
+            {
+              "name": "Execute",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{idempotencyKey}}",
+                    "disabled": true,
+                    "description": "Optional UUID. Send the same value to replay an AI execution."
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/ai/execute",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "ai",
+                    "execute"
+                  ]
+                },
+                "description": "ai-service: ai-service/src/main/java/com/example/eshop/ai/controller/AiController.java — execute",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"Show my latest order\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Execution",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/ai/executions/{{executionId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "ai",
+                    "executions",
+                    "{{executionId}}"
+                  ]
+                },
+                "description": "ai-service: ai-service/src/main/java/com/example/eshop/ai/controller/AiController.java — execution"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Inference",
+          "item": [
+            {
+              "name": "Route intent",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Request-ID",
+                    "value": "req_inference"
+                  }
+                ],
+                "url": {
+                  "raw": "{{inferenceBaseUrl}}/api/v1/ai/route",
+                  "host": [
+                    "{{inferenceBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ai",
+                    "route"
+                  ]
+                },
+                "description": "ai-inference direct call on {{inferenceBaseUrl}}. The gateway does not route this path. Spring Boot normally sends the allowed tools. This service never calls catalog or order itself.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"Show my latest order\",\n  \"tools\": [\n    {\n      \"name\": \"ORDER_GET\",\n      \"description\": \"Read one order owned by the signed-in customer\",\n      \"parameters\": {\n        \"number\": \"string\"\n      }\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Recognize product image",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Request-ID",
+                    "value": "req_inference"
+                  }
+                ],
+                "url": {
+                  "raw": "{{inferenceBaseUrl}}/api/v1/ai/vision/products",
+                  "host": [
+                    "{{inferenceBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ai",
+                    "vision",
+                    "products"
+                  ]
+                },
+                "description": "ai-inference direct call on {{inferenceBaseUrl}}. The gateway does not route this path. Returns candidate product names. It does not choose a catalog id.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mediaType\": \"image/png\",\n  \"imageBase64\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Health",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Request-ID",
+                    "value": "req_inference"
+                  }
+                ],
+                "url": {
+                  "raw": "{{inferenceBaseUrl}}/health",
+                  "host": [
+                    "{{inferenceBaseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                },
+                "description": "ai-inference direct call on {{inferenceBaseUrl}}. The gateway does not route this path. Process is up."
+              },
+              "response": []
+            },
+            {
+              "name": "Ready",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Request-ID",
+                    "value": "req_inference"
+                  }
+                ],
+                "url": {
+                  "raw": "{{inferenceBaseUrl}}/ready",
+                  "host": [
+                    "{{inferenceBaseUrl}}"
+                  ],
+                  "path": [
+                    "ready"
+                  ]
+                },
+                "description": "ai-inference direct call on {{inferenceBaseUrl}}. The gateway does not route this path. 200 when a provider is configured, 503 NOT_READY otherwise."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "notification-service",
+      "item": [
+        {
+          "name": "Notification",
+          "item": [
+            {
+              "name": "List",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notifications?page=1&size=20",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "SENT",
+                      "disabled": true
+                    },
+                    {
+                      "key": "type",
+                      "value": "AI_ACTION_COMPLETED",
+                      "disabled": true
+                    },
+                    {
+                      "key": "read",
+                      "value": "true",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "notification-service: notification-service/src/main/java/com/example/eshop/notification/controller/NotificationController.java — list"
+              },
+              "response": []
+            },
+            {
+              "name": "Get",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notifications/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications",
+                    "{{id}}"
+                  ]
+                },
+                "description": "notification-service: notification-service/src/main/java/com/example/eshop/notification/controller/NotificationController.java — get"
+              },
+              "response": []
+            },
+            {
+              "name": "Count",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notifications/unread-count",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications",
+                    "unread-count"
+                  ]
+                },
+                "description": "notification-service: notification-service/src/main/java/com/example/eshop/notification/controller/NotificationController.java — count"
+              },
+              "response": []
+            },
+            {
+              "name": "Read",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notifications/{{id}}/read",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications",
+                    "{{id}}",
+                    "read"
+                  ]
+                },
+                "description": "notification-service: notification-service/src/main/java/com/example/eshop/notification/controller/NotificationController.java — read"
+              },
+              "response": []
+            },
+            {
+              "name": "Read all",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notifications/read-all",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications",
+                    "read-all"
+                  ]
+                },
+                "description": "notification-service: notification-service/src/main/java/com/example/eshop/notification/controller/NotificationController.java — readAll"
+              },
+              "response": []
+            },
+            {
+              "name": "Preferences",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notifications/preferences",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications",
+                    "preferences"
+                  ]
+                },
+                "description": "notification-service: notification-service/src/main/java/com/example/eshop/notification/controller/NotificationController.java — preferences"
+              },
+              "response": []
+            },
+            {
+              "name": "Preferences (PATCH)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notifications/preferences",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications",
+                    "preferences"
+                  ]
+                },
+                "description": "notification-service: notification-service/src/main/java/com/example/eshop/notification/controller/NotificationController.java — preferences",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"aiEmail\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "api-gateway",
       "item": [
         {
@@ -6248,6 +6874,599 @@
                   ]
                 },
                 "description": "api-gateway:"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Audit logs",
+          "item": [
+            {
+              "name": "Search auth audit logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/audit-logs/auth?page=1&size=20&sort=occurredAt&direction=DESC",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-logs",
+                    "auth"
+                  ],
+                  "query": [
+                    {
+                      "key": "requestId",
+                      "value": "req_example",
+                      "disabled": true
+                    },
+                    {
+                      "key": "traceId",
+                      "value": "0123456789abcdef0123456789abcdef",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorId",
+                      "value": "{{actorId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorType",
+                      "value": "Example actorType",
+                      "disabled": true
+                    },
+                    {
+                      "key": "action",
+                      "value": "Example action",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceType",
+                      "value": "PROMOTION",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceId",
+                      "value": "{{resourceId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "result",
+                      "value": "Example result",
+                      "disabled": true
+                    },
+                    {
+                      "key": "serviceName",
+                      "value": "Example serviceName",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "occurredAt",
+                      "disabled": false
+                    },
+                    {
+                      "key": "direction",
+                      "value": "DESC",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "api-gateway: common-lib/.../AuditLogController.java — search\n\nThe gateway rewrites this path to auth-service GET /api/admin/audit-logs. The caller needs ADMIN or AUDIT_READ."
+              },
+              "response": []
+            },
+            {
+              "name": "Search catalog audit logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/audit-logs/catalog?page=1&size=20&sort=occurredAt&direction=DESC",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-logs",
+                    "catalog"
+                  ],
+                  "query": [
+                    {
+                      "key": "requestId",
+                      "value": "req_example",
+                      "disabled": true
+                    },
+                    {
+                      "key": "traceId",
+                      "value": "0123456789abcdef0123456789abcdef",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorId",
+                      "value": "{{actorId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorType",
+                      "value": "Example actorType",
+                      "disabled": true
+                    },
+                    {
+                      "key": "action",
+                      "value": "Example action",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceType",
+                      "value": "PROMOTION",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceId",
+                      "value": "{{resourceId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "result",
+                      "value": "Example result",
+                      "disabled": true
+                    },
+                    {
+                      "key": "serviceName",
+                      "value": "Example serviceName",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "occurredAt",
+                      "disabled": false
+                    },
+                    {
+                      "key": "direction",
+                      "value": "DESC",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "api-gateway: common-lib/.../AuditLogController.java — search\n\nThe gateway rewrites this path to catalog-service GET /api/admin/audit-logs. The caller needs ADMIN or AUDIT_READ."
+              },
+              "response": []
+            },
+            {
+              "name": "Search order audit logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/audit-logs/order?page=1&size=20&sort=occurredAt&direction=DESC",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-logs",
+                    "order"
+                  ],
+                  "query": [
+                    {
+                      "key": "requestId",
+                      "value": "req_example",
+                      "disabled": true
+                    },
+                    {
+                      "key": "traceId",
+                      "value": "0123456789abcdef0123456789abcdef",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorId",
+                      "value": "{{actorId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorType",
+                      "value": "Example actorType",
+                      "disabled": true
+                    },
+                    {
+                      "key": "action",
+                      "value": "Example action",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceType",
+                      "value": "PROMOTION",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceId",
+                      "value": "{{resourceId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "result",
+                      "value": "Example result",
+                      "disabled": true
+                    },
+                    {
+                      "key": "serviceName",
+                      "value": "Example serviceName",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "occurredAt",
+                      "disabled": false
+                    },
+                    {
+                      "key": "direction",
+                      "value": "DESC",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "api-gateway: common-lib/.../AuditLogController.java — search\n\nThe gateway rewrites this path to order-service GET /api/admin/audit-logs. The caller needs ADMIN or AUDIT_READ."
+              },
+              "response": []
+            },
+            {
+              "name": "Search payment audit logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/audit-logs/payment?page=1&size=20&sort=occurredAt&direction=DESC",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-logs",
+                    "payment"
+                  ],
+                  "query": [
+                    {
+                      "key": "requestId",
+                      "value": "req_example",
+                      "disabled": true
+                    },
+                    {
+                      "key": "traceId",
+                      "value": "0123456789abcdef0123456789abcdef",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorId",
+                      "value": "{{actorId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorType",
+                      "value": "Example actorType",
+                      "disabled": true
+                    },
+                    {
+                      "key": "action",
+                      "value": "Example action",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceType",
+                      "value": "PROMOTION",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceId",
+                      "value": "{{resourceId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "result",
+                      "value": "Example result",
+                      "disabled": true
+                    },
+                    {
+                      "key": "serviceName",
+                      "value": "Example serviceName",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "occurredAt",
+                      "disabled": false
+                    },
+                    {
+                      "key": "direction",
+                      "value": "DESC",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "api-gateway: common-lib/.../AuditLogController.java — search\n\nThe gateway rewrites this path to payment-service GET /api/admin/audit-logs. The caller needs ADMIN or AUDIT_READ."
+              },
+              "response": []
+            },
+            {
+              "name": "Search ai audit logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/audit-logs/ai?page=1&size=20&sort=occurredAt&direction=DESC",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-logs",
+                    "ai"
+                  ],
+                  "query": [
+                    {
+                      "key": "requestId",
+                      "value": "req_example",
+                      "disabled": true
+                    },
+                    {
+                      "key": "traceId",
+                      "value": "0123456789abcdef0123456789abcdef",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorId",
+                      "value": "{{actorId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorType",
+                      "value": "Example actorType",
+                      "disabled": true
+                    },
+                    {
+                      "key": "action",
+                      "value": "Example action",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceType",
+                      "value": "PROMOTION",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceId",
+                      "value": "{{resourceId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "result",
+                      "value": "Example result",
+                      "disabled": true
+                    },
+                    {
+                      "key": "serviceName",
+                      "value": "Example serviceName",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "occurredAt",
+                      "disabled": false
+                    },
+                    {
+                      "key": "direction",
+                      "value": "DESC",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "api-gateway: common-lib/.../AuditLogController.java — search\n\nThe gateway rewrites this path to ai-service GET /api/admin/audit-logs. The caller needs ADMIN or AUDIT_READ."
+              },
+              "response": []
+            },
+            {
+              "name": "Search notification audit logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/audit-logs/notification?page=1&size=20&sort=occurredAt&direction=DESC",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-logs",
+                    "notification"
+                  ],
+                  "query": [
+                    {
+                      "key": "requestId",
+                      "value": "req_example",
+                      "disabled": true
+                    },
+                    {
+                      "key": "traceId",
+                      "value": "0123456789abcdef0123456789abcdef",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorId",
+                      "value": "{{actorId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actorType",
+                      "value": "Example actorType",
+                      "disabled": true
+                    },
+                    {
+                      "key": "action",
+                      "value": "Example action",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceType",
+                      "value": "PROMOTION",
+                      "disabled": true
+                    },
+                    {
+                      "key": "resourceId",
+                      "value": "{{resourceId}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "result",
+                      "value": "Example result",
+                      "disabled": true
+                    },
+                    {
+                      "key": "serviceName",
+                      "value": "Example serviceName",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-10-04T09:00:00Z",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "occurredAt",
+                      "disabled": false
+                    },
+                    {
+                      "key": "direction",
+                      "value": "DESC",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "api-gateway: common-lib/.../AuditLogController.java — search\n\nThe gateway rewrites this path to notification-service GET /api/admin/audit-logs. The caller needs ADMIN or AUDIT_READ."
               },
               "response": []
             }

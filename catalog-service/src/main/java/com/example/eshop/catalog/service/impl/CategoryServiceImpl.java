@@ -111,10 +111,9 @@ public class CategoryServiceImpl implements CategoryService {
         if (category.isEmpty()) {
             throw new ResourceNotFoundException("Category not found with id: " + id);
         }
-        CategoryIcon icon = categoryIconRepository.findById(category.get().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category icon not found with id: " + category.get().getId()));
+        categoryIconRepository.findById(category.get().getId())
+                .ifPresent(icon -> this.categoryIconRepository.deleteById(icon.getId()));
         category.get().setDeleted(true);
-        this.categoryIconRepository.deleteById(icon.getId());
         categoryRepository.save(category.get());
     }
 

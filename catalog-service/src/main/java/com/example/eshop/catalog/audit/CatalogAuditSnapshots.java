@@ -22,7 +22,7 @@ public final class CatalogAuditSnapshots {
             "subCategoryId", p.getSubCategory() == null ? null : p.getSubCategory().getId());
     }
     public static Map<String,Object> of(ProductSku p) {
-        return fields("id", p.getId(), "sku", p.getSku(), "productId", p.getProduct().getId(), "price", p.getPrice(), "isDefault", p.getIsDefault());
+        return fields("id", p.getId(), "sku", p.getSku(), "barcode", p.getBarcode(), "productId", p.getProduct().getId(), "price", p.getPrice(), "isDefault", p.getIsDefault());
     }
     public static Map<String,Object> of(Category p) {
         return fields("id", p.getId(), "name", p.getName(), "status", p.getStatus(), "deleted", p.getDeleted());

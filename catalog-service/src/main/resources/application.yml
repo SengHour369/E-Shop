@@ -25,6 +25,14 @@ spring:
       enabled: true
       max-file-size: 2000MB
       max-request-size: 2000MB
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 1s
+      connect-timeout: 1s
+      repositories:
+        enabled: false
 
 jwt:
   header: Authorization
@@ -53,6 +61,13 @@ springdoc:
 # Feign client to auth-service, e.g. to resolve current user for audit fields
 auth-service:
   name: auth-service
+
+scanner:
+  ai-inference-url: ${SCANNER_AI_INFERENCE_URL:http://localhost:8000}
+  ai-timeout-seconds: ${SCANNER_AI_TIMEOUT_SECONDS:8}
+  duplicate-window-ms: 1500
+  rate-limit: 30
+  rate-window-seconds: 10
 
 logging:
   pattern:

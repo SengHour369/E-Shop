@@ -67,13 +67,13 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @Query("SELECT COALESCE(COUNT(i), 0) FROM Inventory i WHERE (i.quantity - i.reservedQuantity) = 0")
     Long countOutOfStock();
 
-    // ---------- Search (without barcode for now) ----------
     @Query("SELECT i FROM Inventory i " +
             "JOIN FETCH i.productSku sku " +
             "JOIN FETCH sku.product p " +
             "WHERE (:search IS NULL OR " +
             "       LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "       LOWER(sku.sku) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "       LOWER(sku.sku) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "       LOWER(sku.barcode) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:warehouse IS NULL OR i.warehouseLocation = :warehouse) " +
             "AND (:status IS NULL OR " +
             "     (CASE WHEN :status = 'IN_STOCK' THEN (i.quantity - i.reservedQuantity) > i.lowStockThreshold " +

@@ -13,6 +13,15 @@ import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    @Query("""
+            SELECT p FROM Product p
+            WHERE (p.deleted = false OR p.deleted IS NULL)
+              AND p.isActive = :active
+              AND (:name = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')))
+            """)
+    Page<Product> searchByNameAndActive(@Param("name") String name,
+            @Param("active") Boolean active, Pageable pageable);
+
     @Query("select p from Product p where p.isActive = true and (p.deleted = false or p.deleted is null) and exists (select ps.id from PromotionSku ps where ps.promotion.id = :promotionId and ps.productSku.product = p)")
     org.springframework.data.domain.Page<Product> findPromotionProducts(
         @Param("promotionId") Long promotionId, org.springframework.data.domain.Pageable pageable);
@@ -46,5 +55,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.subCategory.id = :subCategoryId AND (p.deleted IS NULL OR p.deleted = false)")
     Long countBySubCategoryId(@Param("subCategoryId") Long subCategoryId);
+
+    @Query("""
+            select p from Product p
+            where (p.deleted is null or p.deleted = false)
+              and (lower(p.name) = lower(:name) or lower(p.name) like lower(concat('%', :name, '%')))
+            order by case when lower(p.name) = lower(:name) then 0 else 1 end, p.id
+            """)
+    List<Product> findForScannerName(@Param("name") String name, Pageable pageable);
 
 }

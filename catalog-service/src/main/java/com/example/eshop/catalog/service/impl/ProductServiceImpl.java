@@ -113,7 +113,11 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> page;
         String successMsg;
 
-        if (type == null || type == 0 || (type != 4 && (value == null || value.isBlank()))) {
+        if (request.getIsActive() != null && (type == null || type == 0 || type == 1)) {
+            page = productRepository.searchByNameAndActive(
+                    value == null ? "" : value.trim(), request.getIsActive(), pageable);
+            successMsg = "Retrieved products by name and status";
+        } else if (type == null || type == 0 || (type != 4 && (value == null || value.isBlank()))) {
             page = productRepository.findAllNotDeleted(pageable);
             successMsg = "Retrieved all products";
         } else if (type == 1) { // by name (fuzzy)

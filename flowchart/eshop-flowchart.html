@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>E-Shop flowchart</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e8edf2; font-family: "Segoe UI", sans-serif; color: #1f2328; }
+  .sheet { width: max-content; min-width: 980px; margin: 0; padding: 36px 48px 48px; background: #f7f9fb; }
+  h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -0.03em; }
+  .lead { margin: 0 0 22px; color: #57606a; font-size: 16px; line-height: 1.45; max-width: 920px; }
+  h2 { margin: 28px 0 12px; font-size: 18px; }
+  .flow { display: flex; flex-direction: column; align-items: center; }
+  .box { width: 560px; background: #fff; border: 1.5px solid #c5d0db; border-left: 6px solid #1677ff; border-radius: 12px; padding: 14px 16px; font-size: 16px; line-height: 1.4; box-shadow: 0 1px 2px rgba(16,24,40,.06); }
+  .box strong { display: block; font-size: 16px; }
+  .box span { display: block; margin-top: 3px; color: #57606a; font-size: 14px; }
+  .decision { border-left-color: #d48806; background: #fffdf5; }
+  .ok { border-left-color: #389e0d; background: #f6ffed; }
+  .bad { border-left-color: #cf1322; background: #fff2f0; }
+  .muted { border-left-color: #8c959f; }
+  .arrow { width: 2px; height: 26px; background: #8c959f; position: relative; }
+  .arrow:after { content: ""; position: absolute; left: -5px; bottom: -1px; border: 6px solid transparent; border-top: 8px solid #8c959f; }
+  .tag { font-size: 13px; font-weight: 700; color: #57606a; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+  .fork { display: flex; gap: 28px; align-items: flex-start; justify-content: center; width: max-content; margin: 0 auto; }
+  .col { display: flex; flex-direction: column; align-items: center; width: max-content; }
+  .col .box { width: 440px; }
+  .box, .note, .link, .svc { overflow-wrap: break-word; }
+  .note { margin-top: 18px; width: 980px; background: #fff; border: 1.5px solid #c5d0db; border-radius: 12px; padding: 14px 16px; color: #424a53; font-size: 15px; line-height: 1.45; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 980px; }
+  .svc { background: #fff; border: 1.5px solid #c5d0db; border-top: 5px solid #1677ff; border-radius: 12px; padding: 12px 14px; }
+  .svc b { display: block; font-size: 16px; }
+  .svc em { display: block; margin-top: 4px; font-style: normal; color: #57606a; font-size: 13px; }
+  .links { width: 980px; margin-top: 14px; display: grid; gap: 8px; }
+  .link { background: #fff; border-radius: 10px; padding: 10px 14px; border: 1px solid #d8e0e8; font-size: 15px; }
+  .link b { color: #0958d9; }
+</style>
+</head>
+<body>
+
+<section class="sheet" id="services">
+  <h1>1. Services</h1>
+  <p class="lead">The browser and Postman talk only to the API gateway on port 8080. Each service keeps its own database.</p>
+  <div class="flow">
+    <div class="box"><strong>Browser or Postman</strong><span>Sends every shop request to the gateway</span></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>API gateway :8080</strong><span>Checks the token, applies the Redis rate limit, then routes through Eureka</span></div>
+  </div>
+  <h2>Services behind the gateway</h2>
+  <div class="grid">
+    <div class="svc"><b>auth-service :8081</b><em>Accounts, login, verification mail</em></div>
+    <div class="svc"><b>catalog-service :8082</b><em>Products, stock, prices, scanner</em></div>
+    <div class="svc"><b>order-service :8083</b><em>Cart, checkout, returns</em></div>
+    <div class="svc"><b>payment-service :8084</b><em>Payments and Bakong QR</em></div>
+    <div class="svc"><b>ai-service :8085</b><em>Decides and calls one tool</em></div>
+    <div class="svc"><b>notification-service :8086</b><em>In-app inbox for AI writes</em></div>
+  </div>
+  <div class="links">
+    <div class="link"><b>Discovery :8761</b> tells the gateway where each service is.</div>
+    <div class="link"><b>gateway-redis :6379</b> is shared. The gateway counts requests. Each Spring service writes a two-minute startup key. Stock and prices are not cached.</div>
+    <div class="link"><b>order-service</b> asks catalog for the price, then reserves and confirms stock.</div>
+    <div class="link"><b>ai-service</b> asks ai-inference :8000 to name one tool. ai-inference calls OpenAI. ai-service then calls catalog or order.</div>
+    <div class="link"><b>catalog-service</b> calls ai-inference only for a camera image, after no barcode matched.</div>
+    <div class="link"><b>Kafka</b> carries one notification event. notification-service saves the inbox row and asks auth-service to send mail when the user opted in.</div>
+    <div class="link"><b>Postgres</b> is separate: auth 5432, catalog 5433, order 5434, payment 5435, gateway 5436, AI 5437, notification 5438. Discovery and ai-inference do not use Redis.</div>
+  </div>
+</section>
+
+<section class="sheet" id="gateway">
+  <h1>2. Every request through the gateway</h1>
+  <p class="lead">Usual time limit is 6 seconds. Catalog’s HTTP client limit is 5 seconds. AI is allowed 30 seconds.</p>
+  <div class="flow">
+    <div class="box"><strong>Request to http://localhost:8080</strong></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>Keep a safe X-Request-ID or create one</strong></div>
+    <div class="arrow"></div>
+    <div class="box decision"><strong>Public path, or a valid access token?</strong><span>Public: register, verify, login, refresh, password reset, session, active promotions, OpenAPI</span></div>
+  </div>
+  <div class="fork" style="margin-top:18px">
+    <div class="col">
+      <div class="tag">No</div>
+      <div class="box bad"><strong>401</strong><span>Missing or invalid Authorization</span></div>
+    </div>
+    <div class="col">
+      <div class="tag">Yes</div>
+      <div class="box"><strong>Remove caller identity headers and the admin key</strong></div>
+      <div class="arrow"></div>
+      <div class="box decision"><strong>Redis rate window</strong></div>
+      <div class="fork" style="margin-top:16px">
+        <div class="col">
+          <div class="tag">Over the limit</div>
+          <div class="box bad"><strong>429</strong><span>Too many requests</span></div>
+        </div>
+        <div class="col">
+          <div class="tag">Allowed</div>
+          <div class="box ok"><strong>Inside the limit, or Redis is down</strong><span>A Redis error allows the request</span></div>
+          <div class="arrow"></div>
+          <div class="box"><strong>Match the path and ask Eureka for the service</strong></div>
+          <div class="arrow"></div>
+          <div class="box decision"><strong>Does the service answer before the time limit?</strong></div>
+          <div class="fork" style="margin-top:16px">
+            <div class="col">
+              <div class="tag">Yes</div>
+              <div class="box ok"><strong>Return the service status and body</strong></div>
+            </div>
+            <div class="col">
+              <div class="tag">No</div>
+              <div class="box bad"><strong>503</strong><span>The service is temporarily unavailable. Retry.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="note">Product, scanner, cart, order, payment, AI, and notification calls need a bearer token or the access cookie. A slow first start can return 503. The same call succeeds on retry.</div>
+</section>
+
+<section class="sheet" id="account">
+  <h1>3. Account</h1>
+  <p class="lead">Login accepts status ACT only. A seed user stored as ACTIVE is rejected.</p>
+  <div class="flow">
+    <div class="box"><strong>POST /api/v1/public/register</strong><span>username, password, email, phone, full_name</span></div>
+    <div class="arrow"></div>
+    <div class="box decision"><strong>Are the fields valid and unused?</strong></div>
+  </div>
+  <div class="fork" style="margin-top:18px">
+    <div class="col">
+      <div class="tag">Invalid</div>
+      <div class="box bad"><strong>400</strong><span>Invalid body</span></div>
+    </div>
+    <div class="col">
+      <div class="tag">Duplicate</div>
+      <div class="box bad"><strong>409</strong><span>Duplicate user. A missing phone is also stored as a conflict.</span></div>
+    </div>
+    <div class="col">
+      <div class="tag">Valid</div>
+      <div class="box ok"><strong>201</strong><span>User created. Verification mail is queued.</span></div>
+      <div class="arrow"></div>
+      <div class="box"><strong>POST /api/v1/public/verify</strong></div>
+      <div class="arrow"></div>
+      <div class="box"><strong>POST /api/v1/public/email/username/login</strong></div>
+      <div class="arrow"></div>
+      <div class="box decision"><strong>Is the account status ACT?</strong></div>
+      <div class="arrow"></div>
+      <div class="fork">
+        <div class="col">
+          <div class="tag">No</div>
+          <div class="box bad"><strong>401</strong><span>Invalid username or password</span></div>
+        </div>
+        <div class="col">
+          <div class="tag">Yes</div>
+          <div class="box ok"><strong>200</strong><span>Access token about 15 minutes, plus a refresh token</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="note">Session login at POST /api/v1/public/session/login sets HttpOnly cookies and does not put the tokens in JSON.</div>
+</section>
+
+<section class="sheet" id="buy">
+  <h1>4. Buy a product</h1>
+  <p class="lead">Catalog is the only writer of stock and of the price stored on the order. The client price is ignored.</p>
+  <div class="flow">
+    <div class="box"><strong>POST /api/v1/products/get/all</strong><span>Needs a bearer token at the gateway</span></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>Catalog loads one page</strong><span>Then images, SKUs, inventory, and promotions for that page only</span></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>Add a cart item</strong></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>Order asks catalog for the current price</strong><span>The client unit_price is ignored</span></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>POST /api/v1/orders/user/from-cart</strong></div>
+    <div class="arrow"></div>
+    <div class="box decision"><strong>Was this checkout_key already used?</strong></div>
+  </div>
+  <div class="fork" style="margin-top:18px">
+    <div class="col">
+      <div class="tag">Same address</div>
+      <div class="box ok"><strong>Return the existing order</strong></div>
+    </div>
+    <div class="col">
+      <div class="tag">New checkout</div>
+      <div class="box"><strong>Create order CHECKOUT_PENDING</strong></div>
+      <div class="arrow"></div>
+      <div class="box"><strong>Catalog reserves stock</strong></div>
+      <div class="arrow"></div>
+      <div class="box decision"><strong>Did reserve succeed?</strong></div>
+      <div class="fork" style="margin-top:16px">
+        <div class="col">
+          <div class="tag">400 or 404</div>
+          <div class="box bad"><strong>Order FAILED</strong><span>The cart is kept</span></div>
+        </div>
+        <div class="col">
+          <div class="tag">Reserved</div>
+          <div class="box"><strong>Catalog confirms and returns its prices</strong></div>
+          <div class="arrow"></div>
+          <div class="box decision"><strong>Did confirm finish?</strong></div>
+          <div class="fork" style="margin-top:16px">
+            <div class="col">
+              <div class="tag">Timeout</div>
+              <div class="box muted"><strong>Stay CHECKOUT_PENDING</strong><span>Retry reserve, then confirm</span></div>
+            </div>
+            <div class="col">
+              <div class="tag">Prices copied</div>
+              <div class="box ok"><strong>Order PENDING and the cart is cleared</strong></div>
+              <div class="arrow"></div>
+              <div class="box"><strong>POST /api/v1/payments or Bakong QR</strong><span>Payment is a separate call. It is not inside checkout.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sheet" id="scanner">
+  <h1>5. Product scanner</h1>
+  <p class="lead">A scan does not create a product, change stock, or change ProductSku.price. Warehouse location is returned only to ADMIN, MANAGER, and STAFF.</p>
+  <h2>Barcode or QR</h2>
+  <div class="flow">
+    <div class="box"><strong>POST /api/v1/product-scanner/scan</strong><span>Example code 8850123456787, format EAN_13</span></div>
+    <div class="arrow"></div>
+    <div class="box decision"><strong>Are the code and format valid?</strong></div>
+  </div>
+  <div class="fork" style="margin-top:16px">
+    <div class="col">
+      <div class="tag">No</div>
+      <div class="box bad"><strong>400</strong><span>Invalid code or format</span></div>
+    </div>
+    <div class="col">
+      <div class="tag">Yes</div>
+      <div class="box"><strong>Join the same actor and code for 1.5 seconds</strong></div>
+      <div class="arrow"></div>
+      <div class="box decision"><strong>More than 30 scans in 10 seconds?</strong></div>
+      <div class="fork" style="margin-top:16px">
+        <div class="col">
+          <div class="tag">Yes</div>
+          <div class="box bad"><strong>429</strong><span>Retry after 1 second</span></div>
+        </div>
+        <div class="col">
+          <div class="tag">No</div>
+          <div class="box"><strong>Lookup barcode, then internal SKU</strong></div>
+          <div class="fork" style="margin-top:16px">
+            <div class="col">
+              <div class="tag">Row exists</div>
+              <div class="box ok"><strong>200 found true</strong><span>Catalog price and stock</span></div>
+            </div>
+            <div class="col">
+              <div class="tag">No row</div>
+              <div class="box muted"><strong>200 found false</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h2>Image, only when there is no usable barcode</h2>
+  <div class="flow">
+    <div class="box"><strong>POST /api/v1/product-scanner/recognize</strong></div>
+    <div class="arrow"></div>
+    <div class="box decision"><strong>jpeg, png, or webp, and at most 1.5 MB?</strong></div>
+  </div>
+  <div class="fork" style="margin-top:16px">
+    <div class="col">
+      <div class="tag">No</div>
+      <div class="box bad"><strong>400</strong></div>
+    </div>
+    <div class="col">
+      <div class="tag">Yes</div>
+      <div class="box"><strong>ai-inference returns candidate names only</strong><span>It does not choose a catalog id</span></div>
+      <div class="arrow"></div>
+      <div class="box decision"><strong>Provider available, and one exact catalog name at confidence 0.90?</strong></div>
+      <div class="arrow"></div>
+      <div class="fork">
+        <div class="col">
+          <div class="tag">Provider down</div>
+          <div class="box muted"><strong>200 AI_UNAVAILABLE</strong></div>
+        </div>
+        <div class="col">
+          <div class="tag">One exact name</div>
+          <div class="box ok"><strong>Return that catalog product</strong></div>
+        </div>
+        <div class="col">
+          <div class="tag">Otherwise</div>
+          <div class="box"><strong>Candidates</strong><span>The caller must choose</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sheet" id="ai">
+  <h1>6. AI request and notification</h1>
+  <p class="lead">ai-inference never receives a shop URL, the caller token, or permission to call another service.</p>
+  <div class="flow">
+    <div class="box"><strong>POST /api/ai/execute</strong><span>Body is only message, at most 4000 characters</span></div>
+    <div class="arrow"></div>
+    <div class="box decision"><strong>Same Idempotency-Key for this user?</strong></div>
+  </div>
+  <div class="fork" style="margin-top:16px">
+    <div class="col">
+      <div class="tag">Yes</div>
+      <div class="box ok"><strong>Return the saved status</strong><span>Do not run the tool again</span></div>
+    </div>
+    <div class="col">
+      <div class="tag">No</div>
+      <div class="box"><strong>List the tools this actor may use</strong><span>ORDER_CANCEL, PAYMENT_REFUND, and ROLE_GRANT stay disabled</span></div>
+      <div class="arrow"></div>
+      <div class="box"><strong>POST /api/v1/ai/route on ai-inference</strong></div>
+      <div class="arrow"></div>
+      <div class="box"><strong>OpenAI selects one supplied tool</strong></div>
+      <div class="arrow"></div>
+      <div class="box decision"><strong>Confidence at least 0.80 and parameters valid?</strong></div>
+      <div class="arrow"></div>
+      <div class="fork">
+        <div class="col">
+          <div class="tag">No</div>
+          <div class="box bad"><strong>422 NEEDS_INPUT</strong><span>Nothing is called</span></div>
+        </div>
+        <div class="col">
+          <div class="tag">Yes</div>
+          <div class="box ok"><strong>Call one fixed catalog or order client</strong></div>
+          <div class="arrow"></div>
+          <div class="box"><strong>Save execution, audit, and outbox together</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="fork" style="margin-top:16px">
+    <div class="col">
+      <div class="tag">Read</div>
+      <div class="box muted"><strong>No notification</strong></div>
+    </div>
+    <div class="col">
+      <div class="tag">Write finished</div>
+      <div class="box"><strong>Kafka notification.events.v1</strong></div>
+      <div class="arrow"></div>
+      <div class="box"><strong>notification-service writes one in-app row</strong></div>
+      <div class="arrow"></div>
+      <div class="box decision"><strong>Is aiEmail on?</strong></div>
+      <div class="arrow"></div>
+      <div class="fork">
+        <div class="col">
+          <div class="tag">No</div>
+          <div class="box muted"><strong>In-app notification only</strong></div>
+        </div>
+        <div class="col">
+          <div class="tag">Yes</div>
+          <div class="box ok"><strong>auth-service sends the mail</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="note">A write that times out after it was sent stays UNKNOWN until execution history is checked. The caller then uses GET /api/notifications to list, count, and mark rows read.</div>
+</section>
+
+<section class="sheet" id="audit">
+  <h1>7. Audit</h1>
+  <p class="lead">The audit row stores the action and the request id. It does not store the AI prompt, the model parameters, or the downstream response body.</p>
+  <div class="flow">
+    <div class="box"><strong>The service writes one audit row in its own database</strong></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>ADMIN or AUDIT_READ calls the gateway</strong></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>GET /api/admin/audit-logs/{service}</strong><span>service is auth, catalog, order, payment, ai, or notification</span></div>
+    <div class="arrow"></div>
+    <div class="box"><strong>Gateway rewrites the path to /api/admin/audit-logs</strong></div>
+    <div class="arrow"></div>
+    <div class="box ok"><strong>That service returns its own rows</strong></div>
+  </div>
+</section>
+
+</body>
+</html>

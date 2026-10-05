@@ -19,6 +19,11 @@ Open the local inbox to read the verification code after registering. This avoid
 Gmail authentication errors when SMTP credentials are not configured. Real email
 delivery requires valid SMTP settings in the deployed auth-service environment.
 
+If registration reports `Authentication failed`, check the SMTP configuration:
+the default Gmail password is a placeholder. Use the local command above to
+route verification emails to Mailpit. Email transport failures return HTTP 503
+with `EMAIL_DELIVERY_FAILED`; they do not mean the new user's password is wrong.
+
 Check status or logs:
 
 ```powershell
@@ -35,3 +40,11 @@ docker compose -f compose.yaml -f compose.local.yaml down
 PostgreSQL 18 data is persisted at /var/lib/postgresql in named volumes.
 Service builds share a Maven dependency cache. Email, image uploads, and live
 payments still require their respective external-service credentials.
+
+Auth, catalog, order, payment, the API gateway, ai-service, and notification-service
+share the `gateway-redis` container (`redis:7-alpine` on `127.0.0.1:6379`).
+Compose sets `REDIS_HOST=gateway-redis`. A local run outside Compose uses
+`localhost:6379`. Each service records `{service-name}:redis` for two minutes
+when it starts. If Redis is down, the service still starts and the gateway
+rate limiter allows the request. Discovery and ai-inference do not use Redis.
+Stock and promotion prices are not cached.

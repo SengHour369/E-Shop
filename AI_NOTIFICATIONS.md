@@ -7,8 +7,12 @@ PostgreSQL per domain, and common-lib security/audit/request-ID helpers. No AI p
 Kafka broker, or notification service existed. Promotions remain in catalog-service.
 
 New modules:
-- ai-service: intent extraction, immutable Java tool registry, validation/authorization,
+- ai-inference: Python FastAPI decision support. It selects one tool from the list
+  ai-service supplies and extracts parameters. It does not authenticate, authorize,
+  choose a URL, or call a business service.
+- ai-service: authenticated orchestration, immutable Java tool registry, validation/authorization,
   fixed Feign calls, execution metadata, audit, and transactional notification outbox.
+  Intent detection is delegated to ai-inference.
 - notification-service: Kafka consumer, unique event deduplication, owner-scoped in-app APIs,
   opt-in email delivery and retry state.
 
@@ -19,10 +23,13 @@ There is no separate promotion-service or config-server.
 
 ## Start locally
 
-Configure OPENAI_API_KEY and optionally OPENAI_MODEL in your private .env (never commit it).
-The configurable default model is gpt-4.1-mini. The fixed OpenAI Responses endpoint uses
-strict structured output, store=false, a 3-second connection deadline and 20-second request
-deadline. See [OpenAI structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
+Configure OPENAI_API_KEY and optionally OPENAI_MODEL in your private environment (never commit it).
+Only ai-inference reads that key. The configurable default model is gpt-4.1-mini. ai-inference calls
+the fixed OpenAI Responses endpoint with strict structured output, store=false, a 3-second connection
+deadline and a 20-second request deadline. See [OpenAI structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
+ai-service calls `AI_INFERENCE_URL` (`http://ai-inference:8000` inside Compose, `http://localhost:8000`
+on the host). It sends the message plus each allowed tool's name, description, and parameter types.
+It does not send tool URLs, the caller bearer token, or the OpenAI key.
 
 Run:
 ~~~powershell
@@ -33,9 +40,10 @@ real SMTP and HTTPS configuration. AI is reachable through gateway port 8080; no
 development access is also bound to loopback port 8086. New PostgreSQL ports: 5437/5438.
 Kafka is published on loopback 9092 and uses kafka:19092 inside Compose.
 
-Without an API key the service starts but returns AI_NOT_CONFIGURED, with execution history
-and a failure audit. There is no production mock or pretend AI fallback. Tests replace the
-provider with explicit mocks and do not spend provider credits.
+Without an API key both processes start. ai-inference `/ready` is not ready and does not call
+OpenAI. ai-service returns AI_NOT_CONFIGURED, with execution history and a failure audit.
+There is no production mock or pretend AI fallback. Tests replace the provider with explicit
+mocks and do not spend provider credits. Python tests live in `ai-inference` and mock httpx.
 
 ## APIs
 
@@ -139,7 +147,10 @@ Existing X-Request-ID handling is reused for gateway, servlet, Feign, and events
 A validated W3C traceparent passes through Feign and supplies passive trace correlation.
 This does not create spans or install an exporter. Existing instrumentation may supply
 traceId/spanId; event correlation is retained and consumer MDC is restored after handling.
-Provider calls do not receive the user's bearer token or identity.
+Provider calls do not receive the user's bearer token or identity. ai-inference preserves a
+valid traceparent and does not start a second tracing system. Its minimum confidence is 0.70;
+ai-service still requires 0.80 before it will execute. High-risk tools stay disabled in the
+Java registry, which remains the authority for confirmation and execution.
 
 AI_REQUEST_ACCEPTED records durable acceptance, and AI_TOOL_EXECUTION records the final
 outcome. History/audit do not store prompts, extracted parameters, model chain-of-thought,

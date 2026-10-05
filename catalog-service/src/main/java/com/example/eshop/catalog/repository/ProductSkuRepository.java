@@ -26,6 +26,34 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
 
     boolean existsBySku(String sku);
 
+    boolean existsByBarcode(String barcode);
+
+    boolean existsByBarcodeAndIdNot(String barcode, Long id);
+
+    @Query("""
+            select distinct s from ProductSku s
+            join fetch s.product
+            left join fetch s.image
+            where s.barcode in :codes
+            """)
+    List<ProductSku> findByBarcodes(@Param("codes") java.util.Collection<String> codes);
+
+    @Query("""
+            select distinct s from ProductSku s
+            join fetch s.product
+            left join fetch s.image
+            where s.sku in :codes
+            """)
+    List<ProductSku> findBySkuCodes(@Param("codes") java.util.Collection<String> codes);
+
+    @Query("""
+            select s from ProductSku s
+            left join fetch s.image
+            where s.product.id in :ids
+            order by s.product.id, s.id
+            """)
+    List<ProductSku> findForScannerProducts(@Param("ids") java.util.Collection<Long> ids);
+
 
 
 }

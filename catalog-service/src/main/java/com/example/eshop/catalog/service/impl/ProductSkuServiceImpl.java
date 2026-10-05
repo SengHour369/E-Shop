@@ -59,6 +59,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         String base = skuGeneratorUtil.generateSku(product, request);
 
         sku.setSku(base);
+        assignBarcode(sku, request.getBarcode(), null);
 
         if (image != null && !image.isEmpty()) {
             sku.setImage(uploadSkuImage(image));
@@ -93,7 +94,13 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         ProductSkuMapper.updateEntity(existing, request);
         String base = skuGeneratorUtil.generateSku(product, request);
 
-        existing.setSku(base);
+        // Preserve the existing variant code when editing price, stock or barcode only.
+        if (request.getProductAttributes() != null && !request.getProductAttributes().isEmpty()) {
+            existing.setSku(base);
+        }
+        if (request.getBarcode() != null) {
+            assignBarcode(existing, request.getBarcode(), existing.getId());
+        }
 
         if (image != null && !image.isEmpty()) {
             existing.setImage(uploadSkuImage(image));
@@ -160,6 +167,21 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     @Transactional(readOnly = true)
     public List<ProductSku> getSkusByProductId(Long productId) {
         return productSkuRepository.findByProductId(productId);
+    }
+
+    private void assignBarcode(ProductSku sku, String raw, Long currentId) {
+        String barcode = com.example.eshop.catalog.scanner.ScanCodes.storedBarcode(raw);
+        if (barcode == null) {
+            sku.setBarcode(null);
+            return;
+        }
+        boolean taken = currentId == null
+                ? productSkuRepository.existsByBarcode(barcode)
+                : productSkuRepository.existsByBarcodeAndIdNot(barcode, currentId);
+        if (taken) {
+            throw new BusinessLogicException("Barcode is already assigned to another SKU");
+        }
+        sku.setBarcode(barcode);
     }
 
     private Image uploadSkuImage(MultipartFile file) {

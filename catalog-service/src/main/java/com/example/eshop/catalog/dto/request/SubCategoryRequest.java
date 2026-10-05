@@ -19,4 +19,7 @@ public class SubCategoryRequest {
     @NotNull(message = "Category ID is required")
     @JsonProperty("category_id")
     private Long categoryId;
+
+    @JsonProperty("logo_id")
+    private Long logoId;
 }

@@ -136,8 +136,11 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_started
+      gateway-redis:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      REDIS_HOST: gateway-redis
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
       GATEWAY_CORS_ORIGINS: ${GATEWAY_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:8080}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-900}
@@ -159,8 +162,11 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_started
+      gateway-redis:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://catalog-db:5432/catalog_db
+      REDIS_HOST: gateway-redis
       SPRING_DATASOURCE_USERNAME: senghour
       SPRING_DATASOURCE_PASSWORD: senghour369
       JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
@@ -179,8 +185,11 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_started
+      gateway-redis:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://order-db:5432/order_db
+      REDIS_HOST: gateway-redis
       CATALOG_SERVICE_URL: http://catalog-service:8082
       SPRING_DATASOURCE_USERNAME: senghour
       SPRING_DATASOURCE_PASSWORD: senghour369
@@ -200,8 +209,50 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_started
+      gateway-redis:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://payment-db:5432/payment_db
+      REDIS_HOST: gateway-redis
+      SPRING_DATASOURCE_USERNAME: senghour
+      SPRING_DATASOURCE_PASSWORD: senghour369
+      JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    restart: always
+
+  admin-db:
+    image: postgres:18
+    container_name: admin-db
+    environment:
+      POSTGRES_DB: admin_db
+      POSTGRES_USER: senghour
+      POSTGRES_PASSWORD: senghour369
+    ports:
+      - "5439:5432"
+    volumes:
+      - admin_db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U senghour -d admin_db"]
+      interval: 5s
+      retries: 5
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: admin-service/Dockerfile
+    container_name: admin-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      admin-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      gateway-redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://admin-db:5432/admin_db
+      REDIS_HOST: gateway-redis
       SPRING_DATASOURCE_USERNAME: senghour
       SPRING_DATASOURCE_PASSWORD: senghour369
       JWT_SECRET: ${JWT_SECRET:-66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
@@ -213,5 +264,6 @@ volumes:
   catalog_db_data:
   order_db_data:
   payment_db_data:
+  admin_db_data:
 
   gateway_db_data:

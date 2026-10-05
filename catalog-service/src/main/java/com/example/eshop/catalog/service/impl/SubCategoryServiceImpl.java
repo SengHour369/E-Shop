@@ -2,9 +2,11 @@ package com.example.eshop.catalog.service.impl;
 
 import com.example.eshop.common.exception.BusinessLogicException;
 import com.example.eshop.common.exception.ResourceNotFoundException;
+import com.example.eshop.catalog.model.BrandLogo;
 import com.example.eshop.catalog.model.Category;
 import com.example.eshop.catalog.model.Image;
 import com.example.eshop.catalog.model.SubCategory;
+import com.example.eshop.catalog.repository.BrandLogoRepository;
 import com.example.eshop.catalog.repository.CategoryRepository;
 import com.example.eshop.catalog.repository.SubCategoryRepository;
 import com.example.eshop.catalog.service.ImageService;
@@ -27,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,6 +39,7 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     private final SubCategoryRepository subCategoryRepository;
     private final CategoryRepository categoryRepository;
+    private final BrandLogoRepository brandLogoRepository;
     private final ImageService imageService;
 
     @Override
@@ -52,15 +54,20 @@ public class SubCategoryServiceImpl implements SubCategoryService {
             throw new BusinessLogicException("SubCategory already exists with name: " + request.getName() + " in this category");
         }
 
-        if(file.isEmpty()) {
+        boolean hasFile = file != null && !file.isEmpty();
+        if (!hasFile && request.getLogoId() == null) {
             throw new Exception("file in image is empty");
         }
 
         SubCategory subCategory = SubCategoryMapper.toEntity(request);
         subCategory.setCategory(category);
 
-        Image imageUrl = this.imageService.uploadImage(file);
-        subCategory.setImage(imageUrl);
+        if (hasFile) {
+            Image imageUrl = this.imageService.uploadImage(file);
+            subCategory.setImage(imageUrl);
+        } else {
+            subCategory.setImage(imageFromLogo(request.getLogoId()));
+        }
 
         SubCategory savedSubCategory = subCategoryRepository.save(subCategory);
         return SubCategoryMapper.toResponse(savedSubCategory);
@@ -177,9 +184,11 @@ public class SubCategoryServiceImpl implements SubCategoryService {
             subCategory.setCategory(newCategory);
         }
 
-        if(file != null && !Objects.equals(file.getOriginalFilename(), subCategory.getImage())) {
+        if (file != null && !file.isEmpty()) {
             Image imageUrl = this.imageService.uploadImage(file);
             subCategory.setImage(imageUrl);
+        } else if (request.getLogoId() != null) {
+            subCategory.setImage(imageFromLogo(request.getLogoId()));
         }
 
         SubCategoryMapper.updateEntity(subCategory, request);
@@ -193,6 +202,14 @@ public class SubCategoryServiceImpl implements SubCategoryService {
             throw new ResourceNotFoundException("SubCategory not found with id: " + id);
         }
         subCategoryRepository.deleteById(id);
+    }
+
+    private Image imageFromLogo(Long logoId) {
+        BrandLogo logo = brandLogoRepository.findById(logoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand logo not found with id: " + logoId));
+        Image image = new Image();
+        image.setUrl(logo.getUrl());
+        return image;
     }
 
     @Override

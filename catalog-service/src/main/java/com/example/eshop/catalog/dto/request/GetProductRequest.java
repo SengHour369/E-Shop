@@ -16,6 +16,9 @@ public class GetProductRequest {
     @JsonProperty("criteria_value")
     private String criteriaValue;
 
+    @JsonProperty("is_active")
+    private Boolean isActive;
+
     @Builder.Default
     @jakarta.validation.constraints.Min(1)
     private int page = 1;

@@ -14,6 +14,20 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
+    @Query("""
+            select new com.example.eshop.payment.dto.response.MonthlyReportResponse(
+                month(e.paymentDate), count(e), sum(e.amount), e.currency)
+            from Payment e
+            where (e.deleted = false or e.deleted is null)
+              and e.paymentDate >= :start and e.paymentDate < :end
+              and e.status = 'COMPLETED'
+            group by month(e.paymentDate), e.currency
+            order by month(e.paymentDate), e.currency
+            """)
+    List<com.example.eshop.payment.dto.response.MonthlyReportResponse> monthlyReport(
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+
     Optional<Payment> findByTransactionId(String transactionId);
 
 

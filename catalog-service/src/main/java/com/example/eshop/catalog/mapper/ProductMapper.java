@@ -84,6 +84,7 @@ public class ProductMapper {
         return ProductSkuResponse.builder()
                 .id(sku.getId())
                 .sku(sku.getSku())
+                .barcode(sku.getBarcode())
                 .description(sku.getDescription())
                 .price(sku.getPrice())
                 .originalPrice(details.prices().get(sku.getId()).originalPrice())
