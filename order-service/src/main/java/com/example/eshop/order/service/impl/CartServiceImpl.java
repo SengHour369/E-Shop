@@ -27,6 +27,7 @@ import java.util.Optional;
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
+    private final com.example.eshop.order.repository.OrderRepository orders;
     private final CartItemRepository cartItemRepository;
     private final CartMapper cartMapper;
     private final CatalogAccess catalog;
@@ -145,8 +146,21 @@ public class CartServiceImpl implements CartService {
                     newCart.setCartItems(new ArrayList<>());
                     return cartRepository.save(newCart);
                 });
-        if (cart.getCheckoutOrderId() != null)
-            throw new com.example.eshop.common.exception.BusinessLogicException("Checkout is processing; retry after it finishes");
+        if (cart.getCheckoutOrderId() != null) {
+            var checkoutOrder = orders.findById(cart.getCheckoutOrderId()).orElse(null);
+            boolean completed = checkoutOrder != null
+                    && userId.equals(checkoutOrder.getUserId())
+                    && checkoutOrder.isCatalogCompleted()
+                    && java.util.Set.of("PENDING", "CONFIRMED", "PROCESSING", "SHIPPED",
+                            "DELIVERED", "FAILED", "CANCELLED", "REFUNDED")
+                            .contains(checkoutOrder.getStatus());
+            if (!completed) {
+                throw new com.example.eshop.common.exception.BusinessLogicException(
+                        "Checkout is processing; retry after it finishes");
+            }
+            // Recover a stale lock without removing items or changing the order.
+            cart.setCheckoutOrderId(null);
+        }
         return cart;
     }
 

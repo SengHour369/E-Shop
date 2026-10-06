@@ -252,7 +252,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
         log.info("Refreshing token...");
 
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(com.example.eshop.auth.security.RefreshTokenHash.of(request.getRefreshToken()))
                 .orElseThrow(() -> new CustomMessageException("Invalid refresh token",
                         String.valueOf(HttpStatus.UNAUTHORIZED.value())));
 
@@ -280,7 +280,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthenticationResponse logout(RefreshTokenRequest request) {
         log.info("Logging out...");
-        refreshTokenRepository.findByToken(request.getRefreshToken())
+        refreshTokenRepository.findByToken(com.example.eshop.auth.security.RefreshTokenHash.of(request.getRefreshToken()))
                 .ifPresent(token -> {
                     audit.recordForActor(AuditEvent.success(AuditAction.LOGOUT, "USER", token.getUser().getId(), null, null),
                         new UsernamePasswordAuthenticationToken(buildUserDetails(token.getUser()), null, List.of()));
@@ -436,7 +436,7 @@ public class AuthServiceImpl implements AuthService {
     private String generateAndSaveRefreshToken(User user) {
         String token = UUID.randomUUID().toString();
         RefreshToken refreshToken = RefreshToken.builder()
-                .token(token)
+                .token(com.example.eshop.auth.security.RefreshTokenHash.of(token))
                 .user(user)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();

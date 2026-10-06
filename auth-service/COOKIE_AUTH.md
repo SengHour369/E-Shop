@@ -9,7 +9,7 @@ Existing bearer endpoints in `LoginController` remain available for API clients.
 
 1. POST `/api/v1/public/session/login` with the existing `CriteriaValue` and `Password` fields.
 2. The response sets `eshop_access` (path `/api`) and `eshop_refresh`
-   (path `/api/v1/public/session`). Both are HttpOnly, host-only and SameSite=Lax.
+   (path `/api/v1/public/session`). Both are HttpOnly, host-only and default to SameSite=Lax.
    The JSON response contains account information without token values.
 3. Send API requests with `credentials: 'include'`. The gateway validates the access
    cookie locally, removes cookies from protected downstream requests, and forwards
@@ -52,14 +52,57 @@ read the token cookies and should not copy tokens into localStorage.
 - Every session POST and every unsafe cookie-authenticated gateway request requires
   a matching `Origin` header. Browsers set this automatically; this check prevents CSRF,
   including login CSRF. Non-browser tests must supply it explicitly.
-- SameSite=Lax requires the frontend and API to be same-site. For deployment, put them
-  under the same site or proxy API requests through the frontend's site.
+- `AUTH_COOKIE_SAME_SITE` accepts `Lax` (default), `Strict`, or `None`. Use `None`
+  for a frontend on a different site; it requires `AUTH_COOKIE_SECURE=true` and HTTPS.
+  Browsers that block third-party cookies may still require a same-site API proxy.
 - `JWT_EXPIRATION` now defaults to 900 seconds (15 minutes). Refresh tokens retain the
   existing 7-day database lifetime. Use the same `JWT_SECRET` in auth and gateway.
 - An explicit Authorization header takes precedence over the cookie, and an invalid
   header never falls back to cookies. Bearer-only requests remain compatible.
 - Logout revokes refresh and clears browser cookies; a previously copied access JWT
   remains valid until expiry. Gateway validation is stateless and does not implement revocation.
+
+## Configure frontend addresses
+
+See the database upgrade notes below before deploying over an existing installation.
+
+Set these values in the project-root `.env` (exact origins, no trailing slash or path):
+
+```dotenv
+GATEWAY_CORS_ORIGINS=https://shop.example.com,https://admin.example.com
+AUTH_COOKIE_SECURE=true
+AUTH_COOKIE_SAME_SITE=Lax
+```
+
+Both auth and gateway use the same origin list. Replace the example addresses with
+your frontend addresses. For a frontend on a different site from the API, set
+`AUTH_COOKIE_SAME_SITE=None`. The browser stores cookies for the API host automatically;
+no frontend domain needs to be placed in the cookie.
+
+After changing `.env`, recreate the services so the settings take effect:
+
+```powershell
+docker compose up -d --build auth-service api-gateway
+```
+
+For local HTTP use `docker compose -f compose.yaml -f compose.local.yaml up -d --build
+auth-service api-gateway` instead. The local override always uses non-secure `Lax`
+cookies. Frontend fetch calls must use `credentials: 'include'`, as shown above.
+Address changes require recreation, not a Java rebuild or a new application endpoint.
+
+## Database session storage
+
+`auth_db.refresh_tokens` stores the session UUID, `user_id` foreign key, creation
+time, expiry and a unique SHA-256 hash in the `token` column. The raw refresh cookie
+stays in the browser. Access cookies remain short-lived JWTs and are not stored.
+Refresh rotates the database credential; logout deletes it. Token lookup takes a
+row lock to serialize concurrent refresh/logout attempts. Existing login behavior
+keeps one refresh session per user; a new login replaces their previous session.
+
+For an existing database, stop auth-service and apply
+`src/main/resources/db/upgrade/20261005_refresh_cookie_hash.sql` before deploying
+this version. It converts existing credentials without changing browser cookies.
+New databases need no upgrade. This is a manual upgrade, not an automatic migration.
 
 ## Request-path efficiency
 

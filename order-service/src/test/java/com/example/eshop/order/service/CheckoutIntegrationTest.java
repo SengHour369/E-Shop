@@ -100,6 +100,28 @@ class CheckoutIntegrationTest {
         assertThat(cart.getTotalPrice()).isEqualByComparingTo("240");
         assertThatThrownBy(() -> carts.addItemToCart(user+1,request)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
+    @Test void completedCheckoutUnlocksStaleCartWithoutRemovingItems() {
+        OrderResponse placed=(OrderResponse)checkout.create(user,request()).object();
+        tx.executeWithoutResult(t -> {
+            OrderDetail order=orders.findById(placed.getId()).orElseThrow();
+            order.setStatus("DELIVERED");
+            Cart cart=cartRepository.findByUserId(user).orElseThrow();
+            cart.setCheckoutOrderId(placed.getId());
+            cart.getCartItems().add(CartItemMapper.toEntity(cart,1L,1L,new BigDecimal("80")));
+            cart.setTotalItems(1); cart.setTotalPrice(new BigDecimal("80"));
+        });
+        CartResponse recovered=(CartResponse)carts.getOrCreateCart(user).object();
+        assertThat(recovered.getTotalItems()).isEqualTo(1);
+        assertThat(cartRepository.findByUserId(user).orElseThrow().getCheckoutOrderId()).isNull();
+        assertThat(orders.findById(placed.getId()).orElseThrow().getStatus()).isEqualTo("DELIVERED");
+    }
+    @Test void activeCheckoutRemainsLockedForCartChanges() {
+        when(catalog.confirm(anyLong())).thenThrow(new IllegalStateException("network unavailable"));
+        OrderResponse pending=(OrderResponse)checkout.create(user,request()).object();
+        assertThatThrownBy(() -> carts.getOrCreateCart(user))
+            .isInstanceOf(com.example.eshop.common.exception.BusinessLogicException.class);
+        assertThat(cartRepository.findByUserId(user).orElseThrow().getCheckoutOrderId()).isEqualTo(pending.getId());
+    }
     @Test void cancelledOrderReleasesCatalogExactlyOnce() {
         OrderResponse order=(OrderResponse)checkout.create(user,request()).object();
         tx.executeWithoutResult(t -> {

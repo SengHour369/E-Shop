@@ -25,7 +25,7 @@ class SessionControllerTest {
     @BeforeEach void setup() {
         auth = mock(AuthServiceImpl.class);
         mvc = MockMvcBuilders.standaloneSetup(new SessionController(auth,
-                new SessionCookieService(true, 900, Set.of(ORIGIN)))).build();
+                new SessionCookieService(true, "Lax", 900, Set.of(ORIGIN)))).build();
     }
 
     @Test void loginSetsScopedHttpOnlyCookiesWithoutTokensInBody() throws Exception {

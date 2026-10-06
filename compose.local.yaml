@@ -11,6 +11,7 @@ services:
         condition: service_started
     environment:
       AUTH_COOKIE_SECURE: "false"
+      AUTH_COOKIE_SAME_SITE: Lax
       SPRING_MAIL_HOST: mailpit
       SPRING_MAIL_PORT: "1025"
       SPRING_MAIL_USERNAME: no-reply@eshop.local

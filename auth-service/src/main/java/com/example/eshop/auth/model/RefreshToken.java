@@ -20,6 +20,7 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    // Stores sha256:<hex>, never the browser's raw refresh cookie.
     @Column(nullable = false, unique = true)
     private String token;
 

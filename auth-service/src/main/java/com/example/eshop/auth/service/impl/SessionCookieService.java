@@ -17,14 +17,22 @@ public class SessionCookieService {
     public static final String REFRESH_COOKIE = "eshop_refresh";
     public static final String SESSION_PATH = "/api/v1/public/session";
     private final boolean secure;
+    private final String sameSite;
     private final long accessSeconds;
     private final Set<String> allowedOrigins;
 
     public SessionCookieService(
             @Value("${auth.cookies.secure:true}") boolean secure,
+            @Value("${auth.cookies.same-site:Lax}") String sameSite,
             @Value("${jwt.expiration}") long accessSeconds,
             @Value("${auth.cookies.allowed-origins}") Set<String> allowedOrigins) {
         this.secure = secure;
+        this.sameSite = java.util.Arrays.stream(new String[]{"Lax", "Strict", "None"})
+                .filter(value -> value.equalsIgnoreCase(sameSite.trim())).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Cookie SameSite must be Lax, Strict or None"));
+        if (this.sameSite.equals("None") && !secure) {
+            throw new IllegalArgumentException("SameSite=None requires secure HTTPS cookies");
+        }
         this.accessSeconds = accessSeconds;
         this.allowedOrigins = Set.copyOf(allowedOrigins);
     }
@@ -56,7 +64,7 @@ public class SessionCookieService {
     }
 
     private String cookie(String name, String value, String path, long seconds) {
-        return ResponseCookie.from(name, value).httpOnly(true).secure(secure).sameSite("Lax")
+        return ResponseCookie.from(name, value).httpOnly(true).secure(secure).sameSite(sameSite)
                 .path(path).maxAge(Duration.ofSeconds(seconds)).build().toString();
     }
 
