@@ -60,8 +60,11 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
       headers.remove("X-Gateway-Admin-Key");
     }).build();
     exchange = exchange.mutate().request(sanitized).build();
+    String path = exchange.getRequest().getPath().value();
+    boolean optionalChatAuthentication = "/api/ai/chat".equals(path);
+    boolean hasCredentials = authorization != null || cookieAuthentication;
     if (!properties.isAuthenticationEnabled()
-        || isPublic(exchange.getRequest().getPath().value())) {
+        || isPublic(path) && (!optionalChatAuthentication || !hasCredentials)) {
       return chain.filter(exchange);
     }
 

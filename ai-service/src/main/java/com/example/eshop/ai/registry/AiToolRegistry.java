@@ -6,6 +6,8 @@ import com.example.eshop.ai.enums.AiToolRisk;
 import com.example.eshop.ai.registry.AiToolDefinition.Parameter;
 import com.example.eshop.ai.service.AiFailure;
 import com.example.eshop.common.security.CurrentActor;
+import com.example.eshop.common.security.LivePermissionService;
+import com.example.eshop.common.security.PermissionSnapshot;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Component;
 
@@ -40,34 +42,40 @@ import static com.example.eshop.ai.enums.AiToolRisk.READ_ONLY;
 public class AiToolRegistry {
 
     private static final String AUTHENTICATED = "AUTHENTICATED";
-    private static final String ADMIN = "ADMIN";
+    private static final String PUBLIC = "PUBLIC";
+    private static final String ADMIN = "PROMOTION_MANAGE";
     private static final BigDecimal MAX_PERCENT = new BigDecimal("100");
     private static final int MAX_TEXT_LENGTH = 120;
     private static final long MAX_THRESHOLD = 1_000_000L;
 
     private final Map<AiIntent, AiToolDefinition> tools = new EnumMap<>(AiIntent.class);
+    private final LivePermissionService permissions;
 
-    public AiToolRegistry() {
+    public AiToolRegistry(LivePermissionService permissions) {
+        this.permissions = permissions;
+        read(AiIntent.KNOWLEDGE_SEARCH,
+                "Retrieve approved policy, FAQ or help text. Never use for live price, stock, order or payment status.",
+                "ai-service", "knowledge", PUBLIC, Map.of("query", parameter("string", true)));
         register(PRODUCT_GET, "Get an active product", "catalog-service", "GET",
-                "/internal/ai/products/{id}", AUTHENTICATED, READ_ONLY, false, true,
+                "/internal/ai/products/{id}", PUBLIC, READ_ONLY, false, true,
                 Map.of("id", parameter("integer", true)));
-        register(PRODUCT_SEARCH, "Search products; one page", "catalog-service", "POST",
-                "/api/v1/products/get/all", AUTHENTICATED, READ_ONLY, false, true,
+        register(PRODUCT_SEARCH, "Search products; one page", "catalog-service", "GET",
+                "/internal/ai/products", PUBLIC, READ_ONLY, false, true,
                 Map.of("query", parameter("string", true)));
         register(SKU_GET, "Get an active product SKU", "catalog-service", "GET",
-                "/internal/ai/skus/{skuId}", AUTHENTICATED, READ_ONLY, false, true,
+                "/internal/ai/skus/{skuId}", PUBLIC, READ_ONLY, false, true,
                 Map.of("skuId", parameter("integer", true)));
-        register(INVENTORY_GET, "Get inventory for SKU", "catalog-service", "POST",
-                "/api/v1/inventory/sku/", ADMIN, READ_ONLY, false, true,
+        register(INVENTORY_GET, "Get inventory for SKU", "catalog-service", "GET",
+                "/internal/ai/inventory/{skuId}", "INVENTORY_VIEW", READ_ONLY, false, true,
                 Map.of("skuId", parameter("integer", true)));
-        register(INVENTORY_LOW_STOCK, "Find low stock; default threshold 10, first 20 rows", "catalog-service", "POST",
-                "/api/v1/inventory/low-stock", ADMIN, READ_ONLY, false, true,
+        register(INVENTORY_LOW_STOCK, "Find low stock; default threshold 10, first 20 rows", "catalog-service", "GET",
+                "/internal/ai/inventory/low-stock", "INVENTORY_VIEW", READ_ONLY, false, true,
                 Map.of("threshold", parameter("integer", false)));
         register(ORDER_GET, "Get your own order by order number", "order-service", "GET",
                 "/internal/ai/orders/{orderNumber}", AUTHENTICATED, READ_ONLY, false, true,
                 Map.of("orderNumber", parameter("string", true)));
         register(PROMOTION_GET, "Get promotion details", "catalog-service", "GET",
-                "/api/v1/admin/promotions/{id}", ADMIN, READ_ONLY, false, true,
+                "/internal/ai/promotions/{id}", "PROMOTION_VIEW", READ_ONLY, false, true,
                 Map.of("id", parameter("integer", true)));
         register(PROMOTION_CREATE,
                 "Create a DRAFT percentage promotion for one SKU; never activate. Require explicit name and start/end local dates (ISO 8601); do not invent missing values.",
@@ -78,10 +86,46 @@ public class AiToolRegistry {
                         "discount", parameter("number", true),
                         "startAt", parameter("string", true),
                         "endAt", parameter("string", true)));
-        for (AiIntent intent : List.of(ORDER_CANCEL, PAYMENT_REFUND, ROLE_GRANT)) {
+        for (AiIntent intent : List.of(PAYMENT_REFUND, ROLE_GRANT)) {
             register(intent, "Unavailable sensitive operation", "disabled", "NONE",
                     "", ADMIN, HIGH_RISK_WRITE, false, false, Map.of());
         }
+        register(ORDER_CANCEL, "Cancel my pending order by explicit order number; requires confirmation",
+                "order-service", "POST", "/internal/ai/orders/{number}/cancel", AUTHENTICATED,
+                HIGH_RISK_WRITE, true, true, Map.of("orderNumber", parameter("string", true)));
+        register(AiIntent.PROMOTION_DISABLE, "Disable a promotion by explicit ID; requires confirmation",
+                "catalog-service", "POST", "/internal/ai/promotions/{id}/disable", "PROMOTION_MANAGE",
+                HIGH_RISK_WRITE, true, true, Map.of("id", parameter("integer", true)));
+        read(AiIntent.MY_ORDERS, "List my latest 20 orders", "order-service",
+                "/internal/ai/orders", AUTHENTICATED, Map.of());
+        read(AiIntent.MY_ORDER_STATUS, "Get my latest order status", "order-service",
+                "/internal/ai/orders/latest", AUTHENTICATED, Map.of());
+        read(AiIntent.MY_PAYMENT_STATUS, "Get my payment status by payment ID", "payment-service",
+                "/internal/ai/payments/{id}", AUTHENTICATED, Map.of("id", parameter("integer", true)));
+        read(AiIntent.MY_RETURNS, "List my latest 20 returns", "order-service",
+                "/internal/ai/returns", AUTHENTICATED, Map.of());
+        read(AiIntent.MY_NOTIFICATIONS, "List my latest 20 notifications", "notification-service",
+                "/api/notifications", AUTHENTICATED, Map.of());
+        read(AiIntent.ADMIN_ORDER_LIST, "List latest 20 orders by optional exact status and date (YYYY-MM-DD or TODAY)", "order-service",
+                "/internal/ai/orders/admin", "ORDER_VIEW_ALL", Map.of("status", parameter("string", false), "date", parameter("string", false)));
+        read(AiIntent.ADMIN_PAYMENT_LIST, "List latest 20 payments by optional exact status and date (YYYY-MM-DD or TODAY)", "payment-service",
+                "/internal/ai/payments/admin", "PAYMENT_VIEW_ALL", Map.of("status", parameter("string", false), "date", parameter("string", false)));
+        read(AiIntent.ADMIN_RETURN_LIST, "List latest 20 returns, optionally by exact status", "order-service",
+                "/internal/ai/returns/admin", "RETURN_VIEW_ALL", Map.of("status", parameter("string", false)));
+        read(AiIntent.ADMIN_ORDER_SUMMARY, "Count all orders by status", "order-service",
+                "/internal/ai/orders/summary", "REPORT_VIEW", Map.of());
+        read(AiIntent.ADMIN_USER_LIST, "List latest 20 accounts without credentials or personal contact details",
+                "auth-service", "/internal/ai/users", "USER_VIEW", Map.of());
+        read(AiIntent.ADMIN_REVENUE_SUMMARY, "Sum completed payments by currency for an explicit date (YYYY-MM-DD or TODAY); not net revenue",
+                "payment-service", "/internal/ai/payments/revenue", "REPORT_VIEW",
+                Map.of("date", parameter("string", true)));
+        read(AiIntent.ADMIN_AUDIT_LOG, "Find latest 20 AI-service audit records by explicit requestId; excludes raw snapshots",
+                "ai-service", "audit", "AUDIT_VIEW", Map.of("requestId", parameter("string", true)));
+    }
+
+    private void read(AiIntent intent, String description, String service, String path,
+            String permission, Map<String, Parameter> parameters) {
+        register(intent, description, service, "GET", path, permission, READ_ONLY, false, true, parameters);
     }
 
     public AiToolDefinition find(AiIntent intent) {
@@ -89,15 +133,27 @@ public class AiToolRegistry {
     }
 
     public boolean permitted(AiToolDefinition tool) {
-        return tool != null && (AUTHENTICATED.equals(tool.requiredPermission()) || CurrentActor.has(tool.requiredPermission()));
+        return permitted(tool, authenticated() ? permissions.current() : null);
+    }
+
+    private boolean permitted(AiToolDefinition tool, PermissionSnapshot snapshot) {
+        return tool != null && (PUBLIC.equals(tool.requiredPermission())
+                || snapshot != null && (AUTHENTICATED.equals(tool.requiredPermission())
+                || snapshot.administrator() && snapshot.permits(tool.requiredPermission())));
     }
 
     public List<AiToolDefinition> available() {
-        CurrentActor.userId();
+        PermissionSnapshot snapshot = authenticated() ? permissions.current() : null;
         return tools.values().stream()
                 .filter(AiToolDefinition::enabled)
-                .filter(this::permitted)
+                .filter(tool -> permitted(tool, snapshot))
                 .toList();
+    }
+
+    public static boolean authenticated() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken);
     }
 
     public AiToolDefinition authorize(AiIntent intent) {
@@ -111,10 +167,6 @@ public class AiToolRegistry {
         if (!permitted(tool)) {
             throw new AiFailure("PERMISSION_DENIED", AiExecutionStatus.DENIED, "You cannot perform this operation.");
         }
-        if (tool.risk() == HIGH_RISK_WRITE) {
-            throw new AiFailure("CONFIRMATION_REQUIRED", AiExecutionStatus.DENIED,
-                    "Use the dedicated workflow for this sensitive operation.");
-        }
         return tool;
     }
 
@@ -124,7 +176,14 @@ public class AiToolRegistry {
         }
         rejectUnknownKeys(tool, params);
         tool.requestSchema().forEach((key, spec) -> checkParameter(key, spec, params.get(key)));
-        if (tool.toolName() == ORDER_GET) {
+        if (params.hasNonNull("date") && !"TODAY".equals(params.path("date").asText())) {
+            try {
+                java.time.LocalDate.parse(params.path("date").asText());
+            } catch (DateTimeParseException exception) {
+                throw invalid("Use YYYY-MM-DD or TODAY for the date.");
+            }
+        }
+        if (tool.toolName() == ORDER_GET || tool.toolName() == ORDER_CANCEL) {
             requireOrderNumber(params.path("orderNumber").asText());
         }
         if (tool.toolName() == PROMOTION_CREATE) {

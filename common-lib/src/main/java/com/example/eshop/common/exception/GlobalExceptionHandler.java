@@ -10,6 +10,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @lombok.RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private final com.example.eshop.common.audit.AuditLogService audit;
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<APIResponse<Object>> handleStatus(org.springframework.web.server.ResponseStatusException ex) {
+        int status = ex.getStatusCode().value();
+        HttpStatus known = HttpStatus.resolve(status);
+        String message = known == null ? "Request could not be completed" : known.getReasonPhrase();
+        return ResponseEntity.status(status).body(APIResponse.error(message, status));
+    }
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<APIResponse<Object>> handleDenied(Exception ex) {
         audit.recordSecurity(com.example.eshop.common.audit.AuditAction.ACCESS_DENIED,

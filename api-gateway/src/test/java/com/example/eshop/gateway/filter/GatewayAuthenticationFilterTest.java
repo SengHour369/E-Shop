@@ -100,4 +100,40 @@ class GatewayAuthenticationFilterTest {
     filter.filter(exchange, current -> { throw new AssertionError("Must not forward"); }).block();
     assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
   }
+
+  @Test
+  void publicChatAcceptsGuestAndPreservesExistingCookieIdentity() {
+    properties.setPublicPaths(List.of("/api/ai/chat"));
+    var guest = MockServerWebExchange.from(MockServerHttpRequest.post("/api/ai/chat"));
+    var guestForwarded = new AtomicReference<ServerWebExchange>();
+    filter.filter(guest, current -> {
+      guestForwarded.set(current);
+      return current.getResponse().setComplete();
+    }).block();
+    assertThat(guestForwarded.get()).isNotNull();
+
+    String access = token(false, true, 60);
+    var signedIn = MockServerWebExchange.from(MockServerHttpRequest.post("/api/ai/chat")
+        .header("Origin", "http://localhost:5173")
+        .cookie(new org.springframework.http.HttpCookie("eshop_access", access)));
+    var signedInForwarded = new AtomicReference<ServerWebExchange>();
+    filter.filter(signedIn, current -> {
+      signedInForwarded.set(current);
+      return current.getResponse().setComplete();
+    }).block();
+    assertThat(signedInForwarded.get().getRequest().getHeaders().getFirst("Authorization"))
+        .isEqualTo("Bearer " + access);
+    assertThat(signedInForwarded.get().getRequest().getHeaders()).doesNotContainKey("Cookie");
+  }
+
+  @Test
+  void publicChatRejectsInvalidCredentialsRatherThanTreatingThemAsGuest() {
+    properties.setPublicPaths(List.of("/api/ai/chat"));
+    var exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/api/ai/chat")
+        .header("Authorization", "Bearer invalid"));
+    filter.filter(exchange, current -> {
+      throw new AssertionError("Invalid credentials must not be forwarded");
+    }).block();
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+  }
 }

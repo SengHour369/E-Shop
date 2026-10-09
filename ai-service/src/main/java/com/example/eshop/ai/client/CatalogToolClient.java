@@ -14,25 +14,31 @@ import java.util.Map;
 @FeignClient(name = "catalog-service")
 public interface CatalogToolClient {
 
+    @PostMapping("/internal/ai/promotions/{id}/disable")
+    JsonNode disablePromotion(@RequestHeader("Authorization") String token, @PathVariable("id") long id);
+
     @GetMapping("/internal/ai/products/{id}")
-    JsonNode product(@RequestHeader("Authorization") String token, @PathVariable("id") long id);
+    JsonNode product(@RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable("id") long id);
 
     @GetMapping("/internal/ai/skus/{id}")
-    JsonNode sku(@RequestHeader("Authorization") String token, @PathVariable("id") long id);
+    JsonNode sku(@RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable("id") long id);
 
-    @PostMapping("/api/v1/products/get/all")
-    JsonNode search(@RequestHeader("Authorization") String token, @RequestBody Map<String, Object> request);
+    @GetMapping("/internal/ai/products")
+    JsonNode search(@RequestHeader(value = "Authorization", required = false) String token,
+            @RequestParam("query") String query);
 
-    @PostMapping("/api/v1/inventory/sku/")
-    JsonNode inventory(@RequestHeader("Authorization") String token, @RequestParam("skuId") long id);
+    @GetMapping("/internal/ai/inventory/{skuId}")
+    JsonNode inventory(@RequestHeader("Authorization") String token, @PathVariable("skuId") long id);
 
-    @PostMapping("/api/v1/inventory/low-stock")
+    @GetMapping("/internal/ai/inventory/low-stock")
     JsonNode lowStock(@RequestHeader("Authorization") String token,
             @RequestParam("threshold") long threshold,
             @RequestParam("page") int page,
             @RequestParam("size") int size);
 
-    @GetMapping("/api/v1/admin/promotions/{id}")
+    @GetMapping("/internal/ai/promotions/{id}")
     JsonNode promotion(@RequestHeader("Authorization") String token, @PathVariable("id") long id);
 
     @PostMapping("/internal/ai/promotions")

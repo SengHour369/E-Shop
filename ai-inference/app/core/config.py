@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     )
 
     ai_provider: str = "OPENAI"
+    ollama_model: str = ""
+    ollama_base_url: str = "http://localhost:11434"
     ai_request_timeout_seconds: float = Field(default=20, gt=0, le=120)
     ai_min_confidence: float = Field(default=0.70, ge=0, le=1)
     openai_api_key: str = ""
@@ -33,6 +35,16 @@ class Settings(BaseSettings):
         if not normalized:
             raise ValueError("AI_PROVIDER is required")
         return normalized
+
+    @field_validator("ollama_base_url")
+    @classmethod
+    def local_provider_url(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ValueError("OLLAMA_BASE_URL must be an HTTP URL")
+        if parsed.username or parsed.password or parsed.query or parsed.fragment:
+            raise ValueError("OLLAMA_BASE_URL cannot contain credentials, query or fragment")
+        return value.rstrip("/")
 
     @field_validator("openai_api_key")
     @classmethod
@@ -67,6 +79,8 @@ class Settings(BaseSettings):
 
 def readiness(settings: Settings) -> bool:
     """Configuration required to serve traffic. This must not call the provider."""
+    if settings.ai_provider == "OLLAMA":
+        return bool(settings.ollama_model.strip())
     return (
         settings.ai_provider == "OPENAI"
         and bool(settings.openai_api_key)

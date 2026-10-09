@@ -32,6 +32,9 @@ public class SecurityConfig {
     // Same public path list as the monolith's SecurityConfig.PUBLIC_PATHS, filtered down to the
     // catalog/product/category/subcategory browsing endpoints that live in this service.
     public static final String[] PUBLIC_PATHS = {
+            "/internal/ai/products",
+            "/internal/ai/products/*",
+            "/internal/ai/skus/*",
             "/swagger-ui/**",
             "/api/v1/promotions/**",
             "/v3/api-docs/**",

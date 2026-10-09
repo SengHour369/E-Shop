@@ -272,6 +272,7 @@ gateway:
     jwt-secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
     admin-key: ${GATEWAY_ADMIN_KEY:}
     public-paths:
+      - /api/ai/chat
       - /api/v1/promotions/**
       - /api/v1/public/session/login
       - /api/v1/public/session/verify

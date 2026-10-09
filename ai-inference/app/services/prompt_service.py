@@ -22,6 +22,10 @@ Rules:
 8. Select only tools supplied by the application.
 9. Return UNKNOWN when no tool safely matches.
 10. Return valid structured JSON only.
+11. Understand English, Khmer and mixed English/Khmer messages. Preserve IDs and product names.
+12. Never invent missing parameters. Ask for clarification by returning UNKNOWN.
+13. A tool that lists the latest rows cannot answer filtered date-range or total-revenue questions.
+14. Use KNOWLEDGE_SEARCH only for stable policy/help questions, never live business facts.
 """
 
 

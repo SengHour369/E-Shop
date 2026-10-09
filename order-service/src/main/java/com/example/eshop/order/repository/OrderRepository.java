@@ -16,6 +16,28 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<OrderDetail, Long> {
 
     @Query("""
+            select new com.example.eshop.order.dto.response.AiOrderStatusCount(o.status, count(o))
+            from OrderDetail o
+            where o.deleted = false or o.deleted is null
+            group by o.status
+            order by o.status
+            """)
+    List<com.example.eshop.order.dto.response.AiOrderStatusCount> assistantStatusSummary();
+
+    @Query("select o from OrderDetail o where o.userId = :userId and (o.deleted = false or o.deleted is null)")
+    Page<OrderDetail> findVisibleByUserId(@Param("userId") long userId, Pageable pageable);
+
+    @Query("""
+            select o from OrderDetail o
+            where (:status is null or o.status = :status)
+              and (o.deleted = false or o.deleted is null)
+              and (cast(:start as LocalDateTime) is null or o.orderDate >= :start)
+              and (cast(:end as LocalDateTime) is null or o.orderDate < :end)
+            """)
+    Page<OrderDetail> findVisibleForAssistant(@Param("status") String status,
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
+
+    @Query("""
             select new com.example.eshop.order.dto.response.DailyReportResponse(
                 year(e.orderDate), month(e.orderDate), day(e.orderDate), count(e))
             from OrderDetail e

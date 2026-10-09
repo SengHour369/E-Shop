@@ -18,6 +18,11 @@ import java.util.Optional;
 @Repository
 public interface ReturnRequestRepository extends JpaRepository<Return, Long> {
 
+    Page<Return> findByCustomerId(Long customerId, Pageable pageable);
+
+    @Query("select r from Return r where :status is null or r.status = :status")
+    Page<Return> findForAssistant(@Param("status") String status, Pageable pageable);
+
     Optional<Return> findByReturnId(String returnId);
 
     boolean existsByReturnId(String returnId);

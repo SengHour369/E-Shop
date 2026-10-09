@@ -15,6 +15,29 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("""
+            select new com.example.eshop.payment.dto.response.AiRevenueSummary(
+                p.currency, count(p), sum(p.amount))
+            from Payment p
+            where (p.deleted = false or p.deleted is null)
+              and p.status = 'COMPLETED'
+              and p.paymentDate >= :start and p.paymentDate < :end
+            group by p.currency
+            order by p.currency
+            """)
+    List<com.example.eshop.payment.dto.response.AiRevenueSummary> assistantRevenue(
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("""
+            select p from Payment p
+            where (:status is null or p.status = :status)
+              and (p.deleted = false or p.deleted is null)
+              and (cast(:start as LocalDateTime) is null or p.paymentDate >= :start)
+              and (cast(:end as LocalDateTime) is null or p.paymentDate < :end)
+            """)
+    Page<Payment> findVisibleForAssistant(@Param("status") String status,
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
+
+    @Query("""
             select new com.example.eshop.payment.dto.response.MonthlyReportResponse(
                 month(e.paymentDate), count(e), sum(e.amount), e.currency)
             from Payment e

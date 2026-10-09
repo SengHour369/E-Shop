@@ -55,6 +55,8 @@ services:
     ports: ["127.0.0.1:8000:8000"]
     environment:
       AI_PROVIDER: ${AI_PROVIDER:-OPENAI}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       AI_REQUEST_TIMEOUT_SECONDS: ${AI_REQUEST_TIMEOUT_SECONDS:-20}
       AI_MIN_CONFIDENCE: ${AI_MIN_CONFIDENCE:-0.70}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -73,6 +75,10 @@ services:
       dockerfile: ai-service/Dockerfile
     # AI is reachable through the gateway; no host port is needed.
     environment:
+      AUTHORIZATION_AUTH_URL: http://auth-service:8081
+      AI_KNOWLEDGE_ENABLED: ${AI_KNOWLEDGE_ENABLED:-false}
+      AI_KNOWLEDGE_EMBEDDING_URL: ${AI_KNOWLEDGE_EMBEDDING_URL:-http://host.docker.internal:11434}
+      AI_KNOWLEDGE_EMBEDDING_MODEL: ${AI_KNOWLEDGE_EMBEDDING_MODEL:-}
       DATABASE_URL: jdbc:postgresql://ai-db:5432/ai_db
       DATABASE_USERNAME: ${AI_DATABASE_USERNAME:-eshop}
       DATABASE_PASSWORD: ${AI_DATABASE_PASSWORD:-eshop}

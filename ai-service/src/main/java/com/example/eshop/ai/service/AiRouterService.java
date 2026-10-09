@@ -40,8 +40,50 @@ public class AiRouterService {
     private final AiToolRegistry registry;
     private final AiToolExecutor executor;
     private final AiExecutionService history;
+    private final AiConfirmationService confirmations;
+    private final io.micrometer.core.instrument.MeterRegistry metrics;
+
+    public AiResponse confirm(UUID id, String bearer) {
+        var previous = history.existing(id);
+        if (previous.isPresent()) {
+            return replay(previous.get());
+        }
+        AiExecution execution;
+        try {
+            execution = history.start(id);
+        } catch (DataIntegrityViolationException exception) {
+            return replay(history.existing(id).orElseThrow());
+        }
+        Outcome outcome;
+        try {
+            var result = executor.executeConfirmed(id, bearer);
+            if (rejected(result.data())) {
+                outcome = Outcome.of(result.tool().toolName(), result.tool(), FAILURE,
+                        "DOWNSTREAM_REJECTED", "The service rejected the action.");
+            } else {
+                outcome = Outcome.success(result.tool().toolName(), result.tool(), result.data(),
+                        promotionId(result.tool().toolName(), result.data()));
+            }
+        } catch (AiFailure exception) {
+            outcome = Outcome.of(AiIntent.UNKNOWN, null, exception.status(), exception.code(), exception.getMessage());
+        } catch (org.springframework.security.access.AccessDeniedException exception) {
+            outcome = Outcome.of(AiIntent.UNKNOWN, null, DENIED, "PERMISSION_DENIED", "This action is not authorized.");
+        } catch (Exception exception) {
+            outcome = Outcome.of(AiIntent.UNKNOWN, null, UNKNOWN, "OUTCOME_UNKNOWN",
+                    "The action could not be confirmed. Check its state before submitting it again.");
+        }
+        history.finish(id, outcome.intent(), outcome.tool(), outcome.status(), outcome.code(), outcome.resourceId());
+        return response(id, execution, outcome);
+    }
 
     public AiResponse execute(AiRequest request, UUID id, String bearer) {
+        if (!AiToolRegistry.authenticated()) {
+            Outcome outcome = run(request, null);
+            history.recordGuest(id, outcome.intent(), outcome.status(), outcome.code());
+            return new AiResponse(id, com.example.eshop.common.request.RequestIds.current(),
+                    org.slf4j.MDC.get("traceId"), outcome.intent(), outcome.status(),
+                    outcome.message(), outcome.code(), outcome.data());
+        }
         Optional<AiExecution> previous = history.existing(id);
         if (previous.isPresent()) {
             return replay(previous.get());
@@ -60,6 +102,15 @@ public class AiRouterService {
     }
 
     private Outcome run(AiRequest request, String bearer) {
+        long started = System.nanoTime();
+        Outcome outcome = evaluate(request, bearer);
+        metrics.timer("ai.request.duration", "intent", outcome.intent().name(), "status", outcome.status().name())
+                .record(System.nanoTime() - started, java.util.concurrent.TimeUnit.NANOSECONDS);
+        metrics.counter("ai.requests", "status", outcome.status().name()).increment();
+        return outcome;
+    }
+
+    private Outcome evaluate(AiRequest request, String bearer) {
         AiIntent intent = AiIntent.UNKNOWN;
         AiToolDefinition tool = null;
         boolean dispatched = false;
@@ -69,6 +120,15 @@ public class AiRouterService {
             intent = detected.intent();
             tool = registry.authorize(intent);
             registry.validate(tool, detected.parameters());
+            if (tool.risk() != AiToolRisk.READ_ONLY) {
+                JsonNode preview = executor.preview(tool, detected.parameters(), bearer);
+                JsonNode confirmation = confirmations.prepare(intent, detected.parameters());
+                if (preview != null && confirmation instanceof com.fasterxml.jackson.databind.node.ObjectNode card) {
+                    card.set("preview", preview);
+                }
+                return new Outcome(intent, tool, NEEDS_INPUT, "CONFIRMATION_REQUIRED",
+                        "Review the proposed action and confirm within five minutes.", null, confirmation);
+            }
             dispatched = true;
             JsonNode data = executor.execute(tool, detected.parameters(), bearer);
             if (rejected(data)) {
@@ -77,6 +137,8 @@ public class AiRouterService {
             return Outcome.success(intent, tool, data, promotionId(intent, data));
         } catch (AiFailure ex) {
             return Outcome.of(intent, tool, ex.status(), ex.code(), ex.getMessage());
+        } catch (org.springframework.security.access.AccessDeniedException ex) {
+            return Outcome.of(intent, tool, DENIED, "PERMISSION_DENIED", "This operation is not authorized.");
         } catch (FeignException ex) {
             return feignOutcome(intent, tool, dispatched, ex);
         } catch (Exception ex) {
@@ -112,7 +174,8 @@ public class AiRouterService {
     }
 
     private static String promotionId(AiIntent intent, JsonNode data) {
-        if (intent == AiIntent.PROMOTION_CREATE && data.path("id").isIntegralNumber()) {
+        if ((intent == AiIntent.PROMOTION_CREATE || intent == AiIntent.PROMOTION_DISABLE || intent == AiIntent.ORDER_CANCEL)
+                && data.path("id").isIntegralNumber()) {
             return data.path("id").asText();
         }
         return null;
@@ -137,7 +200,7 @@ public class AiRouterService {
     }
 
     private static AiResponse response(UUID id, AiExecution execution, Outcome outcome) {
-        JsonNode data = outcome.status() == SUCCESS ? outcome.data() : null;
+        JsonNode data = outcome.status() == SUCCESS || outcome.status() == NEEDS_INPUT ? outcome.data() : null;
         return new AiResponse(id, execution.getRequestId(), execution.getTraceId(),
                 outcome.intent(), outcome.status(), outcome.message(), outcome.code(), data);
     }

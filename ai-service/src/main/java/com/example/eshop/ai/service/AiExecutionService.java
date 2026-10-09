@@ -37,6 +37,15 @@ public class AiExecutionService {
     private final AuditLogService audit;
     private final ObjectMapper mapper;
 
+    @Transactional
+    public void recordGuest(UUID id, AiIntent intent, AiExecutionStatus status, String code) {
+        audit.record(new AuditEvent(
+                AuditAction.AI_TOOL_EXECUTION,
+                "AI_EXECUTION", id.toString(), null,
+                Map.of("intent", intent.name(), "executionStatus", status.name()),
+                auditResult(status), code));
+    }
+
     @Transactional(readOnly = true)
     public Optional<AiExecution> existing(UUID id) {
         Optional<AiExecution> result = executions.findById(id);
@@ -78,7 +87,8 @@ public class AiExecutionService {
         execution.setResourceId(resourceId);
         execution.setCompletedAt(Instant.now());
 
-        String resource = intent == AiIntent.PROMOTION_CREATE ? "PROMOTION" : "AI_EXECUTION";
+        String resource = intent == AiIntent.PROMOTION_CREATE || intent == AiIntent.PROMOTION_DISABLE
+                ? "PROMOTION" : intent == AiIntent.ORDER_CANCEL ? "ORDER" : "AI_EXECUTION";
         auditOutcome(id, intent, tool, status, code, resource, resourceId);
         if (shouldNotify(tool, status)) {
             enqueue(execution, status, resource, resourceId);

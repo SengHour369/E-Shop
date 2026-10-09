@@ -13,6 +13,23 @@ import java.util.Optional;
 @Repository
 public interface FunctionPermissionRepository extends JpaRepository<FunctionPermission, Long> {
 
+    @Query("""
+            select distinct f.funcCode from FunctionPermission f
+            where f.isActive = true and f.isDelete = false
+              and (
+                exists (select p.userPermissionId from UserPermission p
+                        where p.userId = :userId and p.funcId = f.funcId
+                          and p.isActive = true and p.isDelete = false)
+                or exists (select gp.groupPermissionId from GroupPermission gp, UserGroup ug, Group g
+                           where ug.userId = :userId and ug.groupId = gp.groupId
+                             and g.id = ug.groupId and gp.funcId = f.funcId
+                             and ug.isActive = true and ug.isDelete = false
+                             and gp.isActive = true and gp.isDelete = false
+                             and g.isActive = true and g.isDelete = false)
+              )
+            """)
+    java.util.Set<String> effectiveCodes(@Param("userId") Long userId);
+
     Optional<FunctionPermission> findByFuncCodeAndIsDeleteFalse(String funcCode);
 
     @Query("SELECT COALESCE(MAX(f.funcId), 0) FROM FunctionPermission f")

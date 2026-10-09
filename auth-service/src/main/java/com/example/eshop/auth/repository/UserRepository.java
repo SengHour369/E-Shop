@@ -9,6 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+    @Query("select u from User u where u.deleted = false or u.deleted is null")
+    org.springframework.data.domain.Page<User> findVisibleForAssistant(
+            org.springframework.data.domain.Pageable pageable);
+
     Optional<User> findFirstByUsernameAndStatus(String username, String status);
 
     Optional<User> findFirstByUsernameOrEmail(String username, String email);

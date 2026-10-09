@@ -1,0 +1,43 @@
+<section class="chat" aria-label="E-Shop assistant">
+  <header>
+    <h2>{{ administrator ? 'Admin assistant' : 'Shopping assistant' }}</h2>
+    <button type="button" (click)="newConversation()" [disabled]="busy">New chat</button>
+  </header>
+
+  <div class="messages" aria-live="polite" aria-relevant="additions">
+    <article *ngFor="let item of messages" [class.customer]="item.author === 'You'">
+      <strong>{{ item.author }}</strong>
+      <p>{{ item.text }}</p>
+      <!-- Text interpolation escapes backend/model content; never use innerHTML. -->
+      <section class="result-card" *ngFor="let row of item.rows">
+        <h3>{{ row.title }}</h3>
+        <dl>
+          <ng-container *ngFor="let field of row.fields">
+            <dt>{{ field.label }}</dt>
+            <dd>{{ field.value }}</dd>
+          </ng-container>
+        </dl>
+      </section>
+      <ul *ngIf="item.sources?.length" aria-label="Approved sources">
+        <li *ngFor="let source of item.sources">{{ source }}</li>
+      </ul>
+      <small *ngIf="item.result?.requestId">Request: {{ item.result?.requestId }}</small>
+      <button *ngIf="item.confirmationId" type="button" [disabled]="busy" (click)="confirm(item)">
+        Confirm this action
+      </button>
+    </article>
+    <p *ngIf="busy" role="status">Working…</p>
+    <p *ngIf="error" role="alert">{{ error }}</p>
+  </div>
+
+  <form (ngSubmit)="send()">
+    <label for="ai-language">Language</label>
+    <select id="ai-language" name="language" [(ngModel)]="language">
+      <option value="en">English</option>
+      <option value="km">ខ្មែរ</option>
+    </select>
+    <label for="ai-message">Your message</label>
+    <textarea id="ai-message" name="message" [(ngModel)]="message" maxlength="4000" rows="3" required></textarea>
+    <button type="submit" [disabled]="busy || !message.trim()">Send</button>
+  </form>
+</section>
