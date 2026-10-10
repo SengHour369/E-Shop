@@ -117,10 +117,10 @@ public class AiCatalogController {
         return result;
     }
 
-    public record ProductCard(Long id, String name, String description, List<SkuCard> skus) {
+    public record ProductCard(Long id, String name, String description, List<String> images, List<SkuCard> skus) {
 
         static ProductCard from(com.example.eshop.catalog.dto.response.ProductResponse product) {
-            return new ProductCard(product.getId(), product.getName(), product.getDescription(),
+            return new ProductCard(product.getId(), product.getName(), product.getDescription(), product.getImage(),
                     product.getSkus().stream().map(SkuCard::from).toList());
         }
     }
@@ -133,3 +133,4 @@ public class AiCatalogController {
         }
     }
 }
+

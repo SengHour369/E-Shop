@@ -210,11 +210,14 @@ on tools, confirmation ownership/single use, idempotency, audit/outbox, provider
 failure, and gateway guest/cookie/invalid-credential behavior. Python tests
 cover existing inference behavior and the new Ollama structured adapter.
 
-The Windows environment prevents the existing Java HTTP-loopback inference
-integration tests from opening their sockets. They remain intact; passing
-mocked orchestration tests does not replace that HTTP verification. Run those
-and the full service integration suite in a working network environment before
-release. Angular compilation and live PostgreSQL/pgvector, Redis, Kafka,
+The Java HTTP-loopback tests initially could not start because the Windows
+sandbox temporary path was too long for the JDK's internal Unix-domain sockets.
+A short `jdk.net.unixdomain.tmpdir` resolved that error without altering tests.
+The parent Maven configuration now activates `windows-test-sockets` on Windows
+and points test sockets at the module's existing target directory. For a deeply
+nested checkout, override `ai.test.socket-directory` with a short existing
+directory. This setting affects test JVMs, not deployed services. Run the full
+service integration suite before release. Angular compilation and live PostgreSQL/pgvector, Redis, Kafka,
 provider/model and full-stack deployment were not verified here.
 
 This is an implemented backend and an integration-ready UI, not a claim that
@@ -228,7 +231,7 @@ active names; it does not promise color/size/budget filtering.
 
 ### Latest recorded checks
 
-- Java core: 34 tests passed across auth, order, payment and AI modules.
+- Java core: 39 tests passed across auth, order, payment and AI modules, including five HTTP-loopback tests.
 - Gateway: 9 tests passed, including public chat with login cookies and invalid credentials.
 - Python inference: 48 tests passed.
 - `git diff --check`: no whitespace errors.
@@ -236,13 +239,13 @@ active names; it does not promise color/size/budget filtering.
 Reproduce the targeted Java checks with:
 
 ```powershell
-mvn -pl ai-service,auth-service,catalog-service,order-service,payment-service -am '-Dtest=AiOrchestrationTest,AiConfirmationTest,AiOrderOwnershipTest,AiPaymentSecurityTest,AiPermissionRepositoryTest,AiAccountAuthorizationTest,AiRevenueRepositoryTest' '-Dsurefire.failIfNoSpecifiedTests=false' test
+mvn -pl ai-service,auth-service,catalog-service,order-service,payment-service -am '-Dtest=AiOrchestrationTest,AiConfirmationTest,AiOrderOwnershipTest,AiPaymentSecurityTest,AiPermissionRepositoryTest,AiAccountAuthorizationTest,AiRevenueRepositoryTest,AiInferenceClientTest' '-Dsurefire.failIfNoSpecifiedTests=false' test
 mvn -pl api-gateway -am '-Dtest=GatewayAuthenticationFilterTest' '-Dsurefire.failIfNoSpecifiedTests=false' test
 ```
 
-Run `pytest -q` from ai-inference using its existing dependencies. Full Java
-HTTP-loopback inference tests need the environment issue described above fixed;
-the targeted command intentionally does not stand in for the full suite.
+Run `pytest -q` from ai-inference using its existing dependencies. These targeted
+commands intentionally do not stand in for the full repository suite or a live
+provider/deployment test.
 
 ### Requested rerun — 2026-10-09
 
@@ -257,3 +260,24 @@ Rerun logs in the repository root:
 - `ai-assistant-rerun-java.log`
 - `ai-assistant-rerun-network.log`
 - `ai-assistant-rerun-python.log`
+
+### Resolved Windows socket failure — 2026-10-09
+
+The JDK's internal Unix-domain socket path exceeded the Windows limit because
+the sandbox TEMP directory was long. A short `jdk.net.unixdomain.tmpdir` fixed
+the issue. No tests were removed, skipped, or weakened.
+
+The final combined selected run passed all 48 Java tests with no failures,
+errors, or skips. The final Python run passed all 48 tests with one deprecation
+warning. That is 96/96 selected tests passing, not a statement of 100% code
+coverage or a live deployment/model guarantee.
+
+The Windows-only Maven profile was independently verified: all five HTTP tests
+passed without a manual socket-path launcher flag. The profile uses the
+module's existing target directory and can be overridden with
+`-Dai.test.socket-directory=<short-existing-directory>`.
+
+Final logs:
+- `ai-assistant-all-selected-java.log`
+- `ai-assistant-all-python.log`
+- `ai-assistant-windows-profile.log`

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from typing import Any
 
@@ -31,6 +32,18 @@ class IntentService:
     async def route(self, request: AiRouteRequest) -> AiRouteResponse:
         started = time.perf_counter()
         log.info("AI routing started provider=%s", self.settings.ai_provider)
+        # Exact, read-only shortcuts avoid small-model ambiguity. They are still
+        # restricted to the caller's supplied catalog and validated like model output.
+        normalized = re.sub(r"\s+", " ", request.message.strip().lower()).rstrip(".!?")
+        explicit_reads = {
+            "show my orders": "MY_ORDERS", "list my orders": "MY_ORDERS", "my orders": "MY_ORDERS",
+            "show my returns": "MY_RETURNS", "list my returns": "MY_RETURNS",
+            "show my notifications": "MY_NOTIFICATIONS", "my notifications": "MY_NOTIFICATIONS",
+            "show my latest order status": "MY_ORDER_STATUS", "track my latest order": "MY_ORDER_STATUS",
+        }
+        name = explicit_reads.get(normalized)
+        if name and any(tool.name == name and not tool.parameters for tool in request.tools):
+            return self.accept(request, ModelDecision(intent=name, tool=name, confidence=1.0, parameters={}))
         instructions = build_instructions(request.tools)
         try:
             decision = await self.providers.route(instructions, request.message, request.tools)

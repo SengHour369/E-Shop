@@ -27,6 +27,8 @@ import java.util.UUID;
 public class AiController {
 
     private final AiRouterService router;
+    private final com.example.eshop.ai.service.AiAdminWorkspaceService workspace;
+    private final com.example.eshop.ai.service.AiConversationService conversation;
     private final AiExecutionService history;
     private final com.example.eshop.ai.service.AiChatStateService chatState;
     private final com.example.eshop.common.security.LivePermissionService permissions;
@@ -55,11 +57,41 @@ public class AiController {
             throw new org.springframework.security.access.AccessDeniedException("Administrator access required");
         }
         UUID conversationId = chatState.conversation(request.conversationId());
+        if (AiConversationRouting.isConversation(request.message())) {
+            return conversational(conversationId, administrator, request);
+        }
         String message = chatState.withContext(conversationId, request.message());
         AiResponse result = router.execute(new AiRequest(message == null ? request.message() : message), UUID.randomUUID(), bearer);
+        if ("UNCERTAIN_INTENT".equals(result.errorCode()) || "UNKNOWN_INTENT".equals(result.errorCode())
+                || "MISSING_PARAMETER".equals(result.errorCode())
+                || result.intent() == com.example.eshop.ai.enums.AiIntent.UNKNOWN && result.status() == AiExecutionStatus.NEEDS_INPUT) {
+            return conversational(conversationId, administrator, request);
+        }
+        if (result.intent() == com.example.eshop.ai.enums.AiIntent.KNOWLEDGE_SEARCH
+                && result.status() == AiExecutionStatus.SUCCESS && result.data() != null
+                && "No approved knowledge is available.".equals(result.data().path("answer").asText())) {
+            return conversational(conversationId, administrator, request);
+        }
         chatState.remember(conversationId, result);
         var response = presenter.present(conversationId, administrator, request.language(), result);
+        if (administrator) workspace.remember(request.message(), response);
         return ResponseEntity.status(httpStatus(result.status())).body(response);
+    }
+
+    private ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> conversational(UUID id, boolean admin,
+            com.example.eshop.ai.dto.AiChatRequest request) {
+        String answer = conversation.reply(request.message(), request.language(), chatState.dialogue(id));
+        boolean success = answer != null;
+        if (success) chatState.rememberDialogue(id, request.message(), answer);
+        var result = new AiResponse(null, com.example.eshop.common.request.RequestIds.current(), null,
+                com.example.eshop.ai.enums.AiIntent.UNKNOWN,
+                success ? AiExecutionStatus.SUCCESS : AiExecutionStatus.FAILURE,
+                success ? answer : "The assistant could not respond. Please try again shortly.",
+                success ? null : "AI_PROVIDER_FAILURE", null);
+        var response = new com.example.eshop.ai.dto.AiChatResponse(id, admin ? "SUPER_ADMIN" : "CUSTOMER",
+                success ? "ConversationCard" : "ErrorCard", java.util.List.of(), result);
+        if (admin) workspace.remember(request.message(), response);
+        return ResponseEntity.status(success ? HttpStatus.OK : HttpStatus.BAD_GATEWAY).body(response);
     }
 
     @PostMapping("/execute")
@@ -90,3 +122,6 @@ public class AiController {
         };
     }
 }
+
+
+

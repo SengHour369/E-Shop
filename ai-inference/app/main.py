@@ -12,6 +12,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.api.ai_router import ai_route_error, invalid_request, router
 from app.api.vision import router as vision_router
+from app.api.conversation import router as conversation_router
 from app.services.vision_service import VisionService
 from app.core.config import Settings
 from app.core.errors import AiRouteError
@@ -113,8 +114,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_exception_handler(RequestValidationError, invalid_request)
     app.include_router(router)
     app.include_router(vision_router)
+    app.include_router(conversation_router)
     app.add_middleware(RequestContextMiddleware)
     return app
 
 
 app = create_app()
+

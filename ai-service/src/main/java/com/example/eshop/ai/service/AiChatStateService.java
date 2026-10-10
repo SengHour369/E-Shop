@@ -86,9 +86,35 @@ public class AiChatStateService {
         }
     }
 
+    private String dialogueKey(UUID id) {
+        String actor = AiToolRegistry.authenticated() ? "user:" + CurrentActor.userId() : "guest";
+        return "ai:dialogue:" + actor + ":" + id;
+    }
+
+    public java.util.List<java.util.Map<String, String>> dialogue(UUID id) {
+        String json = redis.opsForValue().get(dialogueKey(id));
+        if (json == null) return java.util.List.of();
+        try {
+            return mapper.readValue(json, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+        } catch (Exception invalid) {
+            return java.util.List.of();
+        }
+    }
+
+    public void rememberDialogue(UUID id, String question, String answer) {
+        var turns = new java.util.ArrayList<>(dialogue(id));
+        turns.add(java.util.Map.of("role", "user", "content", question));
+        turns.add(java.util.Map.of("role", "assistant", "content", answer));
+        if (turns.size() > 8) turns = new java.util.ArrayList<>(turns.subList(turns.size() - 8, turns.size()));
+        try {
+            redis.opsForValue().set(dialogueKey(id), mapper.writeValueAsString(turns), Duration.ofMinutes(30));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException invalid) {
+            throw new IllegalStateException("Conversation could not be saved", invalid);
+        }
+    }
     public UUID conversation(UUID requested) {
         if (!AiToolRegistry.authenticated()) {
-            return UUID.randomUUID();
+            return requested == null ? UUID.randomUUID() : requested;
         }
         UUID id = requested == null ? UUID.randomUUID() : requested;
         String key = conversationKey(id);
@@ -109,3 +135,4 @@ public class AiChatStateService {
         }
     }
 }
+

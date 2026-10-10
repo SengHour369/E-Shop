@@ -39,7 +39,7 @@ spring:
               predicates:
                 - Path=/api/ai/**
               metadata:
-                response-timeout: 30000
+                response-timeout: ${AI_GATEWAY_RESPONSE_TIMEOUT_MS:30000}
               filters:
                 - name: CircuitBreaker
                   args:
@@ -259,7 +259,7 @@ resilience4j:
   timelimiter:
     instances:
       aiServiceCB:
-        timeout-duration: 30s
+        timeout-duration: ${AI_GATEWAY_TIMEOUT:30s}
     configs:
       default:
         timeout-duration: 6s
@@ -314,3 +314,4 @@ springdoc:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=api-gateway requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"
+

@@ -236,3 +236,21 @@ async def test_missing_provider_configuration_does_not_call_the_model(fake):
     assert caught.value.status == 503
     assert fake.calls == 0
     assert caught.value.code == AI_PROVIDER_ERROR
+
+
+@pytest.mark.asyncio
+async def test_exact_order_list_uses_only_the_supplied_read_tool(service, fake):
+    result = await service.route(request("Show my orders", [tool("MY_ORDERS", "List my orders")]))
+    assert result.intent == "MY_ORDERS"
+    assert result.parameters == {}
+    assert result.requires_confirmation is False
+
+
+@pytest.mark.asyncio
+async def test_order_shortcut_does_not_add_permissions_or_accept_compound_actions(service, fake):
+    fake.push(decision("UNKNOWN", 0))
+    result = await service.route(request("Show my orders", [PRODUCT_SEARCH]))
+    assert result.intent == "UNKNOWN"
+    fake.push(decision("UNKNOWN", 0))
+    result = await service.route(request("Show my orders and cancel them", [tool("MY_ORDERS", "List my orders"), ORDER_CANCEL]))
+    assert result.intent == "UNKNOWN"

@@ -26,6 +26,10 @@ Rules:
 12. Never invent missing parameters. Ask for clarification by returning UNKNOWN.
 13. A tool that lists the latest rows cannot answer filtered date-range or total-revenue questions.
 14. Use KNOWLEDGE_SEARCH only for stable policy/help questions, never live business facts.
+15. Only include parameters belonging to the selected tool. Omit unspecified optional parameters. A list tool with no parameters uses {}.
+16. Product search needs only a query, for example "Find headphones" means PRODUCT_SEARCH with query "headphones" when available.
+17. "Show my orders" means MY_ORDERS with {} when available. Do not require an order number for a list.
+18. Greetings, conversation, and general explanations without a matching tool are UNKNOWN with {}.
 """
 
 

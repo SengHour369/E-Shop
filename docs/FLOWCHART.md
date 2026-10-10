@@ -2,9 +2,9 @@
 
 The browser and Postman talk only to the API gateway on port 8080. Each service keeps its own database. Redis is shared for the gateway rate limit and a startup ping. Stock and promotion prices are read from catalog on every request.
 
-One image of the whole path: [full.png](flowchart/full.png).
+One image of the whole path: [full.png](../flowchart/full.png).
 
-Separate sheets: [services](flowchart/services.png), [gateway](flowchart/gateway.png), [account](flowchart/account.png), [buy](flowchart/buy.png), [scanner](flowchart/scanner.png), [AI](flowchart/ai.png), [audit](flowchart/audit.png).
+Separate sheets: [services](../flowchart/services.png), [gateway](../flowchart/gateway.png), [account](../flowchart/account.png), [buy](../flowchart/buy.png), [scanner](../flowchart/scanner.png), [AI](../flowchart/ai.png), [audit](../flowchart/audit.png).
 
 ## 1. Services
 

@@ -38,6 +38,7 @@ class AiOrchestrationTest {
     @Autowired NotificationOutboxRepository outbox;
     @Autowired AuditLogRepository audits;
     @MockitoBean AiProviderClient provider;
+    @MockitoBean AiConversationService conversation;
     @MockitoBean CatalogToolClient catalog;
     @MockitoBean OrderToolClient orders;
     @MockitoBean NotificationOutboxPublisher publisher;
@@ -255,12 +256,13 @@ class AiOrchestrationTest {
 
     @Test
     void knowledgeWithoutApprovedDocumentsDoesNotInventPolicy() throws Exception {
+        when(conversation.reply(anyString(), any(), anyList())).thenReturn("I don't have the verified E-Shop return policy. Please contact support.");
         intent(AiIntent.KNOWLEDGE_SEARCH, "{\"query\":\"return policy\"}");
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"What is the return policy?\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.data.sources").isEmpty())
-                .andExpect(jsonPath("$.result.data.answer").value("No approved knowledge is available."));
+                .andExpect(jsonPath("$.cardType").value("ConversationCard"))
+                .andExpect(jsonPath("$.result.message").value("I don't have the verified E-Shop return policy. Please contact support."));
     }
 
     @Test
@@ -309,4 +311,60 @@ class AiOrchestrationTest {
         request(expired, UUID.randomUUID().toString()).andExpect(status().isUnauthorized());
         verifyNoInteractions(provider);
     }
-}
+    @Test
+    void greetingUsesConversationWithoutBusinessTools() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(chatState.conversation(null)).thenReturn(id);
+        when(chatState.dialogue(id)).thenReturn(List.of());
+        when(conversation.reply("Hello", "en", List.of())).thenReturn("Hello! How can I help?");
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"Hello\",\"language\":\"en\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cardType").value("ConversationCard"))
+                .andExpect(jsonPath("$.result.message").value("Hello! How can I help?"));
+        verifyNoInteractions(provider, catalog, orders);
+        verify(chatState).rememberDialogue(id, "Hello", "Hello! How can I help?");
+    }
+
+    @Test
+    void uncertainChatGetsNaturalReplyWithoutExecutingTools() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(chatState.conversation(null)).thenReturn(id);
+        when(chatState.dialogue(id)).thenReturn(List.of());
+        when(provider.detect(anyString(), anyList())).thenReturn(
+                new AiIntentResult(AiIntent.UNKNOWN, 0.1, mapper.readTree("{}")));
+        when(conversation.reply("What is Bluetooth?", "en", List.of())).thenReturn("Bluetooth connects devices wirelessly.");
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"What is Bluetooth?\",\"language\":\"en\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.message").value("Bluetooth connects devices wirelessly."));
+        verifyNoInteractions(catalog, orders, confirmations);
+    }
+
+    @Test
+    void mistakenToolWithoutRequiredParametersFallsBackWithoutExecutingIt() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(chatState.conversation(null)).thenReturn(id);
+        when(chatState.dialogue(id)).thenReturn(List.of());
+        when(provider.detect(anyString(), anyList())).thenReturn(
+                new AiIntentResult(AiIntent.SKU_GET, 0.95, mapper.readTree("{}")));
+        when(conversation.reply("Explain Bluetooth", "en", List.of())).thenReturn("Bluetooth connects devices wirelessly.");
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"Explain Bluetooth\",\"language\":\"en\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cardType").value("ConversationCard"));
+        verifyNoInteractions(catalog, orders, confirmations);
+    }
+
+    @Test
+    void conversationOutageRemainsARetryableError() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(chatState.conversation(null)).thenReturn(id);
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"Hello\",\"language\":\"en\"}"))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.result.errorCode").value("AI_PROVIDER_FAILURE"));
+        verifyNoInteractions(provider, catalog, orders);
+    }}
+
+
