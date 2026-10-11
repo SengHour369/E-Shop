@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor @PreAuthorize("hasAuthority('SERVICE_ORDER')")
 public class CatalogCheckoutController {
     private final CatalogCheckoutService service;
+    @GetMapping("/{orderId}") public CheckoutResult snapshot(@PathVariable Long orderId) { return service.snapshot(orderId); }
     @PostMapping("/quote") public CheckoutResult quote(@RequestBody CheckoutRequest request) { return service.quote(request); }
     @PostMapping public CheckoutResult reserve(@RequestBody CheckoutRequest request) { return service.reserve(request); }
     @PostMapping("/{orderId}/confirm") public CheckoutResult confirm(@PathVariable Long orderId) { return service.confirm(orderId); }

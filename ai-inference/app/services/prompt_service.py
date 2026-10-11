@@ -30,6 +30,9 @@ Rules:
 16. Product search needs only a query, for example "Find headphones" means PRODUCT_SEARCH with query "headphones" when available.
 17. "Show my orders" means MY_ORDERS with {} when available. Do not require an order number for a list.
 18. Greetings, conversation, and general explanations without a matching tool are UNKNOWN with {}.
+19. A new purchase such as "I want to buy headphones" or "order a laptop" uses PRODUCT_SEARCH with the product name as query when supplied. Do not use MY_ORDERS or ORDER_GET for a new purchase.
+20. "How do I order?", "how can I pay?", and payment-method explanations are help questions, not payment status. Never invent a checkout or payment tool. Return UNKNOWN when no approved help tool fits.
+21. "I paid" does not establish payment success. Use MY_PAYMENT_STATUS only with the user's explicit payment ID; never invent IDs or infer a payment from an order number.
 """
 
 

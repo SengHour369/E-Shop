@@ -21,16 +21,25 @@ import java.util.*;
 
 @Service @RequiredArgsConstructor @Slf4j
 public class CheckoutCoordinator {
+    private final org.springframework.beans.factory.ObjectProvider<com.example.eshop.order.automation.CheckoutAddressVerifier> addressVerifier;
     private final OrderRepository orders;
     private final CartRepository carts;
     private final CatalogAccess catalog;
     private final OrderMapper mapper;
     private final TransactionTemplate transactions;
+    private final org.springframework.beans.factory.ObjectProvider<com.example.eshop.common.automation.AutomationEvents> automation;
+
 
     public ResponseErrorTemplate create(Long userId, OrderRequest request) {
         CurrentCustomer.require(userId);
+        var verifier=addressVerifier.getIfAvailable();
+        if(verifier!=null) verifier.require(userId,request.getAddressId());
         if (request.getCurrency() != null && !"USD".equalsIgnoreCase(request.getCurrency()))
             throw new BusinessLogicException("Catalog prices use USD");
+        if (request.getPaymentMethod()==null || !Set.of("BAKONG","KHQR","ABA","CASH_ON_DELIVERY").contains(request.getPaymentMethod()))
+            throw new BusinessLogicException("Unsupported payment method");
+        if (!"CASH_ON_DELIVERY".equals(request.getPaymentMethod()) && automation.getIfAvailable()==null)
+            throw new BusinessLogicException("Online payment automation is not enabled");
         String key = request.getCheckoutKey() == null || request.getCheckoutKey().isBlank()
             ? UUID.randomUUID().toString() : request.getCheckoutKey();
         if (key.length() > 100) throw new BusinessLogicException("checkout_key must not exceed 100 characters");
@@ -38,7 +47,7 @@ public class CheckoutCoordinator {
             Cart cart = carts.lockByUserId(userId).orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
             var existing = orders.findByUserIdAndCheckoutKey(userId, key);
             if (existing.isPresent()) {
-                if (!Objects.equals(existing.get().getShippingAddressId(), request.getAddressId()))
+                if (!Objects.equals(existing.get().getShippingAddressId(), request.getAddressId()) || !Objects.equals(existing.get().getPaymentMethod(),request.getPaymentMethod()))
                     throw new BusinessLogicException("Checkout key was already used for a different address");
                 return existing.get().getId();
             }
@@ -46,7 +55,7 @@ public class CheckoutCoordinator {
             if (cart.getCartItems().isEmpty()) throw new BusinessLogicException("Cart is empty");
             OrderDetail order = OrderDetail.builder().userId(userId).orderNumber("ORD-" + UUID.randomUUID())
                 .orderDate(LocalDateTime.now()).status("CHECKOUT_PENDING").totalAmount(BigDecimal.ZERO)
-                .shippingAddressId(request.getAddressId()).checkoutKey(key).catalogCompleted(false).build();
+                .shippingAddressId(request.getAddressId()).paymentMethod(request.getPaymentMethod()).checkoutKey(key).catalogCompleted(false).build();
             order.setOrderItems(cart.getCartItems().stream().map(i ->
                 OrderItemMapper.toEntity(order, i.getProductSkuId(), i.getQuantity(), BigDecimal.ZERO)).toList());
             orders.saveAndFlush(order);
@@ -68,7 +77,8 @@ public class CheckoutCoordinator {
             if (!"CHECKOUT_PENDING".equals(order.getStatus())) return;
             CheckoutRequest request = new CheckoutRequest(id, order.getUserId(), order.getOrderItems().stream()
                 .map(i -> new CheckoutRequest.Line(i.getProductSkuId(), i.getQuantity())).toList());
-            try { catalog.reserve(request); }
+            CheckoutResult reserved;
+            try { reserved = catalog.reserve(request); }
             catch (FeignException ex) {
                 if (ex.status() == 400 || ex.status() == 404) {
                     order.setStatus("FAILED"); order.setCatalogCompleted(true);
@@ -78,7 +88,8 @@ public class CheckoutCoordinator {
                 }
                 throw ex;
             }
-            CheckoutResult result = catalog.confirm(id);
+            boolean cash = "CASH_ON_DELIVERY".equals(order.getPaymentMethod());
+            CheckoutResult result = cash ? catalog.confirm(id) : reserved;
             Map<Long, CheckoutResult.Line> lines = new HashMap<>();
             result.items().forEach(l -> lines.put(l.productSkuId(), l));
             for (OrderItem item : order.getOrderItems()) {
@@ -90,7 +101,13 @@ public class CheckoutCoordinator {
                 item.setPromotionId(line.promotionId()); item.setPromotionName(line.promotionName());
                 item.setTotalPrice(line.finalPrice().multiply(BigDecimal.valueOf(line.quantity())));
             }
-            order.setTotalAmount(result.total()); order.setStatus("PENDING"); order.setCatalogCompleted(true);
+            order.setTotalAmount(result.total()); order.setStatus("PENDING"); order.setCatalogCompleted(cash);
+            var eventBus=automation.getIfAvailable();
+            if(eventBus!=null) {
+                var event=com.example.eshop.common.automation.AutomationEvents.event(com.example.eshop.common.automation.CommerceEvent.Type.ORDER_CREATED,id,order.getUserId(),result.total(),order.getPaymentMethod(),null);
+                eventBus.emit(com.example.eshop.common.automation.CommerceEvent.ORDERS,event);
+                eventBus.notify(event,com.example.eshop.common.notification.NotificationEvent.Type.ORDER_CREATED);
+            }
             Cart cart = carts.lockByUserId(order.getUserId()).orElseThrow();
             if (Objects.equals(cart.getCheckoutOrderId(), id)) {
                 cart.getCartItems().clear(); cart.setTotalPrice(BigDecimal.ZERO);

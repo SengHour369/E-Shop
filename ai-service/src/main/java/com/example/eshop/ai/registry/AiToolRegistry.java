@@ -119,6 +119,8 @@ public class AiToolRegistry {
         read(AiIntent.ADMIN_REVENUE_SUMMARY, "Sum completed payments by currency for an explicit date (YYYY-MM-DD or TODAY); not net revenue",
                 "payment-service", "/internal/ai/payments/revenue", "REPORT_VIEW",
                 Map.of("date", parameter("string", true)));
+        read(AiIntent.ADMIN_AUTOMATION_REVIEW, "Review authoritative order, payment, reservation and notification delivery; no financial writes", "order-service",
+                "/internal/ai/orders/automation/{id}", "ORDER_VIEW_ALL", Map.of("id", parameter("integer", true)));
         read(AiIntent.ADMIN_AUDIT_LOG, "Find latest 20 AI-service audit records by explicit requestId; excludes raw snapshots",
                 "ai-service", "audit", "AUDIT_VIEW", Map.of("requestId", parameter("string", true)));
     }

@@ -10,7 +10,13 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest(properties = {"spring.jpa.hibernate.ddl-auto=create-drop", "spring.cloud.discovery.enabled=false"})
+@org.springframework.test.context.ContextConfiguration(classes=MonthlyReportRepositoryTest.Config.class)
 class MonthlyReportRepositoryTest {
+    @org.springframework.boot.SpringBootConfiguration
+    @org.springframework.boot.autoconfigure.EnableAutoConfiguration
+    @org.springframework.boot.autoconfigure.domain.EntityScan("com.example.eshop.order.model")
+    @org.springframework.data.jpa.repository.config.EnableJpaRepositories("com.example.eshop.order.repository")
+    static class Config {}
     @Autowired OrderRepository repository;
 
     @Test

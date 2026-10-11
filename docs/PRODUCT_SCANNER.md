@@ -434,7 +434,7 @@ Optional fallback after the camera finds no barcode. Send one still image. Do no
 
 | Part | Required | Rule |
 | --- | --- | --- |
-| `image` | Yes | One JPEG, PNG, or WebP file. Maximum 1,500,000 bytes. The content type and the file bytes must agree. |
+| `image` | Yes | One JPEG, PNG, or WebP file. Maximum 4,194,304,000 bytes (4000 MB). The content type and the file bytes must agree. |
 
 Headers are the same `Authorization` and optional `X-Request-ID` as the scan route.
 
@@ -577,7 +577,7 @@ ai-inference is down, timed out, or returned a non-200 response. The catalog cal
 | Condition | `message` |
 | --- | --- |
 | The `image` part is present and empty | `Image is required` |
-| File larger than 1,500,000 bytes | `Image is too large` |
+| File larger than 4,194,304,000 bytes (4000 MB) | `Image is too large` |
 | Content type is not JPEG, PNG, or WebP, or the bytes do not match that type | `Image must be JPEG, PNG, or WebP` |
 | The file cannot be read | `Image could not be read` |
 
@@ -604,7 +604,7 @@ This path is not on the gateway. The body has no bearer token, no catalog id, an
 }
 ```
 
-`imageBase64` is standard base64 of the image bytes. Maximum decoded size is 1,500,000 bytes. `mediaType` is `image/jpeg`, `image/png`, or `image/webp`. Extra JSON fields are rejected.
+`imageBase64` is standard base64 of the image bytes. Maximum decoded size is 4,194,304,000 bytes (4000 MB). `mediaType` is `image/jpeg`, `image/png`, or `image/webp`. Extra JSON fields are rejected.
 
 ### Response 200
 

@@ -1,0 +1,270 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.44kB done
+#1 DONE 0.0s
+
+#2 [api-gateway internal] load build definition from Dockerfile
+#2 transferring dockerfile: 30B 0.0s
+#2 transferring dockerfile: 566B 0.0s done
+#2 DONE 0.1s
+
+#3 [catalog-service internal] load build definition from Dockerfile
+#3 transferring dockerfile: 586B 0.0s done
+#3 DONE 0.2s
+
+#4 [api-gateway internal] load metadata for docker.io/library/maven:3.9-amazoncorretto-17
+#4 DONE 2.9s
+
+#5 [catalog-service internal] load metadata for docker.io/library/eclipse-temurin:17-jre-alpine
+#5 DONE 2.9s
+
+#6 [api-gateway internal] load .dockerignore
+#6 transferring context: 72B done
+#6 DONE 0.0s
+
+#7 [api-gateway internal] load build context
+#7 DONE 0.0s
+
+#8 [api-gateway builder 1/4] FROM docker.io/library/maven:3.9-amazoncorretto-17@sha256:046784a9c83821fc3e9ded94c2f18155e0daf1981c8a0813d0ff693a9dc4a51b
+#8 resolve docker.io/library/maven:3.9-amazoncorretto-17@sha256:046784a9c83821fc3e9ded94c2f18155e0daf1981c8a0813d0ff693a9dc4a51b 0.1s done
+#8 resolve docker.io/library/maven:3.9-amazoncorretto-17@sha256:046784a9c83821fc3e9ded94c2f18155e0daf1981c8a0813d0ff693a9dc4a51b 0.1s done
+#8 DONE 0.1s
+
+#9 [catalog-service stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jre-alpine@sha256:3c472129dc75a8d1d7a3f2df5b2093a8077e4493deff046754d4764d0371de63
+#9 resolve docker.io/library/eclipse-temurin:17-jre-alpine@sha256:3c472129dc75a8d1d7a3f2df5b2093a8077e4493deff046754d4764d0371de63 0.1s done
+#9 DONE 0.1s
+
+#7 [catalog-service internal] load build context
+#7 transferring context: 777.38kB 1.5s done
+#7 transferring context: 777.38kB 1.5s done
+#7 DONE 1.7s
+
+#10 [catalog-service builder 2/4] WORKDIR /build
+#10 CACHED
+
+#11 [api-gateway builder 3/4] COPY . .
+#11 DONE 6.9s
+
+#12 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#12 ...
+
+#13 [catalog-service builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl catalog-service -am -DskipTests package
+#13 8.961 [INFO] Scanning for projects...
+#13 10.25 [INFO] ------------------------------------------------------------------------
+#13 10.25 [INFO] Reactor Build Order:
+#13 10.25 [INFO] 
+#13 10.25 [INFO] eshop-microservices                                                [pom]
+#13 10.25 [INFO] common-lib                                                         [jar]
+#13 10.25 [INFO] catalog-service                                                    [jar]
+#13 10.28 [INFO] 
+#13 10.28 [INFO] ---------------< com.example.eshop:eshop-microservices >----------------
+#13 10.28 [INFO] Building eshop-microservices 0.0.1-SNAPSHOT                        [1/3]
+#13 10.28 [INFO]   from pom.xml
+#13 10.28 [INFO] --------------------------------[ pom ]---------------------------------
+#13 10.29 [INFO] 
+#13 10.29 [INFO] --------------------< com.example.eshop:common-lib >--------------------
+#13 10.29 [INFO] Building common-lib 0.0.1-SNAPSHOT                                 [2/3]
+#13 10.29 [INFO]   from common-lib/pom.xml
+#13 10.29 [INFO] --------------------------------[ jar ]---------------------------------
+#13 11.99 [INFO] 
+#13 11.99 [INFO] --- resources:3.3.1:resources (default-resources) @ common-lib ---
+#13 12.39 [INFO] skip non existing resourceDirectory /build/common-lib/src/main/resources
+#13 12.39 [INFO] skip non existing resourceDirectory /build/common-lib/src/main/resources
+#13 12.40 [INFO] 
+#13 12.40 [INFO] --- compiler:3.14.0:compile (default-compile) @ common-lib ---
+#13 12.87 [INFO] Recompiling the module because of changed source code.
+#13 12.90 [INFO] Compiling 45 source files with javac [debug parameters release 17] to target/classes
+#13 21.10 [INFO] 
+#13 21.10 [INFO] --- resources:3.3.1:testResources (default-testResources) @ common-lib ---
+#13 21.12 [INFO] skip non existing resourceDirectory /build/common-lib/src/test/resources
+#13 21.12 [INFO] 
+#13 21.12 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ common-lib ---
+#13 21.16 [INFO] Recompiling the module because of changed dependency.
+#13 21.17 [INFO] Compiling 6 source files with javac [debug parameters release 17] to target/test-classes
+#13 24.27 [INFO] /build/common-lib/src/test/java/com/example/eshop/common/automation/AutomationPostgresTest.java: /build/common-lib/src/test/java/com/example/eshop/common/automation/AutomationPostgresTest.java uses unchecked or unsafe operations.
+#13 24.27 [INFO] /build/common-lib/src/test/java/com/example/eshop/common/automation/AutomationPostgresTest.java: Recompile with -Xlint:unchecked for details.
+#13 24.27 [INFO] 
+#13 24.27 [INFO] --- surefire:3.5.3:test (default-test) @ common-lib ---
+#13 24.64 [INFO] Tests are skipped.
+#13 24.64 [INFO] 
+#13 24.65 [INFO] --- jar:3.4.2:jar (default-jar) @ common-lib ---
+#13 25.65 [INFO] Building jar: /build/common-lib/target/common-lib-0.0.1-SNAPSHOT.jar
+#13 25.86 [INFO] 
+#13 25.86 [INFO] -----------------< com.example.eshop:catalog-service >------------------
+#13 25.86 [INFO] Building catalog-service 0.0.1-SNAPSHOT                            [3/3]
+#13 25.86 [INFO]   from catalog-service/pom.xml
+#13 25.86 [INFO] --------------------------------[ jar ]---------------------------------
+#13 27.43 [INFO] 
+#13 27.43 [INFO] --- resources:3.3.1:resources (default-resources) @ catalog-service ---
+#13 27.47 [INFO] Copying 1 resource from src/main/resources to target/classes
+#13 27.52 [INFO] Copying 206 resources from src/main/resources to target/classes
+#13 27.64 [INFO] 
+#13 27.64 [INFO] --- compiler:3.14.0:compile (default-compile) @ catalog-service ---
+#13 27.71 [INFO] Recompiling the module because of changed dependency.
+#13 27.73 [INFO] Compiling 147 source files with javac [debug parameters release 17] to target/classes
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/SubCategory.java:[34,27] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/SubCategory.java:[38,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/util/SkuGeneratorUtil.java:[412,25] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/util/SkuGeneratorUtil.java:[413,25] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/request/InventoryRequest.java:[19,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/request/ProductRequest.java:[22,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/request/ProductSkuRequest.java:[45,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/request/ProductSkuRequest.java:[48,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.00 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/request/ProductSkuRequest.java:[49,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/request/ProductSkuRequest.java:[61,43] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Product.java:[27,25] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Product.java:[29,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Product.java:[30,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Product.java:[35,30] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/request/ProductAttributeRequest.java:[29,48] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/dto/response/ProductSkuResponse.java:[28,25] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/ProductSku.java:[46,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/ProductSku.java:[48,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Category.java:[30,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Category.java:[31,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Category.java:[34,31] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+#13 36.01 [WARNING] /build/catalog-service/src/main/java/com/example/eshop/catalog/model/Image.java:[11,1] Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+#13 36.01 [INFO] 
+#13 36.01 [INFO] --- resources:3.3.1:testResources (default-testResources) @ catalog-service ---
+#13 36.02 [INFO] skip non existing resourceDirectory /build/catalog-service/src/test/resources
+#13 36.02 [INFO] 
+#13 36.02 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ catalog-service ---
+#13 36.06 [INFO] Recompiling the module because of changed dependency.
+#13 36.06 [INFO] Compiling 13 source files with javac [debug parameters release 17] to target/test-classes
+#13 38.72 [INFO] 
+#13 38.72 [INFO] --- surefire:3.5.3:test (default-test) @ catalog-service ---
+#13 38.73 [INFO] Tests are skipped.
+#13 38.73 [INFO] 
+#13 38.73 [INFO] --- jar:3.4.2:jar (default-jar) @ catalog-service ---
+#13 38.88 [INFO] Building jar: /build/catalog-service/target/catalog-service-0.0.1-SNAPSHOT.jar
+#13 39.07 [INFO] 
+#13 39.07 [INFO] --- spring-boot:3.5.0:repackage (repackage) @ catalog-service ---
+#13 43.50 [INFO] Replacing main artifact /build/catalog-service/target/catalog-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+#13 43.50 [INFO] The original artifact has been renamed to /build/catalog-service/target/catalog-service-0.0.1-SNAPSHOT.jar.original
+#13 43.50 [INFO] ------------------------------------------------------------------------
+#13 43.50 [INFO] Reactor Summary for eshop-microservices 0.0.1-SNAPSHOT:
+#13 43.50 [INFO] 
+#13 43.50 [INFO] eshop-microservices ................................ SUCCESS [  0.010 s]
+#13 43.50 [INFO] common-lib ......................................... SUCCESS [ 15.572 s]
+#13 43.51 [INFO] catalog-service .................................... SUCCESS [ 17.641 s]
+#13 43.51 [INFO] ------------------------------------------------------------------------
+#13 43.51 [INFO] BUILD SUCCESS
+#13 43.51 [INFO] ------------------------------------------------------------------------
+#13 43.51 [INFO] Total time:  34.616 s
+#13 43.51 [INFO] Finished at: 2026-10-11T06:43:57Z
+#13 43.51 [INFO] ------------------------------------------------------------------------
+#13 DONE 44.0s
+
+#12 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#12 ...
+
+#14 [api-gateway stage-1 2/3] WORKDIR /app
+#14 CACHED
+
+#15 [catalog-service stage-1 3/3] COPY --from=builder /build/catalog-service/target/*.jar app.jar
+#15 DONE 0.6s
+
+#12 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#12 ...
+
+#16 [catalog-service] exporting to image
+#16 exporting layers
+#16 ...
+
+#12 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#12 47.33 [INFO] Scanning for projects...
+#12 49.22 [INFO] ------------------------------------------------------------------------
+#12 49.22 [INFO] Reactor Build Order:
+#12 49.22 [INFO] 
+#12 49.23 [INFO] eshop-microservices                                                [pom]
+#12 49.23 [INFO] api-gateway                                                        [jar]
+#12 49.29 [INFO] 
+#12 49.29 [INFO] ---------------< com.example.eshop:eshop-microservices >----------------
+#12 49.29 [INFO] Building eshop-microservices 0.0.1-SNAPSHOT                        [1/2]
+#12 49.29 [INFO]   from pom.xml
+#12 49.29 [INFO] --------------------------------[ pom ]---------------------------------
+#12 49.30 [INFO] 
+#12 49.30 [INFO] -------------------< com.example.eshop:api-gateway >--------------------
+#12 49.30 [INFO] Building api-gateway 0.0.1-SNAPSHOT                                [2/2]
+#12 49.30 [INFO]   from api-gateway/pom.xml
+#12 49.30 [INFO] --------------------------------[ jar ]---------------------------------
+#12 53.04 [INFO] 
+#12 53.04 [INFO] --- resources:3.3.1:resources (default-resources) @ api-gateway ---
+#12 53.40 [INFO] Copying 1 resource from src/main/resources to target/classes
+#12 53.49 [INFO] Copying 1 resource from src/main/resources to target/classes
+#12 53.50 [INFO] 
+#12 53.50 [INFO] --- compiler:3.14.0:compile (default-compile) @ api-gateway ---
+#12 53.89 [INFO] Recompiling the module because of changed source code.
+#12 53.92 [INFO] Compiling 25 source files with javac [debug parameters release 17] to target/classes
+#12 59.74 [INFO] 
+#12 59.74 [INFO] --- resources:3.3.1:testResources (default-testResources) @ api-gateway ---
+#12 59.75 [INFO] skip non existing resourceDirectory /build/api-gateway/src/test/resources
+#12 59.75 [INFO] 
+#12 59.75 [INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ api-gateway ---
+#12 59.77 [INFO] Recompiling the module because of changed dependency.
+#12 59.78 [INFO] Compiling 9 source files with javac [debug parameters release 17] to target/test-classes
+#12 ...
+
+#16 [catalog-service] exporting to image
+#16 exporting layers 14.6s done
+#16 exporting manifest sha256:48272a48e6e42c8aa842ae422d7466808fdba7325330f98e203d244ba05e0da7 0.0s done
+#16 exporting config sha256:67573ec3633d52e461797de96b2404420a3f1967e08fd506dda2fadcf8a60b4a 0.0s done
+#16 exporting attestation manifest sha256:ca3a03be99bc2a30aa1cde96c23b64f999354efc07c80dfbb6deaf5148326b9f
+#16 exporting attestation manifest sha256:ca3a03be99bc2a30aa1cde96c23b64f999354efc07c80dfbb6deaf5148326b9f 0.1s done
+#16 exporting manifest list sha256:e980f91191179d4e4c84ed2704336b7eaac3d12761b5907b71116810f6b2b35b 0.0s done
+#16 naming to docker.io/library/e-shop-catalog-service:latest done
+#16 unpacking to docker.io/library/e-shop-catalog-service:latest
+#16 unpacking to docker.io/library/e-shop-catalog-service:latest 3.5s done
+#16 DONE 18.5s
+
+#12 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#12 63.99 [INFO] /build/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java: /build/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java uses unchecked or unsafe operations.
+#12 63.99 [INFO] /build/api-gateway/src/test/java/com/example/eshop/gateway/service/ratelimit/ReactiveRateLimiterServiceTest.java: Recompile with -Xlint:unchecked for details.
+#12 63.99 [INFO] 
+#12 63.99 [INFO] --- surefire:3.5.3:test (default-test) @ api-gateway ---
+#12 64.20 [INFO] Tests are skipped.
+#12 64.20 [INFO] 
+#12 64.20 [INFO] --- jar:3.4.2:jar (default-jar) @ api-gateway ---
+#12 64.87 [INFO] Building jar: /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
+#12 65.01 [INFO] 
+#12 65.01 [INFO] --- spring-boot:3.5.0:repackage (repackage) @ api-gateway ---
+#12 ...
+
+#17 [catalog-service] resolving provenance for metadata file
+#17 DONE 0.2s
+
+#12 [api-gateway builder 4/4] RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked     mvn -B -ntp -pl api-gateway -am -DskipTests package
+#12 67.31 [INFO] Replacing main artifact /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+#12 67.32 [INFO] The original artifact has been renamed to /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar.original
+#12 67.32 [INFO] ------------------------------------------------------------------------
+#12 67.32 [INFO] Reactor Summary for eshop-microservices 0.0.1-SNAPSHOT:
+#12 67.32 [INFO] 
+#12 67.32 [INFO] eshop-microservices ................................ SUCCESS [  0.017 s]
+#12 67.32 [INFO] api-gateway ........................................ SUCCESS [ 18.014 s]
+#12 67.32 [INFO] ------------------------------------------------------------------------
+#12 67.32 [INFO] BUILD SUCCESS
+#12 67.32 [INFO] ------------------------------------------------------------------------
+#12 67.32 [INFO] Total time:  20.084 s
+#12 67.32 [INFO] Finished at: 2026-10-11T06:44:21Z
+#12 67.32 [INFO] ------------------------------------------------------------------------
+#12 DONE 68.3s
+
+#18 [api-gateway stage-1 3/3] COPY --from=builder /build/api-gateway/target/*.jar app.jar
+#18 DONE 0.5s
+
+#19 [api-gateway] exporting to image
+#19 exporting layers
+#19 exporting layers 4.3s done
+#19 exporting manifest sha256:003cdd3d4e442e488885de8caf99b71085e04eb412a3ebe7899f9ec4f20744af 0.0s done
+#19 exporting config sha256:081a3fdaeb60199fb5c1c68562247398007aca915bb12eb906e316dab30b1c93 0.0s done
+#19 exporting attestation manifest sha256:d07eabda8a6489f8bbe99e369899176c7904acc1b36877bc89ec2989ee03e184
+#19 exporting attestation manifest sha256:d07eabda8a6489f8bbe99e369899176c7904acc1b36877bc89ec2989ee03e184 0.1s done
+#19 exporting manifest list sha256:d46e5a41a27da65d2474404b59bddb5b511f4722d07c1bcf2237f7ad160b77d5 0.0s done
+#19 naming to docker.io/library/e-shop-api-gateway:latest done
+#19 unpacking to docker.io/library/e-shop-api-gateway:latest
+#19 unpacking to docker.io/library/e-shop-api-gateway:latest 0.5s done
+#19 DONE 5.1s
+
+#20 [api-gateway] resolving provenance for metadata file
+#20 DONE 0.0s
+ e-shop-api-gateway  Built
+ e-shop-catalog-service  Built

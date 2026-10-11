@@ -137,7 +137,7 @@ public class BakongServiceImpl implements BakongService {
                     .retrieve()
                     .body(String.class);
 
-            log.info("Bakong response: {}", responseBody);
+            log.debug("Bakong verification response received");
 
             return mapper.readValue(responseBody, BakongResponse.class);
 

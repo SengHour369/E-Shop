@@ -173,6 +173,7 @@ public class AiInferenceClient implements AiProviderClient {
         } catch (Exception ex) {
             reported = "";
         }
+        if (status == 429) return "AI_PROVIDER_BUSY";
         if (status == 504 || "AI_PROVIDER_TIMEOUT".equals(reported)) {
             return "AI_PROVIDER_TIMEOUT";
         }
@@ -202,6 +203,7 @@ public class AiInferenceClient implements AiProviderClient {
 
     private static AiFailure failure(String code) {
         log.warn("AI inference failed code={}", code);
-        return new AiFailure(code, AiExecutionStatus.FAILURE, UNAVAILABLE);
+        return new AiFailure(code, AiExecutionStatus.FAILURE, "AI_PROVIDER_BUSY".equals(code)
+                ? "The assistant is busy. Please try again shortly." : UNAVAILABLE);
     }
 }

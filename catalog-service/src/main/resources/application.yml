@@ -23,8 +23,9 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 2000MB
-      max-request-size: 2000MB
+      max-file-size: 4000MB
+      max-request-size: 4001MB
+      file-size-threshold: 0B
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -72,3 +73,8 @@ scanner:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=catalog-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"
+
+# Starter data is opt-in; enabled by the local Compose override only.
+catalog:
+  seed:
+    enabled: ${CATALOG_SEED_ENABLED:false}

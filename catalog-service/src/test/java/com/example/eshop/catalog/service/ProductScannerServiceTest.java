@@ -209,6 +209,34 @@ class ProductScannerServiceTest {
         assertThat(down.getCandidates()).isEmpty();
     }
 
+    @Test void accepts4000MbMetadataWithoutReadingAnUploadSizedByteArray() throws Exception {
+        var source = new java.awt.image.BufferedImage(2048, 1024, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var encoded = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(source, "png", encoded);
+        var file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.getSize()).thenReturn(4000L * 1024 * 1024);
+        when(file.getContentType()).thenReturn("image/png");
+        when(file.getInputStream()).thenAnswer(invocation -> new java.io.ByteArrayInputStream(encoded.toByteArray()));
+        when(vision.identify(any(), any())).thenAnswer(invocation -> {
+            byte[] bytes = invocation.getArgument(0);
+            assertThat(bytes.length).isLessThanOrEqualTo(1_500_000);
+            assertThat((String) invocation.getArgument(1)).isEqualTo("image/jpeg");
+            var result = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+            assertThat(result.getWidth()).isLessThanOrEqualTo(1024);
+            return VisionOutcome.unavailable();
+        });
+        assertThat(scanner.recognize(file).getMatchType()).isEqualTo("AI_UNAVAILABLE");
+        verify(file, never()).getBytes();
+        verify(vision).identify(any(), any());
+    }
+
+    @Test void rejectsAbove4000MbBeforeOpeningTheStream() throws Exception {
+        var file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.getSize()).thenReturn(4000L * 1024 * 1024 + 1);
+        assertThatThrownBy(() -> scanner.recognize(file)).isInstanceOf(BusinessLogicException.class);
+        verify(file, never()).getInputStream();
+        verifyNoInteractions(vision);
+    }
     private void signIn(String role) {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 "scanner-user", null, List.of(new SimpleGrantedAuthority(role))));

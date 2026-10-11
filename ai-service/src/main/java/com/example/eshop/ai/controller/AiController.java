@@ -57,7 +57,13 @@ public class AiController {
             throw new org.springframework.security.access.AccessDeniedException("Administrator access required");
         }
         UUID conversationId = chatState.conversation(request.conversationId());
-        if (AiConversationRouting.isConversation(request.message())) {
+        if (!administrator && CustomerPurchaseGuide.matches(request.message())) {
+            var guide = CustomerPurchaseGuide.response(conversationId, request.language());
+            chatState.rememberDialogue(conversationId, request.message(), guide.result().message());
+            return ResponseEntity.ok(guide);
+        }
+        if (AiQuickReply.reply(request.message(), request.language()) != null
+                || AiConversationRouting.isConversation(request.message())) {
             return conversational(conversationId, administrator, request);
         }
         String message = chatState.withContext(conversationId, request.message());
@@ -75,23 +81,33 @@ public class AiController {
         chatState.remember(conversationId, result);
         var response = presenter.present(conversationId, administrator, request.language(), result);
         if (administrator) workspace.remember(request.message(), response);
-        return ResponseEntity.status(httpStatus(result.status())).body(response);
+        return ResponseEntity.status("AI_PROVIDER_BUSY".equals(result.errorCode()) ? HttpStatus.TOO_MANY_REQUESTS : httpStatus(result.status())).body(response);
     }
 
     private ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> conversational(UUID id, boolean admin,
             com.example.eshop.ai.dto.AiChatRequest request) {
-        String answer = conversation.reply(request.message(), request.language(), chatState.dialogue(id));
+        String answer;
+        String errorCode = "AI_PROVIDER_FAILURE";
+        String errorMessage = "The assistant could not respond. Please try again shortly.";
+        try {
+            answer = AiQuickReply.reply(request.message(), request.language());
+            if (answer == null) answer = conversation.reply(request.message(), request.language(), chatState.dialogue(id));
+        } catch (com.example.eshop.ai.service.AiFailure failure) {
+            answer = null;
+            errorCode = failure.code();
+            errorMessage = failure.getMessage();
+        }
         boolean success = answer != null;
         if (success) chatState.rememberDialogue(id, request.message(), answer);
         var result = new AiResponse(null, com.example.eshop.common.request.RequestIds.current(), null,
                 com.example.eshop.ai.enums.AiIntent.UNKNOWN,
                 success ? AiExecutionStatus.SUCCESS : AiExecutionStatus.FAILURE,
-                success ? answer : "The assistant could not respond. Please try again shortly.",
-                success ? null : "AI_PROVIDER_FAILURE", null);
+                success ? answer : errorMessage,
+                success ? null : errorCode, null);
         var response = new com.example.eshop.ai.dto.AiChatResponse(id, admin ? "SUPER_ADMIN" : "CUSTOMER",
                 success ? "ConversationCard" : "ErrorCard", java.util.List.of(), result);
         if (admin) workspace.remember(request.message(), response);
-        return ResponseEntity.status(success ? HttpStatus.OK : HttpStatus.BAD_GATEWAY).body(response);
+        return ResponseEntity.status(success ? HttpStatus.OK : "AI_PROVIDER_BUSY".equals(errorCode) ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.BAD_GATEWAY).body(response);
     }
 
     @PostMapping("/execute")

@@ -65,6 +65,11 @@ public class CatalogCheckoutService {
     }
 
     @Transactional(readOnly = true)
+    public CheckoutResult snapshot(Long id) {
+        return read(reservations.findById(id).orElseThrow(() -> new ResourceNotFoundException("Checkout not found")));
+    }
+
+    @Transactional(readOnly = true)
     public CheckoutResult quote(CheckoutRequest request) {
         validate(request);
         return price(request, false);

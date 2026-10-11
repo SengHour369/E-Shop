@@ -7,7 +7,7 @@ class VisionRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     media_type: str = Field(alias="mediaType")
-    image_base64: str = Field(alias="imageBase64", min_length=1, max_length=2_000_000)
+    image_base64: str = Field(alias="imageBase64", min_length=1, max_length=5_592_405_336)
 
 
 class VisionCandidate(BaseModel):

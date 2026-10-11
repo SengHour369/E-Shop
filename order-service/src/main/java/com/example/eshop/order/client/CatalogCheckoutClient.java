@@ -4,6 +4,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "catalog-service", url = "${catalog-service.url:http://localhost:8082}")
 public interface CatalogCheckoutClient {
+    @GetMapping("/internal/catalog/checkouts/{id}")
+    CheckoutResult snapshot(@RequestHeader("Authorization") String token, @PathVariable("id") Long id);
     @PostMapping("/internal/catalog/checkouts/quote")
     CheckoutResult quote(@RequestHeader("Authorization") String token, @RequestBody CheckoutRequest request);
     @PostMapping("/internal/catalog/checkouts")

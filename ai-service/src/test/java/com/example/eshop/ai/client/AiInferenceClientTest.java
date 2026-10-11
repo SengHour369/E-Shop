@@ -42,6 +42,19 @@ class AiInferenceClientTest {
     }
 
     @Test
+    void busyProviderReturnsRetryableBusyMessage() throws Exception {
+        server = listen(exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            reply(exchange, 429, "{\"code\":\"AI_PROVIDER_BUSY\"}");
+        });
+        assertThatThrownBy(() -> client().detect("Find a laptop", List.of(productTool())))
+                .isInstanceOfSatisfying(AiFailure.class, failure -> {
+                    assertThat(failure.code()).isEqualTo("AI_PROVIDER_BUSY");
+                    assertThat(failure.getMessage()).contains("busy");
+                });
+    }
+
+    @Test
     void sendsToolNamesOnlyAndPropagatesCorrelation() throws Exception {
         AtomicReference<String> body = new AtomicReference<>();
         AtomicReference<com.sun.net.httpserver.Headers> headers = new AtomicReference<>();

@@ -117,52 +117,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponse processPayment(Long orderId, PaymentRequest request) {
-        // Cross-service: the monolith looked up the Order (order-service) here, guarded
-        // against a duplicate payment via order.getPayment() != null, and flipped the
-        // order's status to PROCESSING after a successful payment.
-        // TODO: cross-service call via Feign to order-service to (a) validate the order
-        // exists, (b) confirm it has no payment yet, and (c) update its status once this
-        // payment completes.
-        if (paymentRepository.findByOrderId(orderId).isPresent()) {
-            throw new BusinessLogicException("Order already has a payment");
-        }
-
-        Payment payment = PaymentMapper.toEntity(request);
-        payment.setOrderId(orderId);
-        payment.setPaymentDate(LocalDateTime.now());
-
-        // Simulate payment processing (in real app, integrate with payment gateway)
-        payment.setStatus("COMPLETED");
-        payment.setTransactionId(generateTransactionId());
-
-        Payment savedPayment = paymentRepository.save(payment);
-
-        // Record the money received as a PaymentTransaction so downstream flows
-        // (e.g. refunds) can find a SUCCESS transaction for this order.
-        recordSuccessfulTransaction(orderId, savedPayment);
-
-        return PaymentMapper.toResponse(savedPayment);
-    }
-
-    private void recordSuccessfulTransaction(Long orderId, Payment payment) {
-        try {
-            PaymentTransactionRequest txnRequest = PaymentTransactionRequest.builder()
-                    .orderId(orderId)
-                    .customerId(payment.getUserId())
-                    .paymentMethod(PaymentMethod.fromString(payment.getPaymentMethod()))
-                    .amount(payment.getAmount())
-                    .currency(payment.getCurrency() != null ? payment.getCurrency() : "USD")
-                    .remarks("Auto-created on payment success for order " + orderId)
-                    .build();
-
-            paymentTransactionService.recordTransaction(
-                    txnRequest, TransactionStatus.SUCCESS, "SYSTEM", "Payment completed");
-        } catch (Exception e) {
-            // Re-throw so the whole @Transactional processPayment rolls back: we never want a
-            // COMPLETED payment without its matching PaymentTransaction (refunds depend on it).
-            log.error("Failed to record PaymentTransaction for order {}: {}", orderId, e.getMessage(), e);
-            throw e;
-        }
+        throw new BusinessLogicException("Use the order-bound KHQR payment flow. Payment success requires provider verification.");
     }
 
     @Override
@@ -226,9 +181,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponse updatePaymentStatus(Long paymentId, String status, String transactionId) {
+        if ("COMPLETED".equalsIgnoreCase(status) || "SUCCESS".equalsIgnoreCase(status))
+            throw new BusinessLogicException("Provider verification is required; manual success is forbidden");
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + paymentId));
 
+        if ("BAKONG".equalsIgnoreCase(payment.getPaymentProvider()))
+            throw new BusinessLogicException("Provider-managed payment status cannot be changed manually");
         payment.setStatus(status);
         if (transactionId != null) {
             payment.setTransactionId(transactionId);

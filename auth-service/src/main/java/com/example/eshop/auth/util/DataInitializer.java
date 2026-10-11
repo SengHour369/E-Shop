@@ -400,6 +400,11 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("POST", "/api/v1/categories/id/get/", 1007L);
         createApiPermissionIfNotExists("GET", "/api/v1/subcategories/**", 1008L);
         createApiPermissionIfNotExists("POST", "/api/v1/subcategories/get/all", 1008L);
+        createApiPermissionIfNotExists("GET", "/api/v1/groups/get/**", 101L);
+        createApiPermissionIfNotExists("POST", "/api/v1/groups/create", 102L);
+        createApiPermissionIfNotExists("PUT", "/api/v1/groups/update/**", 103L);
+        createApiPermissionIfNotExists("PATCH", "/api/v1/groups/activate/**", 103L);
+        createApiPermissionIfNotExists("DELETE", "/api/v1/groups/delete/**", 104L);
         createApiPermissionIfNotExists("POST", "/api/v1/user-groups/get/all", 101L);
         createApiPermissionIfNotExists("POST", "/api/v1/user-groups/get/id/", 101L);
         createApiPermissionIfNotExists("POST", "/api/v1/user-groups/create/", 102L);

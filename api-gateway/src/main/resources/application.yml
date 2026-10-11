@@ -123,6 +123,12 @@ spring:
                   args:
                     name: authServiceCB
                     fallbackUri: forward:/fallback/auth
+            - id: scanner-upload
+              uri: lb://catalog-service
+              predicates:
+                - Path=/api/v1/product-scanner/recognize
+              metadata:
+                response-timeout: 3600000
             - id: catalog-service
               uri: lb://catalog-service
               predicates:
@@ -272,6 +278,8 @@ gateway:
     jwt-secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
     admin-key: ${GATEWAY_ADMIN_KEY:}
     public-paths:
+      - /api/v1/category-icons/seed/**
+      - /api/v1/brand-logos/seed/**
       - /api/ai/chat
       - /api/v1/promotions/**
       - /api/v1/public/session/login

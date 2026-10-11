@@ -54,6 +54,7 @@ public class PaymentTransactionController extends BaseController {
         return ResponseEntity.ok(ResponseErrorTemplate.success("Payment transaction created successfully", response));
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}/status")
     public ResponseEntity<ResponseErrorTemplate> updateTransactionStatus(
             @PathVariable Long id,

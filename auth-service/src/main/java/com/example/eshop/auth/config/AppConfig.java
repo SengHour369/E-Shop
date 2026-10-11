@@ -26,7 +26,7 @@ public class AppConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         // Service identities are authorized by InternalNotificationSecurityConfig and method security.
         registry.addInterceptor(apiPermissionInterceptor)
-                .excludePathPatterns("/internal/notifications/**", "/internal/authorization/me",
+                .excludePathPatterns("/internal/notifications/**", "/internal/authorization/me", "/api/v1/user/access",
                         "/internal/ai/users");
     }
 

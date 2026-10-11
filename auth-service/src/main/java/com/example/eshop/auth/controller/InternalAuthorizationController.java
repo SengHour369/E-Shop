@@ -20,7 +20,7 @@ public class InternalAuthorizationController {
     private final UserRepository users;
     private final FunctionPermissionRepository functions;
 
-    @GetMapping("/internal/authorization/me")
+    @GetMapping({"/internal/authorization/me", "/api/v1/user/access"})
     @Transactional(readOnly = true)
     public PermissionSnapshot current(Authentication authentication) {
         long actorId = CurrentActor.userId();

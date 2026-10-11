@@ -31,6 +31,7 @@ public class OrderDetail extends BaseEntity {
     // TODO: cross-service call via Feign to payment-service for payment details/status.
     @Column(name = "payment_id")
     private Long paymentId;
+    @Column(length=30) private String paymentMethod;
 
     @OneToMany(mappedBy = "orderDetail", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();

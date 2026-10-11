@@ -15,6 +15,7 @@ async def test_local_provider_separates_user_text_and_returns_valid_decision():
         body = json.loads(request.content)
         assert request.url.path == "/api/chat"
         assert body["stream"] is False
+        assert body["keep_alive"] == "30m"
         assert body["messages"][0]["role"] == "system"
         assert "បង្ហាញ shoes" not in body["messages"][0]["content"]
         requests.append(body)
@@ -38,6 +39,8 @@ async def test_local_provider_separates_user_text_and_returns_valid_decision():
         assert result["tool"] == "PRODUCT_SEARCH"
         assert result["parameters"] == {"query": "shoes"}
         assert len(requests) == 2
+        assert requests[0]["options"]["num_predict"] == 96
+        assert requests[1]["options"]["num_predict"] == 192
         assert "parameters" not in requests[0]["format"]["properties"]
         assert set(requests[1]["format"]["properties"]["parameters"]["properties"]) == {"query"}
 
@@ -72,3 +75,14 @@ async def test_parameterless_order_list_needs_no_argument_generation():
             "fixed", message="Show my orders", tools=[ToolDefinition(name="MY_ORDERS", description="List my orders", parameters={})])
     assert result == {"intent": "MY_ORDERS", "tool": "MY_ORDERS", "confidence": 0.95, "parameters": {}}
     assert len(calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_large_admin_drafts_get_a_larger_token_budget():
+    def handler(request):
+        body = json.loads(request.content)
+        assert body["options"]["num_predict"] == 384
+        return httpx.Response(200, json={"done": True, "message": {"content": "{}"}})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        provider = OllamaProvider(model="test", base_url="http://localhost:11434", http=http)
+        await provider._generate("Extract", "draft", {"properties": {"parameters": {"properties": {str(i): {"type": "string"} for i in range(8)}}}})

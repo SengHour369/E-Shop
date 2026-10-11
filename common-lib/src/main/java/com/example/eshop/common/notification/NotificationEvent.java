@@ -7,10 +7,10 @@ import java.util.UUID;
 public record NotificationEvent(int version, UUID eventId, String requestId, String traceId,
         String spanId, UUID aiExecutionId, long userId, Type type, String resourceType,
         String resourceId, Instant occurredAt) {
-    public enum Type { AI_ACTION_COMPLETED, AI_ACTION_FAILED }
+    public enum Type { AI_ACTION_COMPLETED, AI_ACTION_FAILED, ORDER_CREATED, ORDER_UPDATED, ORDER_CANCELLED, PAYMENT_SUCCESS, PAYMENT_FAILED }
     public static final String TOPIC = "notification.events.v1";
     public void validate() {
-        if (version != 1 || eventId == null || aiExecutionId == null || userId <= 0 || type == null || occurredAt == null
+        if (version != 1 || eventId == null || userId <= 0 || (type == Type.AI_ACTION_COMPLETED || type == Type.AI_ACTION_FAILED) && aiExecutionId == null || type == null || occurredAt == null
                 || requestId == null || !requestId.matches("[A-Za-z0-9._:-]{1,128}")
                 || (traceId != null && !traceId.matches("[a-f0-9]{32}"))
                 || (spanId != null && !spanId.matches("[a-f0-9]{16}"))

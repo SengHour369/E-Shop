@@ -41,11 +41,19 @@ class GatewayRouteConfigurationTest {
         .anyMatch(value -> value.contains("/api/v1/category-icons/**"))
         .anyMatch(value -> value.contains("/api/v1/brand-logos/**"))
         .anyMatch(value -> value.contains("/api/v1/product-scanner/**"));
-    assertThat(routes.values().stream().filter(route -> !route.getId().endsWith("-openapi")))
+    assertThat(routes.values().stream().filter(route -> !route.getId().endsWith("-openapi") && !route.getId().equals("scanner-upload")))
         .allSatisfy(route -> {
           assertThat(route.getFilters()).anyMatch(filter -> filter.getName().equals("CircuitBreaker"));
           assertThat(route.getFilters()).noneMatch(filter -> filter.getName().equals("StripPrefix"));
         });
+  }
+
+  @Test void seedImagesArePublicButImageManagementRemainsProtected() {
+    client.get().uri("/api/v1/category-icons/seed/laptops.svg").exchange()
+        .expectStatus().isEqualTo(503);
+    client.get().uri("/api/v1/brand-logos/seed/apple.svg").exchange()
+        .expectStatus().isEqualTo(503);
+    client.get().uri("/api/v1/brand-logos/get/all").exchange().expectStatus().isUnauthorized();
   }
 
   @Test void missingTokenIsRejectedBeforeUnavailableService() {

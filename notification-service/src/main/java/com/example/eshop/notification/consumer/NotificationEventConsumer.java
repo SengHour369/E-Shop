@@ -22,7 +22,7 @@ public class NotificationEventConsumer {
         var previous = MDC.getCopyOfContextMap();
         try {
             MDC.clear(); MDC.put("requestId",e.requestId()); MDC.put("eventId",e.eventId().toString());
-            MDC.put("aiExecutionId",e.aiExecutionId().toString());
+            if(e.aiExecutionId()!=null) MDC.put("aiExecutionId",e.aiExecutionId().toString());
             if(e.traceId()!=null) MDC.put("traceId",e.traceId());
             if(e.spanId()!=null) MDC.put("parentSpanId",e.spanId());
             try { service.receive(e); }

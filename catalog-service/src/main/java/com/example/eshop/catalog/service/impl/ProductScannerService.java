@@ -45,7 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class ProductScannerService {
     private static final Logger log = LoggerFactory.getLogger(ProductScannerService.class);
-    private static final long MAX_IMAGE_BYTES = 1_500_000;
+    private static final long MAX_IMAGE_BYTES = 4000L * 1024 * 1024;
     private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
     private static final Set<String> OPERATIONAL = Set.of("ADMIN", "MANAGER", "STAFF");
 
@@ -293,7 +293,13 @@ public class ProductScannerService {
         }
         byte[] bytes;
         try {
-            bytes = image.getBytes();
+            if (!IMAGE_TYPES.contains(mediaType)) throw new BusinessLogicException("Image must be JPEG, PNG, or WebP");
+            if (image.getSize() > 1_500_000) {
+                return new CheckedImage(com.example.eshop.catalog.scanner.ScanImageNormalizer.normalize(image), "image/jpeg");
+            }
+            try (var source = image.getInputStream()) {
+                bytes = source.readNBytes(1_500_001);
+            }
         } catch (IOException ex) {
             throw new BusinessLogicException("Image could not be read");
         }

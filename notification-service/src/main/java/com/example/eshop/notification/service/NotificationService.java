@@ -21,8 +21,24 @@ public class NotificationService {
         e.validate();
         if (repository.existsByEventId(e.eventId())) return;
         var n = new Notification(); n.setEventId(e.eventId()); n.setUserId(e.userId()); n.setType(e.type());
-        n.setTitle(e.type()==NotificationEvent.Type.AI_ACTION_COMPLETED ? "AI action completed" : "AI action needs attention");
-        n.setMessage(e.type()==NotificationEvent.Type.AI_ACTION_COMPLETED ? "Your requested action completed. View its execution for details." : "Your requested action could not be confirmed. Check its execution before trying again.");
+        n.setTitle(switch(e.type()) {
+            case ORDER_CREATED -> "Order received";
+            case ORDER_UPDATED -> "Order updated";
+            case ORDER_CANCELLED -> "Order cancelled";
+            case PAYMENT_SUCCESS -> "Payment verified";
+            case PAYMENT_FAILED -> "Payment not completed";
+            case AI_ACTION_COMPLETED -> "AI action completed";
+            case AI_ACTION_FAILED -> "AI action needs attention";
+        });
+        n.setMessage(switch(e.type()) {
+            case PAYMENT_SUCCESS -> "Your payment was verified with the provider. View the order for its current status.";
+            case PAYMENT_FAILED -> "Payment was not confirmed before the QR expired. View the order before trying again.";
+            case ORDER_CREATED -> "Your order was received. Complete payment using the order's current payment instructions.";
+            case ORDER_CANCELLED -> "The order was cancelled. Review the order for details.";
+            case ORDER_UPDATED -> "The order status changed. View the order for details.";
+            case AI_ACTION_COMPLETED -> "Your requested action completed. View its execution for details.";
+            case AI_ACTION_FAILED -> "Your requested action could not be confirmed. Check its execution before trying again.";
+        });
         n.setResourceType(e.resourceType()); n.setResourceId(e.resourceId()); n.setRequestId(e.requestId()); n.setTraceId(e.traceId());
         n.setAiExecutionId(e.aiExecutionId()); n.setCreatedAt(Instant.now()); n.setSentAt(Instant.now()); n.setStatus(Notification.Status.SENT);
         boolean email = preferences.findById(e.userId()).map(NotificationPreference::isAiEmail).orElse(false);

@@ -179,6 +179,8 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         PaymentTransaction transaction = paymentTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment transaction not found with id: " + transactionId));
 
+        if (request.getNewStatus()==TransactionStatus.SUCCESS || transaction.getQrMd5()!=null)
+            throw new com.example.eshop.common.exception.BusinessLogicException("Provider-managed payments cannot be changed manually");
         TransactionStatus oldStatus = transaction.getStatus();
         transaction.setStatus(request.getNewStatus());
         PaymentTransaction updated = paymentTransactionRepository.save(transaction);

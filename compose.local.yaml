@@ -22,3 +22,7 @@ services:
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT: "5000"
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT: "5000"
       APP_BASE_URL: http://localhost:8080
+
+  catalog-service:
+    environment:
+      CATALOG_SEED_ENABLED: "true"

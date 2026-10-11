@@ -21,6 +21,8 @@ def test_conversation_keeps_history_and_user_text_out_of_system_prompt():
         assert received[0]['messages'][1] == {'role': 'user', 'content': 'My name is Alex'}
         assert 'tools' not in received[0]
         assert 'format' not in received[0]
+        assert received[0]['keep_alive'] == '30m'
+        assert received[0]['options']['num_predict'] == 192
 
 def test_conversation_rejects_system_role_in_history():
     app = create_app(make_settings(ai_provider='OLLAMA', ollama_model='test'))
@@ -37,3 +39,13 @@ def test_conversation_timeout_returns_retryable_error():
         app.state.http = httpx.AsyncClient(transport=httpx.MockTransport(handle))
         result = client.post('/api/v1/ai/conversation', json={'message': 'Hello'})
         assert result.status_code == 504
+
+
+def test_conversation_rejects_incomplete_generation():
+    def handle(request):
+        return httpx.Response(200, json={'done': False, 'message': {'content': 'partial'}})
+    app = create_app(make_settings(ai_provider='OLLAMA', ollama_model='test'))
+    with TestClient(app) as client:
+        app.state.http = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+        result = client.post('/api/v1/ai/conversation', json={'message': 'Hello'})
+        assert result.status_code == 502

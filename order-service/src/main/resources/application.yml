@@ -61,3 +61,12 @@ catalog-service:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=order-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"
+
+# Apply db/upgrade/20261011_commerce_automation.sql before enabling.
+automation:
+  enabled: ${COMMERCE_AUTOMATION_ENABLED:false}
+  input-topic: commerce.payments.v1
+  api-path: /api/v1/orders/automation
+  merchant-name: ${KHQR_MERCHANT_NAME:}
+  merchant-id: ${KHQR_MERCHANT_ID:}
+  acquiring-bank: ${KHQR_ACQUIRING_BANK:}

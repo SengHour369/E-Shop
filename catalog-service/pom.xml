@@ -16,6 +16,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-webp</artifactId>
+            <version>3.13.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.example.eshop</groupId>
             <artifactId>common-lib</artifactId>
             <version>${project.version}</version>

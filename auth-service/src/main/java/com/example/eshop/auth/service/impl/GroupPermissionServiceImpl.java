@@ -28,6 +28,8 @@ import java.util.List;
 public class GroupPermissionServiceImpl implements GroupPermissionService {
 
     private final GroupPermissionRepository groupPermissionRepository;
+    private final com.example.eshop.auth.repository.GroupRepository groups;
+    private final com.example.eshop.auth.repository.FunctionPermissionRepository functions;
 
     @Override
     @Transactional(readOnly = true)
@@ -125,6 +127,13 @@ public class GroupPermissionServiceImpl implements GroupPermissionService {
 
     @Override
     public ResponseErrorTemplate createGroupPermission(Long groupId, Long funcId) {
+        var group = groups.findById(groupId)
+                .filter(value -> !Boolean.TRUE.equals(value.getIsDelete()))
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        var function = functions.findById(funcId)
+                .filter(value -> !Boolean.TRUE.equals(value.getIsDelete()))
+                .filter(value -> Boolean.TRUE.equals(value.getIsActive()))
+                .orElseThrow(() -> new BadRequestException("Permission is inactive or unavailable"));
         if (groupPermissionRepository.existsByGroupIdAndFuncId(groupId, funcId)) {
             throw new BadRequestException("Permission already exists for group " + groupId + " and function " + funcId);
         }

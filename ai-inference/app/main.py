@@ -74,7 +74,7 @@ class RequestContextMiddleware:
         try:
             await self.app(scope, receive, send_with_context)
         finally:
-            if scope.get("path") in {"/api/v1/ai/route", "/api/v1/ai/vision/products"}:
+            if scope.get("path") in {"/api/v1/ai/route", "/api/v1/ai/vision/products", "/api/v1/ai/conversation"}:
                 elapsed_ms = int((time.perf_counter() - started) * 1000)
                 log.info(
                     "AI routing finished status=%s durationMs=%s requestId=%s",

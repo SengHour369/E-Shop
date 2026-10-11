@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(name = "order-service")
 public interface OrderToolClient {
+    @org.springframework.web.bind.annotation.GetMapping("/internal/ai/orders/automation/{id}")
+    JsonNode automationReview(@RequestHeader("Authorization") String token,@org.springframework.web.bind.annotation.PathVariable("id") long id);
 
     @GetMapping("/internal/ai/orders/{number}/cancel-preview")
     JsonNode cancelPreview(@RequestHeader("Authorization") String token, @PathVariable("number") String number);

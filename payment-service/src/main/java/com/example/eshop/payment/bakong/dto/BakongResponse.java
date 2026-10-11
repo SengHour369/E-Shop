@@ -13,7 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class BakongResponse {
-    private int responseCode;
+    @Builder.Default
+    private int responseCode = -1;
     private String responseMessage;
     private Integer errorCode;
     private Object data;

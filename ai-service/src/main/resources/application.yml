@@ -70,3 +70,7 @@ logging:
 ai:
   inference-url: ${AI_INFERENCE_URL:http://localhost:8000}
   inference-timeout-seconds: ${AI_INFERENCE_TIMEOUT_SECONDS:25}
+
+  training:
+    seed:
+      enabled: ${AI_TRAINING_SEED_ENABLED:false}

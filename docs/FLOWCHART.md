@@ -146,7 +146,7 @@ flowchart TD
   hit[200 found true with catalog price and stock]
   miss[200 found false]
   image[POST /api/v1/product-scanner/recognize]
-  file{jpeg png or webp and at most 1.5 MB?}
+  file{jpeg png or webp and at most 4000 MB?}
   vision[ai-inference names candidates only]
   down[200 AI_UNAVAILABLE]
   exact{One catalog name and confidence at least 0.90?}

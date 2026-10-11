@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+    private final org.springframework.beans.factory.ObjectProvider<com.example.eshop.common.automation.AutomationEvents> automation;
 
     private final OrderRepository orderRepository;
     private final OrderCancelationRepository orderCancelationRepository;
@@ -176,7 +177,10 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessLogicException("Unsupported order status");
         if (OrderStatus.CANCELLED.equals(status) && !OrderStatus.PENDING.equals(order.getStatus()))
             throw new BusinessLogicException("Only pending orders can be cancelled");
+        com.example.eshop.order.automation.OrderTransitions.require(order.getStatus(),status,
+                order.getPaymentId()!=null || "CASH_ON_DELIVERY".equals(order.getPaymentMethod()));
         order.setStatus(status);
+        notifyLifecycle(order,"CANCELLED".equals(status));
         if (OrderStatus.CANCELLED.equals(status) && order.getCheckoutKey() != null) order.setCatalogCompleted(false);
 
         if (OrderStatus.CANCELLED.equals(status)) {
@@ -208,6 +212,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
+        notifyLifecycle(order,true);
         if (order.getCheckoutKey() != null) order.setCatalogCompleted(false);
         // Checkout recovery releases stock and promotion usage idempotently.
         OrderDetail cancelled = orderRepository.save(order);
@@ -248,6 +253,13 @@ public class OrderServiceImpl implements OrderService {
                 .map(orderMapper::toResponse);
     }
 
+    private void notifyLifecycle(OrderDetail order, boolean cancelled) {
+        var bus=automation.getIfAvailable(); if(bus==null) return;
+        var type=cancelled?com.example.eshop.common.automation.CommerceEvent.Type.ORDER_CANCELLED:com.example.eshop.common.automation.CommerceEvent.Type.ORDER_STATUS_CHANGED;
+        var event=com.example.eshop.common.automation.AutomationEvents.event(type,order.getId(),order.getUserId(),order.getTotalAmount(),order.getPaymentMethod()==null?"LEGACY":order.getPaymentMethod(),order.getPaymentId());
+        bus.emit(com.example.eshop.common.automation.CommerceEvent.ORDERS,event);
+        bus.notify(event,cancelled?com.example.eshop.common.notification.NotificationEvent.Type.ORDER_CANCELLED:com.example.eshop.common.notification.NotificationEvent.Type.ORDER_UPDATED);
+    }
     private String generateCancelationId() {
         String cancelationId;
         do {

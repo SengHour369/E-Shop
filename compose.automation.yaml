@@ -1,0 +1,35 @@
+services:
+  order-service:
+    environment:
+      COMMERCE_AUTOMATION_ENABLED: "true"
+      AUTOMATION_ADMIN_USER_IDS: ${AUTOMATION_ADMIN_USER_IDS:-}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      SPRING_KAFKA_PRODUCER_KEY_SERIALIZER: org.apache.kafka.common.serialization.StringSerializer
+      SPRING_KAFKA_PRODUCER_VALUE_SERIALIZER: org.apache.kafka.common.serialization.StringSerializer
+      SPRING_KAFKA_PRODUCER_ACKS: all
+      SPRING_KAFKA_PRODUCER_PROPERTIES_ENABLE_IDEMPOTENCE: "true"
+      SPRING_KAFKA_CONSUMER_KEY_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+      SPRING_KAFKA_CONSUMER_VALUE_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+      SPRING_KAFKA_CONSUMER_ENABLE_AUTO_COMMIT: "false"
+      SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: earliest
+  payment-service:
+    environment:
+      COMMERCE_AUTOMATION_ENABLED: "true"
+      AUTOMATION_ADMIN_USER_IDS: ${AUTOMATION_ADMIN_USER_IDS:-}
+      BAKONG_EMAIL: ${BAKONG_EMAIL:?Set your registered Bakong email}
+      BAKONG_BASE_URL: ${BAKONG_BASE_URL:-https://api-bakong.nbc.gov.kh}
+      BAKONG_APP_ICON_URL: ${BAKONG_APP_ICON_URL:-}
+      APP_BASE_URL: ${APP_BASE_URL:-}
+      BAKONG_ACCOUNT_ID: ${BAKONG_ACCOUNT_ID:?Set your verified merchant Bakong account}
+      KHQR_MERCHANT_NAME: ${KHQR_MERCHANT_NAME:-}
+      KHQR_MERCHANT_ID: ${KHQR_MERCHANT_ID:-}
+      KHQR_ACQUIRING_BANK: ${KHQR_ACQUIRING_BANK:-}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      SPRING_KAFKA_PRODUCER_KEY_SERIALIZER: org.apache.kafka.common.serialization.StringSerializer
+      SPRING_KAFKA_PRODUCER_VALUE_SERIALIZER: org.apache.kafka.common.serialization.StringSerializer
+      SPRING_KAFKA_PRODUCER_ACKS: all
+      SPRING_KAFKA_PRODUCER_PROPERTIES_ENABLE_IDEMPOTENCE: "true"
+      SPRING_KAFKA_CONSUMER_KEY_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+      SPRING_KAFKA_CONSUMER_VALUE_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+      SPRING_KAFKA_CONSUMER_ENABLE_AUTO_COMMIT: "false"
+      SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: earliest

@@ -49,9 +49,9 @@ springdoc:
     enabled: true
 
 bakong:
-  account-id: ${BAKONG_ACCOUNT_ID:senghour_soeurng@bkrt}
+  account-id: ${BAKONG_ACCOUNT_ID:}
   base-url: ${BAKONG_BASE_URL:https://api-bakong.nbc.gov.kh}
-  email: ${BAKONG_EMAIL:seanghour097328@gmail.com}
+  email: ${BAKONG_EMAIL:}
   app-name: E-Shop
   app-icon-url: ${BAKONG_APP_ICON_URL:https://random-subdomain.trycloudflare.com/logo.png}
 app:
@@ -62,3 +62,12 @@ app:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=payment-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"
+
+# Apply db/upgrade/20261011_commerce_automation.sql before enabling.
+automation:
+  enabled: ${COMMERCE_AUTOMATION_ENABLED:false}
+  input-topic: commerce.orders.v1
+  api-path: /api/v1/payments/automation
+  merchant-name: ${KHQR_MERCHANT_NAME:}
+  merchant-id: ${KHQR_MERCHANT_ID:}
+  acquiring-bank: ${KHQR_ACQUIRING_BANK:}

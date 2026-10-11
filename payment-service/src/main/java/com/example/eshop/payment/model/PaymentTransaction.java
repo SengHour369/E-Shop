@@ -50,5 +50,14 @@ public class PaymentTransaction extends BaseEntity {
 
     @Column(name = "remarks", length = 255)
     private String remarks;
+    @Column(length=4000) private String qrPayload;
+    @Column(length=32,unique=true) private String qrMd5;
+    @Column(length=120) private String recipientAccount;
+    @Column(length=64,unique=true) private String providerHash;
+    private java.time.Instant verifiedAt;
+    private java.time.Instant expiresAt;
+    private java.time.Instant nextVerificationAt;
+    private int verificationAttempts;
+
 
 }

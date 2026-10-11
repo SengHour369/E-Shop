@@ -92,6 +92,7 @@ public class AiToolExecutor {
             case ADMIN_RETURN_LIST -> orders.adminReturns(bearer, parameters.path("status").textValue());
             case ADMIN_USER_LIST -> auth.users(bearer);
             case ADMIN_REVENUE_SUMMARY -> payments.revenue(bearer, date(parameters));
+            case ADMIN_AUTOMATION_REVIEW -> orders.automationReview(bearer,parameters.path("id").longValue());
             case ADMIN_AUDIT_LOG -> auditLookup.find(parameters.path("requestId").textValue());
             case PROMOTION_GET -> catalog.promotion(bearer, parameters.path("id").longValue());
             case PROMOTION_CREATE -> catalog.createPromotion(bearer, parameters);

@@ -25,6 +25,7 @@ public class CatalogAccess {
     }
     public CheckoutResult reserve(CheckoutRequest request) { return client.reserve(token(), request); }
     public CheckoutResult confirm(Long id) { return client.confirm(token(), id); }
+    public CheckoutResult snapshot(Long id) { return client.snapshot(token(),id); }
     public void release(Long id) { client.release(token(), id); }
 }
 

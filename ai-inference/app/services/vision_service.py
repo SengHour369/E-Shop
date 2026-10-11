@@ -10,7 +10,7 @@ from app.providers.base import AiProvider
 from app.schemas.vision import VisionCandidate
 
 _MEDIA_TYPES = {"image/jpeg", "image/png", "image/webp"}
-_MAX_BYTES = 1_500_000
+_MAX_BYTES = 4000 * 1024 * 1024
 _INVALID = "The image is invalid."
 
 

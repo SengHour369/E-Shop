@@ -41,18 +41,20 @@ class CheckoutIntegrationTest {
     static class Config {
         @Bean TransactionTemplate transactions(PlatformTransactionManager m) { return new TransactionTemplate(m); }
         @Bean CatalogAccess catalog() { return mock(CatalogAccess.class); }
+        @Bean com.example.eshop.common.automation.AutomationEvents automation() { return mock(com.example.eshop.common.automation.AutomationEvents.class); }
     }
     @Autowired CheckoutCoordinator checkout;
     @Autowired CartServiceImpl carts;
     @Autowired CartRepository cartRepository;
     @Autowired OrderRepository orders;
     @Autowired CatalogAccess catalog;
+    @Autowired com.example.eshop.common.automation.AutomationEvents automation;
     @Autowired TransactionTemplate tx;
     private static long sequence=100;
     private long user;
 
     @BeforeEach void setup() {
-        reset(catalog); user=++sequence;
+        reset(catalog,automation); user=++sequence;
         var auth = new UsernamePasswordAuthenticationToken("customer", null, List.of());
         auth.setDetails(Map.of("userId",user));
         SecurityContextHolder.getContext().setAuthentication(auth);
@@ -131,5 +133,15 @@ class CheckoutIntegrationTest {
         checkout.process(order.getId()); checkout.process(order.getId());
         verify(catalog,times(1)).release(order.getId());
     }
+    @Test void onlineCheckoutReservesWithoutConfirmingStockAndEmitsOnce() {
+        var request=request();request.setPaymentMethod("BAKONG");
+        var first=(OrderResponse)checkout.create(user,request).object();
+        checkout.create(user,request);
+        assertThat(first.getStatus()).isEqualTo("PENDING");
+        assertThat(first.getTotalAmount()).isEqualByComparingTo("160");
+        verify(catalog,never()).confirm(anyLong());
+        verify(catalog,times(1)).reserve(any());
+        tx.executeWithoutResult(t -> verify(automation,times(1)).emit(eq(com.example.eshop.common.automation.CommerceEvent.ORDERS),argThat(e->e.type()==com.example.eshop.common.automation.CommerceEvent.Type.ORDER_CREATED)));
+        tx.executeWithoutResult(t->assertThat(orders.findById(first.getId()).orElseThrow().isCatalogCompleted()).isFalse());
+    }
 }
-

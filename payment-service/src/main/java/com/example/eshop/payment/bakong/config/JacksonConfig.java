@@ -20,6 +20,8 @@ public class JacksonConfig {
 
     @Bean
     public RestClient restClient(RestClient.Builder builder) {
-        return builder.build();
+        var factory=new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);factory.setReadTimeout(10000);
+        return builder.requestFactory(factory).build();
     }
 }

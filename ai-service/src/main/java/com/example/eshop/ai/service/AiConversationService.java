@@ -30,9 +30,14 @@ public class AiConversationService {
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body)).build();
             var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 429) throw new AiFailure("AI_PROVIDER_BUSY",
+                    com.example.eshop.ai.enums.AiExecutionStatus.FAILURE,
+                    "The assistant is busy. Please try again shortly.");
             if (response.statusCode() != 200 || response.body().length() > 65536) return null;
             String answer = mapper.readTree(response.body()).path("message").asText();
             return answer.isBlank() ? null : answer.substring(0, Math.min(4000, answer.length()));
+        } catch (AiFailure failure) {
+            throw failure;
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             return null;

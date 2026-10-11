@@ -312,18 +312,16 @@ class AiOrchestrationTest {
         verifyNoInteractions(provider);
     }
     @Test
-    void greetingUsesConversationWithoutBusinessTools() throws Exception {
+    void greetingWorksWithoutTheModelOrBusinessTools() throws Exception {
         UUID id = UUID.randomUUID();
         when(chatState.conversation(null)).thenReturn(id);
-        when(chatState.dialogue(id)).thenReturn(List.of());
-        when(conversation.reply("Hello", "en", List.of())).thenReturn("Hello! How can I help?");
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"Hello\",\"language\":\"en\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cardType").value("ConversationCard"))
-                .andExpect(jsonPath("$.result.message").value("Hello! How can I help?"));
-        verifyNoInteractions(provider, catalog, orders);
-        verify(chatState).rememberDialogue(id, "Hello", "Hello! How can I help?");
+                .andExpect(jsonPath("$.result.message").value("Hello! How can I help? You can ask about products, orders or payments."));
+        verifyNoInteractions(conversation, provider, catalog, orders);
+        verify(chatState).rememberDialogue(id, "Hello", "Hello! How can I help? You can ask about products, orders or payments.");
     }
 
     @Test
@@ -361,7 +359,7 @@ class AiOrchestrationTest {
         UUID id = UUID.randomUUID();
         when(chatState.conversation(null)).thenReturn(id);
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"message\":\"Hello\",\"language\":\"en\"}"))
+                .content("{\"message\":\"How are you\",\"language\":\"en\"}"))
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.result.errorCode").value("AI_PROVIDER_FAILURE"));
         verifyNoInteractions(provider, catalog, orders);
