@@ -18,6 +18,26 @@ public class Address extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "label", length = 40)
+    private String label;
+
+    @Column(name = "recipient_name", length = 100)
+    private String recipientName;
+
+    @Column(name = "phone_number", length = 30)
+    private String phoneNumber;
+
+    @Column(name = "district", length = 100)
+    private String district;
+
+    @Column(name = "commune", length = 100)
+    private String commune;
+
+    @Column(name = "additional_information", length = 500)
+    private String additionalInformation;
+
+
+
     @Column(name = "address_line1", nullable = false)
     private String addressLine1;
 

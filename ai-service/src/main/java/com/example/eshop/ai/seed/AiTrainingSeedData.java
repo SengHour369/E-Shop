@@ -7,6 +7,8 @@ import java.util.List;
 public final class AiTrainingSeedData {
     public static final String DATASET_CODE = "eshop-bootstrap-10000-v1";
     public static final int SIZE = 100_000;
+    public static final int MAX_SIZE = 10_000_000;
+    public static final String GENERATOR_VERSION = "eshop-bilingual-context-v2";
     public record Example(String language, String prompt, String response, String split) {}
     private record Pair(String en, String km) {}
     private record Topic(String en, String km, String answerEn, String answerKm) {}
@@ -275,22 +277,69 @@ public final class AiTrainingSeedData {
             "សូមពិនិត្យគណនីដែលបានចូល និងប្រវត្តិសន្ទនាដែលមាន។ ខ្ញុំមិនអាចស្ដារប្រវត្តិដែលមិនមាន ឬសន្មតថាការជជែកមុនបានបញ្ចប់សកម្មភាពទេ។ សូមផ្ទៀងផ្ទាត់ការបញ្ជាទិញ ឬទូទាត់តាមសេវា។")
     );
 
+    // The first context is empty so all original 100,000 rows remain byte-for-byte stable.
+    // These are synthetic context combinations, not ten million independent facts.
+    private static final List<Pair> CONTEXTS = List.of(
+        new Pair("", ""),
+        new Pair("I have not signed in yet.", "ខ្ញុំមិនទាន់បានចូលគណនីទេ។"),
+        new Pair("I am signed in to my own account.", "ខ្ញុំបានចូលគណនីផ្ទាល់ខ្លួន។"),
+        new Pair("I am helping a family member who will use their own account.", "ខ្ញុំកំពុងជួយសមាជិកគ្រួសារដែលនឹងប្រើគណនីផ្ទាល់ខ្លួន។"),
+        new Pair("I am reviewing my shopping list before checkout.", "ខ្ញុំកំពុងពិនិត្យបញ្ជីទំនិញមុនបញ្ជាទិញ។"),
+        new Pair("I have an existing order and want to avoid a duplicate.", "ខ្ញុំមានការបញ្ជាទិញរួចហើយ និងចង់ជៀសវាងការស្ទួន។"),
+        new Pair("My connection was interrupted earlier.", "ការតភ្ជាប់របស់ខ្ញុំបានដាច់មុននេះ។"),
+        new Pair("I switched devices during this shopping session.", "ខ្ញុំបានប្តូរឧបករណ៍ក្នុងពេលទិញទំនិញនេះ។"),
+        new Pair("I cannot find the relevant record in my account.", "ខ្ញុំរកកំណត់ត្រាដែលពាក់ព័ន្ធក្នុងគណនីមិនឃើញ។"),
+        new Pair("I want to check the details before taking any action.", "ខ្ញុំចង់ពិនិត្យព័ត៌មានមុនធ្វើសកម្មភាពណាមួយ។")
+    );
+    private static final List<Pair> CONCERNS = List.of(
+        new Pair("", ""),
+        new Pair("Do not assume that a previous chat completed an action.", "កុំសន្មតថាការជជែកមុនបានបញ្ចប់សកម្មភាព។"),
+        new Pair("Please explain what still needs verification.", "សូមពន្យល់អ្វីដែលនៅតែត្រូវផ្ទៀងផ្ទាត់។"),
+        new Pair("Please protect personal information when checking records.", "សូមការពារព័ត៌មានផ្ទាល់ខ្លួនពេលពិនិត្យកំណត់ត្រា។"),
+        new Pair("Please use the current shop information rather than a guess.", "សូមប្រើព័ត៌មានហាងបច្ចុប្បន្ន ជំនួសការសន្មត។"),
+        new Pair("I want to avoid repeating a payment or an order.", "ខ្ញុំចង់ជៀសវាងការបង់ប្រាក់ ឬបញ្ជាទិញស្ទួន។"),
+        new Pair("Do not treat my description as proof of payment.", "កុំចាត់ទុកការពិពណ៌នារបស់ខ្ញុំជាភស្តុតាងនៃការបង់ប្រាក់។"),
+        new Pair("Ask for confirmation before making an authorized change.", "សូមសុំការបញ្ជាក់មុនធ្វើការកែប្រែដែលមានសិទ្ធិ។"),
+        new Pair("If information is missing, do not invent it.", "បើខ្វះព័ត៌មាន សូមកុំប្រឌិតវា។"),
+        new Pair("Please respect account permissions throughout.", "សូមគោរពសិទ្ធិគណនីគ្រប់ជំហាន។")
+    );
+
+    /** Random access allows restart from a committed offset without replaying earlier rows. */
+    public static Example exampleAt(int index) {
+        if (index < 0 || index >= MAX_SIZE) throw new IndexOutOfBoundsException(index);
+        int contextIndex = index / SIZE;
+        int base = index % SIZE;
+        boolean khmer = base % 2 == 1;
+        int styleIndex = (base / 2) % STYLES.size();
+        int productIndex = (base / (2 * STYLES.size())) % PRODUCTS.size();
+        var topic = TOPICS.get(base / (2 * STYLES.size() * PRODUCTS.size()));
+        var product = PRODUCTS.get(productIndex);
+        var style = STYLES.get(styleIndex);
+        int group = productIndex % 25;
+        String split = group < 20 ? "TRAIN" : group < 23 ? "VALIDATION" : "TEST";
+        String prompt = khmer ? style.km() + topic.km().formatted(product.km())
+                              : style.en() + topic.en().formatted(product.en());
+        var context = CONTEXTS.get(contextIndex / CONCERNS.size());
+        var concern = CONCERNS.get(contextIndex % CONCERNS.size());
+        String prefix = khmer ? context.km() : context.en();
+        String suffix = khmer ? concern.km() : concern.en();
+        if (!prefix.isEmpty()) prompt = prefix + "\n" + prompt;
+        if (!suffix.isEmpty()) prompt += "\n" + suffix;
+        return new Example(khmer ? "km" : "en", prompt, khmer ? topic.answerKm() : topic.answerEn(), split);
+    }
+
+    public static List<Example> batch(int offset, int count) {
+        if (offset < 0 || count < 0 || count > 10_000 || (long) offset + count > MAX_SIZE)
+            throw new IllegalArgumentException("Invalid seed batch range (maximum batch 10,000)");
+        var rows = new ArrayList<Example>(count);
+        for (int index = offset; index < offset + count; index++) rows.add(exampleAt(index));
+        return List.copyOf(rows);
+    }
+
+    /** Legacy preview API; bulk seeding must use batch(), never materialize the full corpus. */
     public static List<Example> examples() {
         var rows = new ArrayList<Example>(SIZE);
-        for (var topic : TOPICS) {
-            for (int productIndex = 0; productIndex < PRODUCTS.size(); productIndex++) {
-                var product = PRODUCTS.get(productIndex);
-                // Product-grouped splits avoid identical product prompts across subsets.
-                // Preserve the first 25 products' original subsets when expanding the corpus.
-                int groupIndex = productIndex % 25;
-                String split = groupIndex < 20 ? "TRAIN" : groupIndex < 23 ? "VALIDATION" : "TEST";
-                for (var style : STYLES) {
-                    rows.add(new Example("en", style.en() + topic.en().formatted(product.en()), topic.answerEn(), split));
-                    rows.add(new Example("km", style.km() + topic.km().formatted(product.km()), topic.answerKm(), split));
-                }
-            }
-        }
-        if (rows.size() != SIZE) throw new IllegalStateException("Unexpected bootstrap corpus size");
+        for (int index = 0; index < SIZE; index++) rows.add(exampleAt(index));
         return List.copyOf(rows);
     }
 }

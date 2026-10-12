@@ -13,6 +13,26 @@ import java.time.LocalDateTime;
 public class AddressResponse {
     private Long id;
 
+    @JsonProperty("label")
+    private String label;
+
+    @JsonProperty("recipient_name")
+    private String recipientName;
+
+    @JsonProperty("phone_number")
+    private String phoneNumber;
+
+    @JsonProperty("district")
+    private String district;
+
+    @JsonProperty("commune")
+    private String commune;
+
+    @JsonProperty("additional_information")
+    private String additionalInformation;
+
+
+
     @JsonProperty("address_line1")
     private String addressLine1;
 
