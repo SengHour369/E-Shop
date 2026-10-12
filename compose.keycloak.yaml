@@ -1,0 +1,27 @@
+# Local development only. Start with --env-file .env.keycloak.local.
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: keycloak-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_PASSWORD:?Set local Keycloak bootstrap password}
+      KC_HOSTNAME: http://localhost:8180
+      JAVA_OPTS_KC_HEAP: "-Xms128m -Xmx384m"
+    ports:
+      - "127.0.0.1:8180:8080"
+    volumes:
+      - keycloak_local_data:/opt/keycloak/data
+      - ./keycloak/local-import:/opt/keycloak/data/import:ro
+    restart: unless-stopped
+  auth-service:
+    environment:
+      ESHOP_KEYCLOAK_ENABLED: "true"
+      ESHOP_KEYCLOAK_URL: http://localhost:8180
+      ESHOP_KEYCLOAK_REALM: eshop
+      ESHOP_KEYCLOAK_CLIENT_ID: eshop-web
+      ESHOP_KEYCLOAK_AUDIENCE: eshop-api
+      ESHOP_KEYCLOAK_ISSUER: http://localhost:8180/realms/eshop
+      ESHOP_KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/eshop/protocol/openid-connect/certs
+volumes:
+  keycloak_local_data:

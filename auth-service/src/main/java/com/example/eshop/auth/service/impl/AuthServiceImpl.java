@@ -248,6 +248,21 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // --- Refresh token ---
+    /** Called only after external signature verification and explicit identity lookup. */
+    @Transactional
+    public AuthenticationResponse authenticateExternal(User user) {
+        if (!user.isEnabled() || Boolean.TRUE.equals(user.getDeleted()) || !Constant.ACT.equals(user.getStatus())) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED, "Account is not active");
+        }
+        UserDetailsImpl details = buildUserDetails(user);
+        String accessToken = jwtService.generateToken(details);
+        refreshTokenRepository.deleteByUser(user);
+        String refreshToken = generateAndSaveRefreshToken(user);
+        audit.recordForActor(AuditEvent.success(AuditAction.LOGIN, "USER", user.getId(), null, null),
+                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()));
+        return buildAuthResponse(user, accessToken, refreshToken);
+    }
+
     @Transactional
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
         log.info("Refreshing token...");

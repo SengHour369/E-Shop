@@ -39,3 +39,8 @@ ai-assistant-*.log
 .env
 .env.local
 automation-*.log
+
+# Local Keycloak secrets
+.env.keycloak.local
+keycloak/local-import/
+keycloak/local-credentials.txt

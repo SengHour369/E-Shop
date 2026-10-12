@@ -1,0 +1,46 @@
+{
+  "realm": "eshop",
+  "enabled": true,
+  "displayName": "E-Shop",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "clients": [
+    {
+      "clientId": "eshop-web",
+      "name": "E-Shop Angular",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:4200/auth/keycloak/callback"],
+      "webOrigins": ["http://localhost:4200"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/auth"
+      },
+      "protocolMappers": [{
+        "name": "eshop-api-audience",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-audience-mapper",
+        "consentRequired": false,
+        "config": {"included.custom.audience": "eshop-api", "access.token.claim": "true", "id.token.claim": "false"}
+      }]
+    }
+  ],
+  "users": [{
+    "id": "72c15889-5991-44de-92c6-64d32b146301",
+    "username": "eshop-admin",
+    "enabled": true,
+    "emailVerified": true,
+    "firstName": "E-Shop",
+    "lastName": "Admin",
+    "email": "keycloak-admin@eshop.local",
+    "credentials": []
+  }]
+}

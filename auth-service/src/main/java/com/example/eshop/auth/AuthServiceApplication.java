@@ -8,8 +8,8 @@ import org.springframework.context.annotation.ComponentScan;
 
 @EnableDiscoveryClient
 @EnableFeignClients
-@org.springframework.boot.autoconfigure.domain.EntityScan({"com.example.eshop.auth.model", "com.example.eshop.common.audit"})
-@org.springframework.data.jpa.repository.config.EnableJpaRepositories({"com.example.eshop.auth.repository", "com.example.eshop.common.audit"})
+@org.springframework.boot.autoconfigure.domain.EntityScan({"com.example.eshop.auth.model", "com.example.eshop.auth.keycloak", "com.example.eshop.common.audit"})
+@org.springframework.data.jpa.repository.config.EnableJpaRepositories({"com.example.eshop.auth.repository", "com.example.eshop.auth.keycloak", "com.example.eshop.common.audit"})
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.example.eshop.auth", "com.example.eshop.common"})
 public class AuthServiceApplication {
