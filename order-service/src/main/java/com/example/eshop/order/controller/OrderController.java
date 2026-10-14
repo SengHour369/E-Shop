@@ -91,8 +91,9 @@ public class OrderController extends BaseController {
     @PostMapping("/user/cancel")
     public ResponseEntity<ResponseErrorTemplate> cancelOrder(
             @RequestParam Long id,
-            @RequestParam Long userId) {
-        ResponseErrorTemplate order = orderService.cancelOrder(id, userId);
+            @RequestParam Long userId,
+            @Valid @RequestBody(required = false) com.example.eshop.order.dto.request.CancelOrderRequest request) {
+        ResponseErrorTemplate order = orderService.cancelOrder(id, userId, request);
         return ResponseEntity.ok(order);
     }
 

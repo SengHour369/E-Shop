@@ -12,6 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface FunctionPermissionRepository extends JpaRepository<FunctionPermission, Long> {
+    @Query("select f.funcCode from FunctionPermission f where f.isActive = true and f.isDelete = false")
+    java.util.Set<String> activeCodes();
 
     @Query("""
             select distinct f.funcCode from FunctionPermission f

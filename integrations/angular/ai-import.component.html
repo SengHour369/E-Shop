@@ -1,0 +1,38 @@
+<section aria-label="Excel imports">
+  <h3>{{ reviewer ? 'Pending Excel imports' : 'Excel upload and analysis' }}</h3>
+  <p>Upload literal values in .xlsx or .xls files. Confirm each sheet’s type and column mapping before submitting.</p>
+  <label *ngIf="has('IMPORT_UPLOAD') && !reviewer">Attach Excel <input type="file" accept=".xlsx,.xls" [disabled]="busy" (change)="upload($event)"></label>
+  <button type="button" [disabled]="busy" (click)="refreshList()">Refresh imports</button>
+  <p>{{ batchCount }} imports</p>
+  <ul><li *ngFor="let batch of batches"><button type="button" [disabled]="busy" (click)="page = 0; load(batch.id)">{{ batch.id }} — {{ batch.status }}</button></li></ul>
+  <button type="button" [disabled]="busy || listPage === 0" (click)="paginateList(-1)">Previous imports</button>
+  <span>Page {{ listPage + 1 }} / {{ listPages || 1 }}</span>
+  <button type="button" [disabled]="busy || listPage + 1 >= listPages" (click)="paginateList(1)">Next imports</button>
+  <p *ngIf="busy" role="status">Working…</p><p *ngIf="error" role="alert">{{ error }}</p>
+  <ng-container *ngIf="preview as view">
+    <h4>Import {{ view.batch.id }} · Version {{ view.batch.revision }} · {{ view.batch.status }}</h4>
+    <p>{{ view.summary.totalRows }} rows across {{ view.sheets.length }} sheets · {{ view.summary.editedRows }} edited rows.</p>
+    <dl aria-label="Import analysis summary"><ng-container *ngFor="let count of view.summary.statuses | keyvalue"><dt>{{ count.key }}</dt><dd>{{ count.value }}</dd></ng-container></dl>
+    <p>Showing {{ view.rows.totalElements }} matching rows. Review original values, corrections, validation errors and affected resource IDs below.</p>
+    <button type="button" [disabled]="busy" (click)="load(view.batch.id)">Reload current version</button>
+    <button [disabled]="busy || !editable()" (click)="action('analyze')">Analyze sheets</button>
+    <fieldset *ngFor="let sheet of view.sheets" [disabled]="busy || !editable()">
+      <legend>{{ sheet.name }} · {{ sheet.confirmed ? 'Mapping confirmed' : 'Confirmation needed' }}</legend>
+      <details><summary>AI mapping suggestions (require confirmation)</summary><pre>{{ suggestions(sheet) | json }}</pre></details>
+      <label>Import type <select [(ngModel)]="sheetTools[sheet.id]"><option value="">Choose type</option><option *ngFor="let tool of tools" [value]="tool.name" [disabled]="!tool.enabled || !Object.keys(tool.schema).length">{{ tool.name }} {{ tool.unavailableReason }}</option></select></label>
+      <label *ngFor="let header of headers(sheet)">{{ header }} → <select [(ngModel)]="columns[sheet.id][header]"><option value="">Ignore column</option><option *ngFor="let field of fields(sheet)" [value]="field">{{ field }}</option></select></label>
+      <button type="button" (click)="confirm(sheet)">Confirm this mapping</button>
+    </fieldset>
+    <label>Rows <select [(ngModel)]="filter" (ngModelChange)="changeFilter()"><option *ngFor="let status of filters" [value]="status">{{ status || 'All' }}</option></select></label>
+    <div class="table-scroll"><table><thead><tr><th>Sheet / row</th><th>Original values</th><th>Current values</th><th>Validation / status</th><th>Affected / confirmed resource</th></tr></thead><tbody>
+      <tr *ngFor="let row of view.rows.content"><td>{{ sheetName(row.sheetId) }} / {{ row.rowNumber }}</td><td><pre>{{ object(row.originalValues) | json }}</pre></td><td><label *ngFor="let field of values(row)">{{ field }} <input [(ngModel)]="rowValues[row.id][field]" [disabled]="busy || !editable()"></label><button [disabled]="busy || !editable()" (click)="save(row)">Save corrections</button><button [disabled]="busy || !editable()" (click)="skip(row)">{{ row.skipped ? "Include row" : "Skip row" }}</button></td><td>{{ row.status }} {{ row.edited ? '(edited)' : '' }}<p>{{ messages(row) }}</p></td><td>{{ row.affectedResourceId }} / {{ row.resourceId || 'Unconfirmed' }}</td></tr>
+    </tbody></table></div>
+    <button [disabled]="busy || page === 0" (click)="paginate(-1)">Previous</button><span>Page {{ page + 1 }} / {{ view.rows.totalPages || 1 }}</span><button [disabled]="busy || page + 1 >= view.rows.totalPages" (click)="paginate(1)">Next</button>
+    <button [disabled]="busy || !editable()" (click)="action('validate')">Revalidate</button>
+    <label *ngIf="has('IMPORT_UPLOAD')">Reviewer user ID <input type="number" min="1" [(ngModel)]="reviewerId"></label><button *ngIf="has('IMPORT_UPLOAD')" [disabled]="busy || !reviewerId || !editable()" (click)="action('submit')">Submit for approval</button>
+    <ng-container *ngIf="has('IMPORT_REVIEW') && view.batch.status === 'SUBMITTED'"><label>Review reason <textarea maxlength="2000" [(ngModel)]="reason"></textarea></label><button *ngIf="has('IMPORT_APPROVE')" [disabled]="busy || !reason.trim()" (click)="action('approve')">Approve current version</button><button [disabled]="busy || !reason.trim()" (click)="action('reject')">Reject</button><button [disabled]="busy || !reason.trim()" (click)="action('request-changes')">Request changes</button></ng-container>
+    <button *ngIf="has('IMPORT_EXECUTE') && ['APPROVED', 'PROCESSING', 'PARTIAL_SUCCESS', 'FAILED'].includes(view.batch.status)" [disabled]="busy" (click)="action('execute')">Execute next rows / retry failures</button>
+    <button (click)="download('report')">Download report</button><button (click)="download('original')">Download original</button><button (click)="history()">Tool executions and audit history</button>
+    <pre *ngIf="executionHistory">{{ executionHistory | json }}</pre><pre *ngIf="auditHistory">{{ auditHistory | json }}</pre>
+  </ng-container>
+</section>

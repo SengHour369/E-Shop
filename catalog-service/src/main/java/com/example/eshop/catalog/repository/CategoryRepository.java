@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
+    boolean existsByNameIgnoreCaseAndDeletedFalse(String name);
 
     @Query("""
         SELECT c

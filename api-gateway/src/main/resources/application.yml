@@ -132,7 +132,7 @@ spring:
             - id: catalog-service
               uri: lb://catalog-service
               predicates:
-                - Path=/api/v1/admin/promotions/**, /api/v1/promotions/**, /api/v1/products/**, /api/v1/categories/**, /api/v1/category-icons/**, /api/v1/brand-logos/**, /api/v1/subcategories/**, /api/v1/attributes/**, /api/v1/attribute-values/**, /api/v1/inventory/**, /api/v1/product-scanner/**
+                - Path=/api/v1/branches/**, /api/v1/admin/promotions/**, /api/v1/promotions/**, /api/v1/products/**, /api/v1/categories/**, /api/v1/category-icons/**, /api/v1/brand-logos/**, /api/v1/subcategories/**, /api/v1/attributes/**, /api/v1/attribute-values/**, /api/v1/inventory/**, /api/v1/product-scanner/**
               filters:
                 - name: CircuitBreaker
                   args:

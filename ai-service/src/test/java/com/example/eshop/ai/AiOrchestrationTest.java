@@ -50,7 +50,7 @@ class AiOrchestrationTest {
     @MockitoBean AuthToolClient auth;
 
     @Test
-    void accountListRequiresExplicitFunctionGrantAndUsesFixedClient() throws Exception {
+    void accountListRequiresLiveFunctionAvailabilityAndUsesFixedClient() throws Exception {
         intent(AiIntent.ADMIN_USER_LIST, "{}");
         request(token(7, "ADMIN"), UUID.randomUUID().toString())
                 .andExpect(status().isForbidden());
@@ -204,7 +204,7 @@ class AiOrchestrationTest {
     }
 
     @Test
-    void adminWithoutSpecificPermissionIsDenied() throws Exception {
+    void administratorCannotUseUnavailableFunction() throws Exception {
         doReturn(new com.example.eshop.common.security.PermissionSnapshot(7, true, Set.of()))
                 .when(permissions).current();
         intent(AiIntent.ADMIN_ORDER_LIST, "{}");

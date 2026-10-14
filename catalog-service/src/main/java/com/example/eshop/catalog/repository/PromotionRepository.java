@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.*;
 public interface PromotionRepository extends JpaRepository<Promotion, Long> {
+    @Query("select count(p) > 0 from Promotion p where lower(p.name) = lower(:name) and exists (select ps.id from PromotionSku ps where ps.promotion = p and ps.productSku.id = :skuId)")
+    boolean existsImportDuplicate(@Param("name") String name, @Param("skuId") Long skuId);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Promotion p where (p.status in (com.example.eshop.catalog.enumeration.PromotionStatus.ACTIVE, com.example.eshop.catalog.enumeration.PromotionStatus.SCHEDULED) and p.endAt <= :now) or (p.isActive = true and p.status = com.example.eshop.catalog.enumeration.PromotionStatus.SCHEDULED and p.startAt <= :now) order by p.id")
     List<Promotion> due(@Param("now") LocalDateTime now, Pageable page);

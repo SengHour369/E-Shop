@@ -1,5 +1,13 @@
 # ai-inference
 
+## Gemini configuration
+
+Set `AI_PROVIDER=GEMINI`, `GEMINI_MODEL=gemini-3.1-flash-lite`, and `GEMINI_API_KEY` in the ignored root `.env` for Compose, or the ignored `ai-inference/.env` for local execution. Keep the key out of committed files. The provider uses Google's fixed HTTPS endpoint with `x-goog-api-key` header authentication, bounded streamed responses, explicit deadlines and sanitized errors. It supports structured tool routing, Excel mapping/explanation assistance, product-image suggestions and conversational chat. Backend authorization, confirmation and import approval remain authoritative. The configured Flash-Lite model passed live routing and chat checks; the model can be changed through `GEMINI_MODEL`.
+
+Rebuild/recreate only `ai-inference` using `docker compose -f compose.yaml -f compose.ai.yaml -f compose.local.yaml up -d --build --no-deps ai-inference`. Do not add `compose.ollama.yaml` for Gemini: that optional file explicitly selects Ollama. `/api/v1/ai/info` reports the active model without credentials; `/ready` checks configuration, not Google's quota or key validity.
+
+Implementation reference: [Gemini structured outputs](https://ai.google.dev/gemini-api/docs/generate-content/structured-output). Model availability is checked with Google's model list; generation access must also be tested because listed legacy models may be unavailable to new users.
+
 Decision support for the E-Shop AI orchestrator. This service chooses one supplied tool and its parameters. Spring Boot `ai-service` remains the authority for authentication, authorization, validation, execution, audit, and notifications.
 
 ```text
@@ -61,7 +69,7 @@ Provider failures use a fixed message and do not include upstream bodies:
 
 Send `X-Request-ID`. A missing or unsafe value is replaced and returned on the response. A valid W3C `traceparent` is echoed and forwarded to the provider. This service does not create traces.
 
-`GET /health` reports that the process is up. `GET /ready` checks provider configuration and does not call the model. Ready is HTTP 503 when `OPENAI_API_KEY` is empty or `AI_PROVIDER` is not `OPENAI`.
+`GET /health` reports that the process is up. `GET /ready` checks provider configuration and does not call the model. OpenAI and Gemini require their configured API key and model; Ollama requires its model. Unsupported provider names are not ready.
 
 ## Configuration
 

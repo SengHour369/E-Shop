@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+
+  /* Sidebar scrollbar hidden */
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 0;
+  }
+}
+
+@layer components {
+  /* Page header pattern */
+  .page-header {
+    @apply flex items-center justify-between mb-6;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold text-slate-900;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-slate-500 mt-0.5;
+  }
+
+  /* Card pattern */
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-6;
+  }
+
+  .card-sm {
+    @apply bg-white rounded-xl shadow-sm border border-slate-100 p-4;
+  }
+
+  /* Form group */
+  .form-group {
+    @apply flex flex-col gap-1.5;
+  }
+
+  .form-label {
+    @apply text-sm font-medium text-slate-700;
+  }
+}
+
+@layer utilities {
+  .sidebar-width {
+    width: 260px;
+    min-width: 260px;
+  }
+
+  .sidebar-collapsed {
+    width: 72px;
+    min-width: 72px;
+  }
+
+  /* Animated gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent;
+  }
+
+  /* Smooth transitions */
+  .transition-sidebar {
+    transition: width 250ms cubic-bezier(0.4, 0, 0.2, 1),
+                min-width 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}

@@ -7,7 +7,9 @@ import java.util.UUID;
 public record NotificationEvent(int version, UUID eventId, String requestId, String traceId,
         String spanId, UUID aiExecutionId, long userId, Type type, String resourceType,
         String resourceId, Instant occurredAt) {
-    public enum Type { AI_ACTION_COMPLETED, AI_ACTION_FAILED, ORDER_CREATED, ORDER_UPDATED, ORDER_CANCELLED, PAYMENT_SUCCESS, PAYMENT_FAILED }
+    public enum Type { AI_ACTION_COMPLETED, AI_ACTION_FAILED, ORDER_CREATED, ORDER_UPDATED, ORDER_CANCELLED, PAYMENT_SUCCESS, PAYMENT_FAILED,
+        IMPORT_SUBMITTED, IMPORT_CHANGES_REQUESTED, IMPORT_APPROVED, IMPORT_REJECTED,
+        IMPORT_PROCESSING, IMPORT_COMPLETED, IMPORT_PARTIAL_SUCCESS, IMPORT_FAILED }
     public static final String TOPIC = "notification.events.v1";
     public void validate() {
         if (version != 1 || eventId == null || userId <= 0 || (type == Type.AI_ACTION_COMPLETED || type == Type.AI_ACTION_FAILED) && aiExecutionId == null || type == null || occurredAt == null

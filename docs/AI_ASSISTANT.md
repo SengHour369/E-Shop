@@ -49,11 +49,14 @@ SQL or shell execution.
 | ORDER_CANCEL | Current active account | Confirmed cancellation of an explicitly identified owned PENDING order |
 | PAYMENT_REFUND, ROLE_GRANT | Disabled | Never offered or executed by AI |
 
-An administrator JWT alone does not grant an admin tool. Auth-service checks the
-current enabled, active (`ACT`), nondeleted account and the active/nondeleted
-function and direct/group grants. Admin tools also require a current ADMIN or
-SUPER_ADMIN role. A permission service failure denies execution. Domain
-adapters enforce the same permission or ownership checks independently.
+Auth-service checks the current enabled, active (`ACT`), nondeleted account.
+Current ADMIN and SUPER_ADMIN roles receive all active, nondeleted function
+definitions automatically, including newly registered functions. Other roles
+retain their explicit direct/group grants. The same live permission snapshot
+is returned to the admin dashboard and domain services; stale token roles do
+not substitute for current database roles. A permission service failure denies
+execution. Disabled tools, confirmation, ownership rules for customer-specific
+tools, deterministic validation and independent import approval remain enforced.
 
 Lists are bounded and must not be described as complete totals. Revenue here
 means gross completed payments, not net profit or revenue after refunds. Dates
@@ -150,8 +153,9 @@ existing release procedure. Do not rely on Hibernate `update` in production.
 1. Apply the existing AI orchestration/audit/outbox migrations already required
    by the project, including ai-service's `20261003_ai_orchestration.sql`.
 2. Apply auth-service's `20261008_ai_function_permissions.sql`. It inserts only
-   missing function definitions and grants nobody implicitly. Assign permissions
-   through the existing user/group administration flow.
+   missing function definitions. ADMIN and SUPER_ADMIN access is resolved from
+   all active definitions at request time. Assign staff permissions through the
+   existing user/group administration flow.
 3. If enabling knowledge, first install pgvector binaries compatible with the
    existing PostgreSQL server, then apply ai-service's
    `20261008_ai_knowledge.sql` as the migration owner. The stock postgres:18

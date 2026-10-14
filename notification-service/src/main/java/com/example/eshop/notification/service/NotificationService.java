@@ -29,6 +29,14 @@ public class NotificationService {
             case PAYMENT_FAILED -> "Payment not completed";
             case AI_ACTION_COMPLETED -> "AI action completed";
             case AI_ACTION_FAILED -> "AI action needs attention";
+            case IMPORT_SUBMITTED -> "Excel import awaiting review";
+            case IMPORT_CHANGES_REQUESTED -> "Excel import changes requested";
+            case IMPORT_APPROVED -> "Excel import approved";
+            case IMPORT_REJECTED -> "Excel import rejected";
+            case IMPORT_PROCESSING -> "Excel import processing";
+            case IMPORT_COMPLETED -> "Excel import completed";
+            case IMPORT_PARTIAL_SUCCESS -> "Excel import partially completed";
+            case IMPORT_FAILED -> "Excel import needs attention";
         });
         n.setMessage(switch(e.type()) {
             case PAYMENT_SUCCESS -> "Your payment was verified with the provider. View the order for its current status.";
@@ -38,6 +46,8 @@ public class NotificationService {
             case ORDER_UPDATED -> "The order status changed. View the order for details.";
             case AI_ACTION_COMPLETED -> "Your requested action completed. View its execution for details.";
             case AI_ACTION_FAILED -> "Your requested action could not be confirmed. Check its execution before trying again.";
+            case IMPORT_SUBMITTED, IMPORT_CHANGES_REQUESTED, IMPORT_APPROVED, IMPORT_REJECTED,
+                 IMPORT_PROCESSING, IMPORT_COMPLETED, IMPORT_PARTIAL_SUCCESS, IMPORT_FAILED -> "View the Excel import for its current review status and confirmed row results.";
         });
         n.setResourceType(e.resourceType()); n.setResourceId(e.resourceId()); n.setRequestId(e.requestId()); n.setTraceId(e.traceId());
         n.setAiExecutionId(e.aiExecutionId()); n.setCreatedAt(Instant.now()); n.setSentAt(Instant.now()); n.setStatus(Notification.Status.SENT);

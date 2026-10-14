@@ -20,6 +20,10 @@ public interface ReturnRequestRepository extends JpaRepository<Return, Long> {
 
     Page<Return> findByCustomerId(Long customerId, Pageable pageable);
 
+    @Query("select r from Return r join OrderDetail o on o.id = r.orderId where r.customerId = :customerId and o.userId = :customerId")
+    Page<Return> findOwnedByCustomer(@Param("customerId") Long customerId, Pageable pageable);
+
+
     @Query("select r from Return r where :status is null or r.status = :status")
     Page<Return> findForAssistant(@Param("status") String status, Pageable pageable);
 

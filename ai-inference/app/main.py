@@ -13,6 +13,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.api.ai_router import ai_route_error, invalid_request, router
 from app.api.vision import router as vision_router
 from app.api.conversation import router as conversation_router
+from app.api.import_mapping import router as import_mapping_router
 from app.services.vision_service import VisionService
 from app.core.config import Settings
 from app.core.errors import AiRouteError
@@ -96,6 +97,7 @@ async def lifespan(app: FastAPI):
         follow_redirects=False,
     )
     provider = build_provider(settings, http)
+    app.state.import_provider = provider
     app.state.settings = settings
     app.state.http = http
     app.state.intent_service = IntentService(settings, AiProviderService(provider, settings))
@@ -115,6 +117,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router)
     app.include_router(vision_router)
     app.include_router(conversation_router)
+    app.include_router(import_mapping_router)
     app.add_middleware(RequestContextMiddleware)
     return app
 

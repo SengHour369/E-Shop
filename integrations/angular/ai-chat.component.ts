@@ -4,6 +4,7 @@ import { Component, Input, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AiChatResponse, AiChatService, AiResult } from './ai-chat.service';
+import { AiImportComponent } from './ai-import.component';
 
 interface Message {
   author: 'You' | 'Assistant';
@@ -22,12 +23,13 @@ interface DisplayRow {
 @Component({
   selector: 'app-ai-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiImportComponent],
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss'],
 })
 export class AiChatComponent {
   @Input() administrator = false;
+  @Input() importPermissions: string[] = [];
 
   readonly messages: Message[] = [];
   message = '';

@@ -90,4 +90,10 @@ class AiPermissionRepositoryTest {
         group.setIsDelete(true);
         assertThat(functions.effectiveCodes(7L)).isEmpty();
     }
+    @Test void activeFunctionCatalogExcludesDisabledAndDeletedDefinitions() {
+        entities.persist(FunctionPermission.builder().funcId(201L).funcCode("ACTIVE").funcName("Active").build());
+        entities.persist(FunctionPermission.builder().funcId(202L).funcCode("DISABLED").funcName("Disabled").isActive(false).build());
+        entities.persist(FunctionPermission.builder().funcId(203L).funcCode("DELETED").funcName("Deleted").isDelete(true).build());
+        assertThat(functions.activeCodes()).containsExactly("ACTIVE");
+    }
 }

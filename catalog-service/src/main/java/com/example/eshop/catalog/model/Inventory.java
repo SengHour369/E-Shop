@@ -36,6 +36,8 @@ public class Inventory extends BaseEntity {
     @Column(nullable = false)
     private Long availableQuantity;
 
+    @Column(name="branch_id")
+    private Long branchId;
     private String warehouseLocation;
 
     private LocalDateTime lastRestockedAt;

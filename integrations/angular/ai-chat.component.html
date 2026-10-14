@@ -3,6 +3,7 @@
     <h2>{{ administrator ? 'Admin assistant' : 'Shopping assistant' }}</h2>
     <button type="button" (click)="newConversation()" [disabled]="busy">New chat</button>
   </header>
+  <app-ai-import *ngIf="importPermissions.includes('IMPORT_UPLOAD')" [permissions]="importPermissions"></app-ai-import>
 
   <div class="messages" aria-live="polite" aria-relevant="additions">
     <article *ngFor="let item of messages" [class.customer]="item.author === 'You'">

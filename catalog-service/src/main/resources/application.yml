@@ -75,6 +75,10 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=catalog-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} [%thread] %logger{36} - %msg%n"
 
 # Starter data is opt-in; enabled by the local Compose override only.
+ai:
+  import:
+    signing-key: ${AI_IMPORT_SIGNING_KEY:}
+
 catalog:
   seed:
     enabled: ${CATALOG_SEED_ENABLED:false}

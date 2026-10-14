@@ -16,6 +16,7 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore",
         case_sensitive=False,
+        hide_input_in_errors=True,
     )
 
     ai_provider: str = "OPENAI"
@@ -26,6 +27,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4.1-mini"
     openai_base_url: str = "https://api.openai.com/v1"
+    gemini_api_key: str = Field(default="", repr=False)
+    gemini_model: str = "gemini-3.1-flash-lite"
     log_level: str = "INFO"
 
     @field_validator("ai_provider")
@@ -46,20 +49,20 @@ class Settings(BaseSettings):
             raise ValueError("OLLAMA_BASE_URL cannot contain credentials, query or fragment")
         return value.rstrip("/")
 
-    @field_validator("openai_api_key")
+    @field_validator("openai_api_key", "gemini_api_key")
     @classmethod
     def normalize_key(cls, value: str) -> str:
         cleaned = value.strip()
         if "\r" in cleaned or "\n" in cleaned:
-            raise ValueError("OPENAI_API_KEY is invalid")
+            raise ValueError("API key is invalid")
         return cleaned
 
-    @field_validator("openai_model")
+    @field_validator("openai_model", "gemini_model")
     @classmethod
     def normalize_model(cls, value: str) -> str:
         cleaned = value.strip()
         if cleaned and _MODEL_NAME.fullmatch(cleaned) is None:
-            raise ValueError("OPENAI_MODEL is invalid")
+            raise ValueError("AI model is invalid")
         return cleaned
 
     @field_validator("openai_base_url")
@@ -81,6 +84,8 @@ def readiness(settings: Settings) -> bool:
     """Configuration required to serve traffic. This must not call the provider."""
     if settings.ai_provider == "OLLAMA":
         return bool(settings.ollama_model.strip())
+    if settings.ai_provider == "GEMINI":
+        return bool(settings.gemini_api_key and settings.gemini_model)
     return (
         settings.ai_provider == "OPENAI"
         and bool(settings.openai_api_key)

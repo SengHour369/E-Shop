@@ -18,6 +18,7 @@ public interface OrderService {
     ResponseErrorTemplate createOrderFromCart(Long userId, OrderRequest request);
     ResponseErrorTemplate updateOrderStatus(Long id, String status);
     ResponseErrorTemplate cancelOrder(Long id, Long userId);
+    ResponseErrorTemplate cancelOrder(Long id, Long userId, com.example.eshop.order.dto.request.CancelOrderRequest request);
 
     Page<ResponseErrorTemplate> getUserOrders(Long userId, Pageable pageable);
     Page<ResponseErrorTemplate> getAllOrders(Pageable pageable);

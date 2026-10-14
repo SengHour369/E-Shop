@@ -71,4 +71,12 @@ class NotificationIntegrationTest {
         assertThatThrownBy(()->consumer.consume("{\"version\":99}")).isInstanceOf(IllegalArgumentException.class);
         assertThat(repository.count()).isZero();
     }
+    @Test void allImportEventsUseExistingIdempotentDelivery() throws Exception {
+        for (NotificationEvent.Type type : NotificationEvent.Type.values()) if (type.name().startsWith("IMPORT_")) {
+            var event = new NotificationEvent(1,UUID.randomUUID(),"req_import",null,null,null,7,type,"AI_IMPORT",UUID.randomUUID().toString(),Instant.now());
+            consumer.consume(mapper.writeValueAsString(event)); consumer.consume(mapper.writeValueAsString(event));
+        }
+        assertThat(repository.count()).isEqualTo(8);
+        assertThat(repository.findAll()).allMatch(n -> n.getTitle().startsWith("Excel import"));
+    }
 }

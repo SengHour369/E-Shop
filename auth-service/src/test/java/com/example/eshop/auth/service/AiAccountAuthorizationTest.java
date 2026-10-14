@@ -40,7 +40,7 @@ class AiAccountAuthorizationTest {
         user.setDeleted(false);
         user.setStatus("INA");
         when(users.findById(7L)).thenReturn(Optional.of(user));
-        var controller = new InternalAuthorizationController(users, functions);
+        var controller = new InternalAuthorizationController(users, new AccountAccessService(functions));
         assertThatThrownBy(() -> controller.current(authentication))
                 .isInstanceOf(AccessDeniedException.class);
         verifyNoInteractions(functions);

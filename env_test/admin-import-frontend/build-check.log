@@ -1,0 +1,17 @@
+vite v8.0.16 building client environment for production...
+[2K
+transforming...✓ 2765 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.97 kB │ gzip:   0.53 kB
+dist/assets/index-WSY1hy9p.css     58.61 kB │ gzip:  10.27 kB
+dist/assets/esm-h4rcVg-u.js        26.80 kB │ gzip:   6.96 kB
+dist/assets/esm-DlBzwIg8.js       412.41 kB │ gzip: 110.05 kB
+dist/assets/index-DOzqSiEo.js   1,240.14 kB │ gzip: 327.51 kB
+
+✓ built in 4.16s
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.

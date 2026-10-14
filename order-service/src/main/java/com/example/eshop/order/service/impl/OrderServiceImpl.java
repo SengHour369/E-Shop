@@ -199,6 +199,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public ResponseErrorTemplate cancelOrder(Long id, Long userId) {
+        return cancelOrder(id, userId, null);
+    }
+
+    @Override
+    @Transactional
+    public ResponseErrorTemplate cancelOrder(Long id, Long userId, com.example.eshop.order.dto.request.CancelOrderRequest request) {
         com.example.eshop.common.security.CurrentCustomer.require(userId);
         OrderDetail order = orderRepository.lockById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
@@ -231,7 +237,7 @@ public class OrderServiceImpl implements OrderService {
                 .cancelDate(LocalDateTime.now())
                 .amount(cancelled.getTotalAmount())
                 .currency("USD")
-                .remark("Cancelled by customer")
+                .remark(request == null ? "Cancelled by customer" : request.auditRemark())
                 .createdBy(actor)
                 .build());
 

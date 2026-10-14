@@ -2,6 +2,10 @@ server:
   port: 8085
   forward-headers-strategy: none
 spring:
+  servlet:
+    multipart:
+      max-file-size: ${AI_IMPORT_MAX_BYTES:5242880}
+      max-request-size: ${AI_IMPORT_MAX_REQUEST_BYTES:6291456}
   application:
     name: ai-service
   datasource:
@@ -68,6 +72,12 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=ai-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} eventId=%X{eventId:-} [%thread] %logger{36} - %msg%n"
 ai:
+  import:
+    signing-key: ${AI_IMPORT_SIGNING_KEY:}
+    max-bytes: ${AI_IMPORT_MAX_BYTES:5242880}
+    max-rows: ${AI_IMPORT_MAX_ROWS:10000}
+    max-columns: ${AI_IMPORT_MAX_COLUMNS:64}
+    max-sheets: ${AI_IMPORT_MAX_SHEETS:16}
   inference-url: ${AI_INFERENCE_URL:http://localhost:8000}
   inference-timeout-seconds: ${AI_INFERENCE_TIMEOUT_SECONDS:25}
 

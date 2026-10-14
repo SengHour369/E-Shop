@@ -13,6 +13,8 @@ import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    @Query("select (count(p)>0) from Product p where lower(p.name)=lower(:name) and p.subCategory.id=:category and (p.deleted=false or p.deleted is null)")
+    boolean existsImportDuplicate(@Param("name") String name,@Param("category")long category);
     @Query("""
             SELECT p FROM Product p
             WHERE (p.deleted = false OR p.deleted IS NULL)

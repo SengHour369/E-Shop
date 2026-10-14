@@ -66,5 +66,6 @@ async def invalid_request(_request: Request, _exc: RequestValidationError) -> JS
 @router.get("/api/v1/ai/info")
 async def model_info(request: Request):
     settings = request.app.state.settings
-    return {"provider": settings.ai_provider, "model": settings.ollama_model,
+    model = settings.gemini_model if settings.ai_provider == "GEMINI" else settings.openai_model if settings.ai_provider == "OPENAI" else settings.ollama_model
+    return {"provider": settings.ai_provider, "model": model,
             "configured": readiness(settings), "historyMinutes": 30}

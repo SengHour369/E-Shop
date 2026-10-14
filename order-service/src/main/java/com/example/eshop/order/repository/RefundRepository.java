@@ -22,6 +22,8 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
 
     Optional<Refund> findByRefundId(String refundId);
 
+    Optional<Refund> findByReturnId(String returnId);
+
     boolean existsByRefundId(String refundId);
 
     boolean existsByReturnId(String returnId);

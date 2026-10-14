@@ -60,6 +60,7 @@ public class ProductServiceImpl implements ProductService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
+        if(imageUrls.size()!=files.size())throw new IllegalStateException("Product image storage did not confirm every image");
         Product product = ProductMapper.toEntity(request, subCategory);
         product.setImage(imageUrls);
         imageUrls.forEach(img -> img.setProduct(product));
