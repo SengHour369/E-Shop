@@ -42,6 +42,7 @@ class CatalogImportServiceTest {
     @Mock EntityManager em;
     @Mock ImportApprovalProof proof;
     @Mock PromotionRepository promotionRepository;
+    @Mock BranchService branchService; @Mock BranchRepository branches; @Mock SubCategoryRepository subcategories; @Mock ProductService productService;
     @InjectMocks CatalogImportService service;
     String key = UUID.randomUUID() + ":" + UUID.randomUUID();
     @BeforeEach void setup() {
@@ -85,5 +86,33 @@ class CatalogImportServiceTest {
         assertThat(service.validateBulk(Collections.nCopies(500,row))).hasSize(500);
         verify(permissions,times(1)).current();
         assertThatThrownBy(() -> service.validateBulk(Collections.nCopies(501,row))).hasMessageContaining("500");
+    }
+    ImportContracts.Row productRow()throws Exception{
+        var out=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(4,4,java.awt.image.BufferedImage.TYPE_INT_RGB),"png",out);
+        var image=com.example.eshop.common.imports.ImportImageFile.sanitize(new org.springframework.mock.web.MockMultipartFile("file","product.png","image/png",out.toByteArray()));
+        return new ImportContracts.Row(ImportTool.PRODUCT_BULK_CREATE,Map.of("name","Phone","subCategoryId","1","isActive","true","imageIds",UUID.randomUUID().toString(),"imageChecksums",image.checksum()));
+    }
+    com.example.eshop.common.imports.ImportImageFile approvedPhoto()throws Exception{
+        var out=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(4,4,java.awt.image.BufferedImage.TYPE_INT_RGB),"png",out);
+        return com.example.eshop.common.imports.ImportImageFile.sanitize(new org.springframework.mock.web.MockMultipartFile("file","product.png","image/png",out.toByteArray()));
+    }
+    void productPermission(){when(permissions.current()).thenReturn(new PermissionSnapshot(2,false,Set.of("IMPORT_REVIEW","IMPORT_APPROVE","IMPORT_EXECUTE","PRODUCT_CREATE","BRANCH_CREATE")));}
+    @Test void branchImportUsesDomainServiceAndReceipt()throws Exception{
+        productPermission();var row=new ImportContracts.Row(ImportTool.BRANCH_BULK_CREATE,Map.of("name","Central","address","City"));receipt(row);var branch=new Branch();branch.setId(52L);when(branchService.create("Central","City")).thenReturn(branch);
+        assertThat(service.execute(key,"proof",row).resourceId()).isEqualTo("52");assertThat(service.execute(key,"proof",row).resourceId()).isEqualTo("52");verify(branchService,times(1)).create("Central","City");
+    }
+    @Test void duplicateBranchAndUnknownProductCategoryFailValidation()throws Exception{
+        productPermission();when(branches.existsByNameKey("central")).thenReturn(true);assertThat(service.validate(new ImportContracts.Row(ImportTool.BRANCH_BULK_CREATE,Map.of("name","Central"))).errors()).contains("DUPLICATE_BRANCH");assertThat(service.validate(productRow()).errors()).contains("MISSING_CATEGORY");
+    }
+    @Test void productUsesApprovedImagesAndExistingServiceExactlyOnce()throws Exception{
+        productPermission();var row=productRow();receipt(row);when(subcategories.findById(1L)).thenReturn(Optional.of(new SubCategory()));when(productService.createProduct(any(),anyList(),anyList())).thenReturn(ResponseErrorTemplate.success("Created",Map.of("id",44)));
+        assertThat(service.execute(key,"proof",row,List.of(approvedPhoto())).resourceId()).isEqualTo("44");assertThat(service.execute(key,"proof",row,List.of()).resourceId()).isEqualTo("44");verify(productService,times(1)).createProduct(argThat(r->r.getSubCategoryId()==1&&r.getIsActive()),argThat(files->files.size()==1&&files.get(0).getContentType().equals("image/png")),anyList());
+    }
+    @Test void missingOrChangedImageNeverCreatesProduct()throws Exception{
+        productPermission();var row=productRow();receipt(row);when(subcategories.findById(1L)).thenReturn(Optional.of(new SubCategory()));assertThatThrownBy(()->service.execute(key,"proof",row,List.of())).hasMessageContaining("attachments required");assertThatThrownBy(()->service.execute(key,"proof",row,List.of(new com.example.eshop.common.imports.ImportImageFile("bad.png",new byte[]{1,2,3})))).hasMessageContaining("differs from approved");verifyNoInteractions(productService);
+    }
+    @Test void branchDeniedInventoryCannotPassValidation(){
+        var item=new Inventory();item.setId(1L);item.setBranchId(3L);item.setReservedQuantity(0L);when(inventory.findById(1L)).thenReturn(Optional.of(item));doThrow(new org.springframework.security.access.AccessDeniedException("Denied")).when(branchService).scope(eq(3L),any());
+        assertThat(service.validate(new ImportContracts.Row(ImportTool.INVENTORY_STOCK_IN_BULK,Map.of("inventoryId","1","quantity","5"))).errors()).contains("BRANCH_ACCESS_DENIED");
     }
 }

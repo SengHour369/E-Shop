@@ -7,6 +7,7 @@ import java.util.UUID;
 @Entity @Table(name="catalog_branch_access",uniqueConstraints=@UniqueConstraint(columnNames={"branch_id","user_id"})) @Getter @Setter
 public class BranchAccess {
  @Id private UUID id=UUID.randomUUID();
+ @Version private Long version;
  @Column(name="branch_id",nullable=false) private Long branchId;
  @Column(name="user_id",nullable=false) private Long userId;
  @Column(nullable=false) private boolean active;

@@ -15,4 +15,6 @@ public class BranchController {
  @GetMapping("/{id}/access") public Object members(@PathVariable @Positive long id){return service.members(id);}
  @PutMapping("/{id}/access") public Object grant(@PathVariable @Positive long id,@Valid @RequestBody Grant request){return service.grant(id,request.userId(),request.active());}
  @PutMapping("/{id}/inventory/{inventoryId}") public void assign(@PathVariable @Positive long id,@PathVariable @Positive long inventoryId){service.assignInventory(id,inventoryId);}
+ @ExceptionHandler({org.springframework.dao.DataIntegrityViolationException.class,org.springframework.dao.OptimisticLockingFailureException.class})
+ public org.springframework.http.ResponseEntity<?> conflict(){return org.springframework.http.ResponseEntity.status(409).body(java.util.Map.of("message","Branch or access changed concurrently. Reload before continuing."));}
 }

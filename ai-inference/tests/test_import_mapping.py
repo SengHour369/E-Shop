@@ -34,3 +34,12 @@ async def test_error_explanations_are_advisory_and_allowlisted():
     request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(import_provider=provider)))
     result = await explain(ExplainRequest(codes=["UNKNOWN_SKU", "EXECUTE_API"]),request)
     assert result == {"explanations": {"UNKNOWN_SKU": "Check the SKU ID in the catalog."}}
+
+@pytest.mark.asyncio
+async def test_product_mapping_cannot_infer_protected_image_references():
+    provider = SimpleNamespace(route=AsyncMock(return_value={"intent": "IMPORT_MAPPING", "parameters": {"name": "Title", "subCategoryId": "Category", "imageIds": "Images", "imageChecksums": "Hashes"}}))
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(import_provider=provider)))
+    result = await suggest(MappingRequest(tool="PRODUCT_BULK_CREATE", headers=["Title", "Category", "Images", "Hashes"]), request)
+    assert result["mapping"] == {"Title": "name", "Category": "subCategoryId"}
+    assert result["confirmationRequired"]
+

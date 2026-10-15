@@ -22,6 +22,7 @@ public class AiImportController {
     public record Edit(@Min(1) int version, @NotNull @Size(max = 64) Map<String, String> values) {}
     public record Mapping(@Min(1) int version, @NotNull ImportTool tool, @NotNull @Size(max = 64) Map<String, String> columns) {}
     public record Skip(@Min(1) int version, boolean skipped) {}
+    public record AddRow(@Min(1) int version, @NotNull UUID rowId, @NotNull @Size(max = 64) Map<String, String> values) {}
     @GetMapping("/tools") public Object tools() { return service.registry(); }
     @GetMapping public Object list(@RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size, @RequestParam(defaultValue = "false") boolean review,
@@ -39,6 +40,10 @@ public class AiImportController {
             @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size,
             @RequestParam(required = false) @Pattern(regexp = "VALID|INVALID|DUPLICATE|EDITED|CREATED|FAILED|SKIPPED|UNVALIDATED") String status) { return service.preview(id, page, size, status); }
     @PatchMapping("/{id}/sheets/{sheetId}") public Object mapping(@PathVariable UUID id, @PathVariable UUID sheetId, @Valid @RequestBody Mapping request) { return service.confirmMapping(id, sheetId, request.version(), request.tool(), request.columns()); }
+    @PostMapping("/{id}/sheets/{sheetId}/rows")
+    public Object addRow(@PathVariable UUID id, @PathVariable UUID sheetId, @Valid @RequestBody AddRow request) {
+        return service.addRow(id, sheetId, request.version(), request.rowId(), request.values());
+    }
     @PatchMapping("/{id}/rows/{rowId}") public Object edit(@PathVariable UUID id, @PathVariable UUID rowId, @Valid @RequestBody Edit request) { return service.edit(id, rowId, request.version(), request.values()); }
     @PatchMapping("/{id}/rows/{rowId}/skip") public Object skip(@PathVariable UUID id, @PathVariable UUID rowId, @Valid @RequestBody Skip request) { return service.skip(id, rowId, request.version(), request.skipped()); }
     @PostMapping("/{id}/validate") public Object validate(@PathVariable UUID id, @Valid @RequestBody Version request) { return service.validate(id, request.version()); }

@@ -57,7 +57,7 @@ public enum ImportTool {
                     case "money", "percent" -> { BigDecimal n = new BigDecimal(value); if (n.signum() <= 0 || n.scale() > 4 || n.precision() > 15 || field.type().equals("percent") && n.compareTo(new BigDecimal("100")) > 0) throw new IllegalArgumentException(); }
                     case "boolean" -> { if (!Set.of("true", "false").contains(value)) throw new IllegalArgumentException(); }
                     case "date" -> LocalDateTime.parse(value);
-                    default -> { if (key.equals("name") && value.length() > 120 || key.equals("barcode") && value.length() > 64) throw new IllegalArgumentException(); }
+                    default -> { if (key.equals("name") && value.length() > 120 || key.equals("barcode") && value.length() > 64 || key.equals("address") && value.length() > 500) throw new IllegalArgumentException(); }
                 }
             } catch (RuntimeException ex) { errors.add("INVALID_VALUE: " + key); }
         });

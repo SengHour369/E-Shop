@@ -38,7 +38,7 @@ class AiImportWorkflowTest {
     @MockitoBean ImportMappingClient mappings;
     @MockitoBean NotificationOutboxPublisher publisher;
     @MockitoBean AuditLogService audit;
-    final Set<String> grants = Set.of("IMPORT_UPLOAD", "IMPORT_REVIEW", "IMPORT_APPROVE", "IMPORT_EXECUTE", "CATEGORY_CREATE", "SKU_CREATE", "INVENTORY_ADJUST", "PROMOTION_MANAGE");
+    final Set<String> grants = Set.of("IMPORT_UPLOAD", "IMPORT_REVIEW", "IMPORT_APPROVE", "IMPORT_EXECUTE", "CATEGORY_CREATE", "PRODUCT_CREATE", "BRANCH_CREATE", "SKU_CREATE", "INVENTORY_ADJUST", "PROMOTION_MANAGE");
     @BeforeEach void setup() {
         actor(1);
         when(permissions.current()).thenAnswer(c -> new PermissionSnapshot(CurrentActor.userId(), false, grants));
@@ -63,11 +63,49 @@ class AiImportWorkflowTest {
     AiImportBatch approved(String... names) {
         var batch = mapped(names); batch = service.submit(batch.getId(),batch.getRevision(),2); actor(2); return service.decide(batch.getId(),batch.getRevision(),"APPROVED","Reviewed");
     }
-    @Test void requiresMappingConfirmationAndRejectsUnsupportedBranch() {
+    @Test void addedRowsAreStagedVersionedAndCannotBeDuplicated() {
+        var batch = mapped("Original"); var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0);
+        UUID rowId = UUID.randomUUID(); int previousVersion = batch.getRevision();
+        var added = service.addRow(batch.getId(),sheet.getId(),previousVersion,rowId,Map.of("name","Added","status","true"));
+        assertThat(added.row().getId()).isEqualTo(rowId);
+        assertThat(added.row().getRowNumber()).isEqualTo(3);
+        assertThat(added.row().getResourceId()).isNull();
+        assertThat(added.row().getStatus()).isEqualTo("UNVALIDATED");
+        assertThat(added.row().getOriginalValues()).isEqualTo("{}");
+        assertThat(added.row().isEdited()).isTrue();
+        assertThat(added.batch().getRevision()).isEqualTo(previousVersion+1);
+        assertThat(service.preview(batch.getId(),0,50,null).summary().totalRows()).isEqualTo(2);
+        assertThatThrownBy(() -> service.addRow(batch.getId(),sheet.getId(),previousVersion,UUID.randomUUID(),Map.of())).hasMessageContaining("Batch changed");
+        assertThatThrownBy(() -> service.addRow(batch.getId(),sheet.getId(),added.batch().getRevision(),rowId,Map.of("name","Added"))).hasMessageContaining("already been saved");
+        assertThat(rows.findByBatchId(batch.getId())).hasSize(2);
+        service.confirmMapping(batch.getId(),sheet.getId(),added.batch().getRevision(),ImportTool.CATEGORY_BULK_CREATE,Map.of("name","name","status","status"));
+        assertThat(rows.findById(rowId).orElseThrow().getValuesJson()).contains("Added");
+        verify(domain,never()).execute(anyString(),anyString(),anyString(),any());
+    }
+    @Test void addingRowsInvalidatesApprovalAndRejectsUnconfirmedOrInjectedFields() {
+        var batch = approved("Approved"); var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0); actor(1);
+        var added = service.addRow(batch.getId(),sheet.getId(),batch.getRevision(),UUID.randomUUID(),Map.of("name","Added","status","true"));
+        assertThat(added.batch().getApprovedRevision()).isNull();
+        assertThat(added.batch().getReviewerId()).isNull();
+        assertThat(added.batch().getStatus()).isEqualTo("DRAFT");
+        assertThatThrownBy(() -> service.addRow(batch.getId(),sheet.getId(),added.batch().getRevision(),UUID.randomUUID(),Map.of("imageIds","injected"))).hasMessageContaining("Invalid row fields");
+        var unconfirmed = upload("Raw"); var rawSheet = service.preview(unconfirmed.getId(),0,50,null).sheets().get(0);
+        assertThatThrownBy(() -> service.addRow(unconfirmed.getId(),rawSheet.getId(),unconfirmed.getRevision(),UUID.randomUUID(),Map.of("name","Added"))).hasMessageContaining("Confirm the worksheet mapping");
+        assertThatThrownBy(() -> service.addRow(batch.getId(),rawSheet.getId(),added.batch().getRevision(),UUID.randomUUID(),Map.of())).isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+    }
+    @Test void addingRowsRequiresDomainPermission() {
+        var batch = mapped("Original"); var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0);
+        when(permissions.current()).thenReturn(new PermissionSnapshot(1,false,Set.of("IMPORT_UPLOAD")));
+        assertThatThrownBy(() -> service.addRow(batch.getId(),sheet.getId(),batch.getRevision(),UUID.randomUUID(),Map.of("name","Denied"))).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        assertThat(rows.findByBatchId(batch.getId())).hasSize(1);
+    }
+
+
+    @Test void requiresMappingConfirmationAndRejectsNonDomainTools() {
         var batch = upload("New"); assertThat(service.validate(batch.getId(),1).getStatus()).isEqualTo("INVALID");
         verifyNoInteractions(domain);
         var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0);
-        assertThatThrownBy(() -> service.confirmMapping(batch.getId(),sheet.getId(),1,ImportTool.BRANCH_BULK_CREATE,Map.of("name","name"))).hasMessageContaining("Unavailable");
+        assertThatThrownBy(() -> service.confirmMapping(batch.getId(),sheet.getId(),1,ImportTool.IMPORT_VALIDATE,Map.of("name","name"))).hasMessageContaining("Unavailable");
     }
     @Test void flagsBothDuplicateRowsAndDomainErrors() {
         var batch = mapped("Same","Same"); assertThat(service.validate(batch.getId(),batch.getRevision()).getStatus()).isEqualTo("INVALID");
@@ -175,4 +213,44 @@ class AiImportWorkflowTest {
         when(permissions.current()).thenReturn(new PermissionSnapshot(3, false, Set.of("IMPORT_UPLOAD")));
         assertThatThrownBy(() -> service.list(0, 100, false, true)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
+    AiImportBatch productBatch(){
+        var batch=service.upload(new ExcelImportParser.ParsedFile("products.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ExcelImportParser.ParsedSheet("Product",List.of("name","subCategoryId","isActive"),List.of(new ExcelImportParser.ParsedRow(2,Map.of("name","Phone","subCategoryId","1","isActive","true")))))));
+        var sheet=service.preview(batch.getId(),0,50,null).sheets().get(0);
+        return service.confirmMapping(batch.getId(),sheet.getId(),batch.getRevision(),ImportTool.PRODUCT_BULK_CREATE,Map.of("name","name","subCategoryId","subCategoryId","isActive","isActive"));
+    }
+    org.springframework.mock.web.MockMultipartFile photo()throws Exception{
+        var out=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(4,4,java.awt.image.BufferedImage.TYPE_INT_RGB),"png",out);
+        return new org.springframework.mock.web.MockMultipartFile("file","product.png","image/png",out.toByteArray());
+    }
+    @Test void productRequiresRowOwnedImageAndChangesInvalidateApproval()throws Exception{
+        var batch=productBatch();var row=rows.findByBatchId(batch.getId()).get(0);
+        assertThat(service.validate(batch.getId(),batch.getRevision()).getStatus()).isEqualTo("INVALID");
+        batch=service.attachImage(batch.getId(),row.getId(),batch.getRevision(),photo());
+        var preview=service.preview(batch.getId(),0,50,null);assertThat(preview.images()).hasSize(1);assertThat(preview.images().get(0).getChecksum()).hasSize(64);
+        service.submit(batch.getId(),batch.getRevision(),2);actor(2);batch=service.decide(batch.getId(),batch.getRevision(),"APPROVED","Reviewed image");
+        actor(1);batch=service.detachImage(batch.getId(),row.getId(),preview.images().get(0).getId(),batch.getRevision());
+        assertThat(batch.getApprovedRevision()).isNull();assertThat(batch.getStatus()).isEqualTo("DRAFT");
+        assertThat(service.image(batch.getId(),preview.images().get(0).getId()).getContent()).isNotEmpty();
+    }
+    @Test void imageReferencesCannotCrossRowsOrBatches()throws Exception{
+        var first=productBatch();var firstRow=rows.findByBatchId(first.getId()).get(0);first=service.attachImage(first.getId(),firstRow.getId(),first.getRevision(),photo());
+        var original=rows.findById(firstRow.getId()).orElseThrow();var values=new com.fasterxml.jackson.databind.ObjectMapper().readValue(original.getValuesJson(),new com.fasterxml.jackson.core.type.TypeReference<Map<String,String>>(){});
+        var second=productBatch();var secondRow=rows.findByBatchId(second.getId()).get(0);final var another=second;assertThatThrownBy(()->service.edit(another.getId(),secondRow.getId(),another.getRevision(),values)).hasMessageContaining("managed by the attachment workflow");
+        assertThat(service.validate(second.getId(),second.getRevision()).getStatus()).isEqualTo("INVALID");
+        final var target=second;var foreign=service.preview(first.getId(),0,50,null).images().get(0).getId();assertThatThrownBy(()->service.image(target.getId(),foreign)).hasMessageContaining("Import not found");
+    }
+    @Test void productExecutionUsesApprovedMultipartImagesAndConfirmedId()throws Exception{
+        var batch=productBatch();var row=rows.findByBatchId(batch.getId()).get(0);batch=service.attachImage(batch.getId(),row.getId(),batch.getRevision(),photo());
+        service.submit(batch.getId(),batch.getRevision(),2);actor(2);batch=service.decide(batch.getId(),batch.getRevision(),"APPROVED","Checked images and values");
+        when(domain.executeProduct(anyString(),anyString(),anyString(),anyString(),anyList())).thenReturn(new ImportContracts.Result("900"));
+        assertThat(service.execute(batch.getId(),batch.getRevision()).getStatus()).isEqualTo("COMPLETED");
+        assertThat(rows.findById(row.getId()).orElseThrow().getResourceId()).isEqualTo("900");verify(domain).executeProduct(anyString(),anyString(),anyString(),contains("imageChecksums"),argThat(files->files.size()==1&&files.get(0).getContentType().equals("image/png")));
+    }
+    @Test void spreadsheetCannotSupplyManagedImageReferences() {
+        var batch=service.upload(new ExcelImportParser.ParsedFile("unsafe-products.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ExcelImportParser.ParsedSheet("Product",List.of("name","subCategoryId","isActive","Images"),List.of(new ExcelImportParser.ParsedRow(2,Map.of("name","Phone","subCategoryId","1","isActive","true","Images","foreign-image")))))));
+        var sheet=service.preview(batch.getId(),0,50,null).sheets().get(0);
+        assertThatThrownBy(()->service.confirmMapping(batch.getId(),sheet.getId(),batch.getRevision(),ImportTool.PRODUCT_BULK_CREATE,Map.of("name","name","subCategoryId","subCategoryId","isActive","isActive","Images","imageIds")))
+                .hasMessageContaining("managed by the attachment workflow");
+    }
 }
+

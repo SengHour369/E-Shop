@@ -35,6 +35,8 @@ class AiOrchestrationTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired AiExecutionRepository executions;
+    @Autowired com.example.eshop.ai.repository.AiDailyQuotaRepository dailyQuotas;
+    @Autowired com.example.eshop.ai.repository.AiQuotaRequestRepository quotaRequests;
     @Autowired NotificationOutboxRepository outbox;
     @Autowired AuditLogRepository audits;
     @MockitoBean AiProviderClient provider;
@@ -76,6 +78,7 @@ class AiOrchestrationTest {
 
     @BeforeEach
     void currentPermissions() {
+        quotaRequests.deleteAll(); dailyQuotas.deleteAll();
         when(permissions.current()).thenAnswer(call -> {
             boolean admin = com.example.eshop.common.security.CurrentActor.has("ADMIN");
             return new com.example.eshop.common.security.PermissionSnapshot(
@@ -363,6 +366,22 @@ class AiOrchestrationTest {
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.result.errorCode").value("AI_PROVIDER_FAILURE"));
         verifyNoInteractions(provider, catalog, orders);
-    }}
+    }    @Test void authenticatedCustomerChatHasFiveDailyRequestsAndInvalidBodiesAreFree() throws Exception {
+        String bearer=token(70,"USER");
+        mvc.perform(post("/api/ai/chat").header("Authorization",bearer).contentType("application/json").content("{\"message\":\"\",\"language\":\"en\"}"))
+                .andExpect(status().isBadRequest());
+        assertThat(quotaRequests.count()).isZero();
+        String key=UUID.randomUUID().toString();
+        for(int i=0;i<5;i++) mvc.perform(post("/api/ai/chat").header("Authorization",bearer).header("Idempotency-Key",i==0?key:UUID.randomUUID().toString()).contentType("application/json").content("{\"message\":\"Hi\",\"language\":\"en\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/ai/chat").header("Authorization",bearer).header("Idempotency-Key",key).contentType("application/json").content("{\"message\":\"Hi\",\"language\":\"en\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/ai/chat").header("Authorization",bearer).header("Idempotency-Key",UUID.randomUUID().toString()).contentType("application/json").content("{\"message\":\"Hi\",\"language\":\"en\"}"))
+                .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.code").value("AI_DAILY_LIMIT_EXCEEDED")).andExpect(jsonPath("$.used").value(5));
+        mvc.perform(get("/api/ai/quota").header("Authorization",bearer)).andExpect(status().isOk()).andExpect(jsonPath("$.remaining").value(0));
+    }
+}
+
+
 
 

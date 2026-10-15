@@ -27,6 +27,7 @@ import java.util.UUID;
 public class AiController {
 
     private final AiRouterService router;
+    private final com.example.eshop.ai.service.AiQuotaService quota;
     private final com.example.eshop.ai.service.AiAdminWorkspaceService workspace;
     private final com.example.eshop.ai.service.AiConversationService conversation;
     private final AiExecutionService history;
@@ -47,6 +48,7 @@ public class AiController {
     public ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> chat(
             @Valid @RequestBody com.example.eshop.ai.dto.AiChatRequest request,
             @RequestHeader(value = "Authorization", required = false) String bearer,
+            @RequestHeader(value = "Idempotency-Key", required = false) UUID key,
             jakarta.servlet.http.HttpServletRequest servlet) {
         chatState.rateLimit(servlet.getRemoteAddr());
         boolean administrator = servlet.getRequestURI().endsWith("/admin/chat");
@@ -56,6 +58,13 @@ public class AiController {
         if (administrator && !permissions.current().administrator()) {
             throw new org.springframework.security.access.AccessDeniedException("Administrator access required");
         }
+        if (com.example.eshop.ai.registry.AiToolRegistry.authenticated()) {
+            return quota.process(key == null ? UUID.randomUUID() : key, "chat:"+administrator+":"+request.toString(),com.example.eshop.ai.dto.AiChatResponse.class,()->acceptedChat(request,bearer,administrator));
+        }
+        return acceptedChat(request,bearer,administrator);
+    }
+
+    private ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> acceptedChat(com.example.eshop.ai.dto.AiChatRequest request,String bearer,boolean administrator) {
         UUID conversationId = chatState.conversation(request.conversationId());
         if (!administrator && CustomerPurchaseGuide.matches(request.message())) {
             var guide = CustomerPurchaseGuide.response(conversationId, request.language());
@@ -117,8 +126,10 @@ public class AiController {
             jakarta.servlet.http.HttpServletRequest servlet) {
         chatState.rateLimit(servlet.getRemoteAddr());
         UUID executionId = key == null ? UUID.randomUUID() : key;
-        AiResponse result = router.execute(request, executionId, bearer);
-        return ResponseEntity.status(httpStatus(result.status())).body(result);
+        return quota.process(executionId, "execute:"+request.toString(), AiResponse.class, () -> {
+            AiResponse result = router.execute(request, executionId, bearer);
+            return ResponseEntity.status(httpStatus(result.status())).body(result);
+        });
     }
 
     @GetMapping("/executions/{id}")
@@ -138,6 +149,7 @@ public class AiController {
         };
     }
 }
+
 
 
 

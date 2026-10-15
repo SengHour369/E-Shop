@@ -158,21 +158,57 @@ public class AiImportService {
         AiImportSheet sheet = sheets.findById(sheetId).filter(s -> s.getBatchId().equals(id)).orElseThrow(AiImportService::notFound);
         if (columns == null || columns.isEmpty() || !parseHeaders(sheet.getHeaders()).containsAll(columns.keySet())
                 || !tool.schema.keySet().containsAll(columns.values()) || new HashSet<>(columns.values()).size() != columns.size()) throw bad("Invalid or ambiguous mapping");
+        if (tool == ImportTool.PRODUCT_BULK_CREATE && columns.values().stream().anyMatch(f -> f.equals("imageIds") || f.equals("imageChecksums"))) throw bad("Image references are managed by the attachment workflow");
         for (var field : tool.schema.entrySet()) if (field.getValue().required() && !columns.containsValue(field.getKey())) throw bad("Missing required mapping: " + field.getKey());
         changed(batch, "MAPPING_CONFIRMED", Map.of("sheetId", sheetId, "tool", tool, "columns", columns));
         sheet.setTool(tool.name()); sheet.setConfirmed(true); mapping(id, sheetId).setConfirmedValues(json(columns));
         for (AiImportRow row : rows.findByBatchId(id)) if (row.getSheetId().equals(sheetId)) {
             Map<String, String> original = values(row.getOriginalValues()), mapped = new LinkedHashMap<>();
+            if (original.isEmpty() && row.isEdited()) continue; // Manually added rows have no workbook cells to remap.
             columns.forEach((header, field) -> { String value = original.get(header); if (value != null) mapped.put(field, value); }); row.setValuesJson(json(mapped));
         }
         return batch;
     }
+    public record AddedRow(AiImportBatch batch, AiImportRow row) {}
+    @org.springframework.beans.factory.annotation.Value("${ai.import.max-rows:10000}")
+    private int maxImportRows = 10000;
+    @Transactional
+    public AddedRow addRow(UUID id, UUID sheetId, int version, UUID rowId, Map<String, String> values) {
+        AiImportBatch batch = lock(id, version); editable(batch);
+        AiImportSheet sheet = sheets.findById(sheetId).filter(s -> s.getBatchId().equals(id)).orElseThrow(AiImportService::notFound);
+        if (!sheet.isConfirmed()) throw bad("Confirm the worksheet mapping before adding rows");
+        ImportTool tool = tool(sheet); require(tool.permission);
+        if (rowId == null || values == null || values.size() > 64
+                || !tool.schema.keySet().containsAll(values.keySet())
+                || values.containsKey("imageIds") || values.containsKey("imageChecksums")
+                || values.values().stream().anyMatch(value -> value == null || value.length() > 2000 || value.chars().anyMatch(Character::isISOControl)))
+            throw bad("Invalid row fields");
+        if (rows.existsById(rowId)) throw conflict("This row has already been saved; reload the workbook");
+        List<AiImportRow> existing = rows.findByBatchId(id);
+        if (existing.size() >= maxImportRows) throw bad("Workbook row limit reached");
+        int number = existing.stream().mapToInt(AiImportRow::getRowNumber).max().orElse(1) + 1;
+        changed(batch, "ROW_ADDED", Map.of("rowId", rowId, "sheetId", sheetId, "values", values));
+        AiImportRow row = new AiImportRow();
+        row.setId(rowId); row.setBatchId(id); row.setSheetId(sheetId); row.setRowNumber(number);
+        row.setOriginalValues("{}"); row.setValuesJson(json(values)); row.setEdited(true);
+        rows.save(row);
+        return new AddedRow(batch, row);
+    }
+
+
     @Transactional
     public AiImportBatch edit(UUID id, UUID rowId, int version, Map<String, String> values) {
         AiImportBatch batch = lock(id, version); editable(batch);
         AiImportRow row = rows.findById(rowId).filter(r -> r.getBatchId().equals(id)).orElseThrow(AiImportService::notFound);
         ImportTool tool = tool(sheets.findById(row.getSheetId()).orElseThrow()); require(tool.permission);
         if (values == null || values.size() > 64 || values.values().stream().anyMatch(v -> v == null || v.length() > 2000) || !tool.schema.keySet().containsAll(values.keySet())) throw bad("Invalid row fields");
+        if(tool==ImportTool.PRODUCT_BULK_CREATE){
+            Map<String,String> current=values(row.getValuesJson()),updated=new LinkedHashMap<>(values);
+            for(String field:List.of("imageIds","imageChecksums")){
+                if(values.containsKey(field)&&!Objects.equals(values.get(field),current.get(field)))throw bad("Image references are managed by the attachment workflow");
+                if(current.containsKey(field))updated.put(field,current.get(field));
+            }values=updated;
+        }
         changed(batch, "ROW_EDITED", Map.of("rowId", rowId, "before", row.getValuesJson(), "after", values));
         row.setValuesJson(json(values)); row.setEdited(true); return batch;
     }
@@ -390,3 +426,4 @@ public class AiImportService {
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
     private static ResponseStatusException conflict(String message) { return new ResponseStatusException(HttpStatus.CONFLICT, message); }
 }
+

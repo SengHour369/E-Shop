@@ -46,7 +46,10 @@ public class CatalogImportService {
 
     private void authorize(Row row, boolean execute) {
         if (row == null || row.tool() == null || !row.tool().enabled || !row.tool().domainTool()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported import tool");
-        var actor = permissions.current();
+        authorize(row,execute,permissions.current());
+    }
+    private void authorize(Row row,boolean execute,com.example.eshop.common.security.PermissionSnapshot actor){
+        if(row==null||row.tool()==null||!row.tool().enabled||!row.tool().domainTool())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unsupported import tool");
         if (!actor.permits(row.tool().permission) || (execute ? !actor.permits("IMPORT_EXECUTE") || !actor.permits("IMPORT_APPROVE") : !actor.permits("IMPORT_UPLOAD") && !actor.permits("IMPORT_REVIEW"))) throw new AccessDeniedException("Import domain permission required");
     }
     @Transactional(readOnly = true)
@@ -58,7 +61,7 @@ public class CatalogImportService {
         Set<ImportTool> authorized = new HashSet<>();
         for (Row row : rows) {
             if (row == null || row.tool() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid import row");
-            if (authorized.add(row.tool())) authorize(row, false);
+            if (authorized.add(row.tool())) authorize(row, false,validationActor);
         }
         return rows.stream().map(row->check(row,validationActor)).toList();
     }
@@ -190,7 +193,9 @@ public class CatalogImportService {
             var file=files.get(i);if(file.getSize()>5_242_880)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Image too large");
             var approved=new com.example.eshop.common.imports.ImportImageFile("product.png",file.getBytes());
             if(!approved.checksum().equals(hashes[i]))throw new AccessDeniedException("Image differs from approved revision");
-            clean.add(com.example.eshop.common.imports.ImportImageFile.sanitize(approved));
+            var sanitized=com.example.eshop.common.imports.ImportImageFile.sanitize(approved);
+            String imageId=row.values().get("imageIds").split(",")[i];
+            clean.add(new com.example.eshop.common.imports.ImportImageFile("import-"+imageId+"-"+hashes[i]+".png",sanitized.getBytes()));
         }return clean;
     }
     private ProductSkuRequest skuRequest(Map<String, String> v) {

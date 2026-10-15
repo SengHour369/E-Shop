@@ -48,9 +48,9 @@ eureka:
     prefer-ip-address: true
 
 cloudinary:
-  cloud_name: ${CLOUDINARY_CLOUD_NAME:dr9z2x9s1}
-  api_key: ${CLOUDINARY_API_KEY:changeme}
-  api_secret: ${CLOUDINARY_API_SECRET:changeme}
+  cloud_name: ${CLOUDINARY_CLOUD_NAME}
+  api_key: ${CLOUDINARY_API_KEY}
+  api_secret: ${CLOUDINARY_API_SECRET}
 
 springdoc:
   api-docs:

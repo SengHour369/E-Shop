@@ -60,6 +60,8 @@ class PostgresImportIntegrationTest {
     @Autowired JdbcTemplate jdbc;
     @MockitoBean LivePermissionService permissions;
     @MockitoBean AuditLogService audit;
+    @MockitoBean BranchService branchService;
+    @MockitoBean ProductService productService;
     @MockitoBean CategoryService categories;
     @MockitoBean ProductSkuServiceImpl skus;
     @MockitoBean AiCatalogController promotions;

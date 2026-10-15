@@ -22,6 +22,7 @@ class ImportSecurityTest {
         assertThat(ImportTool.CATEGORY_BULK_CREATE.validate(Map.of("name","New"))).contains("REQUIRED: status");
         assertThat(ImportTool.INVENTORY_STOCK_ADJUST_BULK.validate(Map.of("inventoryId","1","quantity","-1"))).contains("INVALID_VALUE: quantity");
         assertThat(ImportTool.INVENTORY_STOCK_IN_BULK.validate(Map.of("inventoryId","1","quantity","0"))).contains("INVALID_VALUE: quantity");
-        assertThat(ImportTool.BRANCH_BULK_CREATE.validate(Map.of("name","Unknown"))).anyMatch(e -> e.startsWith("UNSUPPORTED_IMPORT"));
+        assertThat(ImportTool.BRANCH_BULK_CREATE.validate(Map.of("name",""))).contains("REQUIRED: name");
+        assertThat(ImportTool.PRODUCT_BULK_CREATE.validate(Map.of("name","New","subCategoryId","1","isActive","true"))).contains("IMAGE_ATTACHMENT_REQUIRED");
     }
 }
