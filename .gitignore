@@ -34,6 +34,11 @@ build/
 
 # Local verification output
 ai-assistant-*.log
+backend-*-check.log
+
+# Generated JVM crash diagnostics
+hs_err_pid*.log
+replay_pid*.log
 
 # Local commerce configuration and verification output
 .env

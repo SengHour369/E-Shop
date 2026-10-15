@@ -70,12 +70,12 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @Query("SELECT i FROM Inventory i " +
             "JOIN FETCH i.productSku sku " +
             "JOIN FETCH sku.product p " +
-            "WHERE (:search IS NULL OR " +
-            "       LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "       LOWER(sku.sku) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "       LOWER(sku.barcode) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-            "AND (:warehouse IS NULL OR i.warehouseLocation = :warehouse) " +
-            "AND (:status IS NULL OR " +
+            "WHERE (CAST(:search AS string) IS NULL OR " +
+            "       LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR " +
+            "       LOWER(sku.sku) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR " +
+            "       LOWER(sku.barcode) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))) " +
+            "AND (CAST(:warehouse AS string) IS NULL OR i.warehouseLocation = :warehouse) " +
+            "AND (CAST(:status AS string) IS NULL OR " +
             "     (CASE WHEN :status = 'IN_STOCK' THEN (i.quantity - i.reservedQuantity) > i.lowStockThreshold " +
             "           WHEN :status = 'LOW_STOCK' THEN (i.quantity - i.reservedQuantity) <= i.lowStockThreshold " +
             "                                         AND (i.quantity - i.reservedQuantity) > 0 " +

@@ -6,6 +6,14 @@ Start the local HTTP stack:
 docker compose -f compose.yaml -f compose.local.yaml up -d --build
 ```
 
+Databases and Redis restart automatically after Docker restarts unless explicitly
+stopped. Their existing named volumes retain the data.
+
+Cloudinary is optional for starting the catalog. Image uploads require
+`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `.env`;
+Compose passes these values into the catalog container. Browsing products and
+using bundled seed images do not require Cloudinary credentials.
+
 - Gateway and Swagger: http://localhost:8080/swagger-ui.html
 - Service discovery: http://localhost:8761
 - Local email inbox (verification codes and password resets): http://localhost:8025
