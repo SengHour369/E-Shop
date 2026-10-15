@@ -28,34 +28,73 @@ public class InternalAuthorizationController {
                 .filter(value -> value.isEnabled())
                 .filter(value -> "ACT".equals(value.getStatus()))
                 .filter(value -> !Boolean.TRUE.equals(value.getDeleted()))
-                .filter(value -> value.getUsername().equals(authentication.getName()))
-                .orElseThrow(() -> new AccessDeniedException("Account unavailable"));
+                .filter(value ->
+                        value.getUsername().equals(authentication.getName())
+                )
+                .orElseThrow(() -> new AccessDeniedException(
+                        "Account unavailable"
+                ));
         return access.snapshot(user);
     }
 
     @GetMapping("/internal/authorization/users/{id}/active")
-    @Transactional(readOnly=true)
-    public boolean active(@org.springframework.web.bind.annotation.PathVariable long id, Authentication authentication) {
-        var actor=current(authentication);
-        if(!actor.administrator()||!actor.permits("BRANCH_ACCESS_MANAGE"))throw new AccessDeniedException("Branch access administrator required");
-        return users.findById(id).filter(u->u.isEnabled()&&"ACT".equals(u.getStatus())&&!Boolean.TRUE.equals(u.getDeleted())).isPresent();
+    @Transactional(readOnly = true)
+    public boolean active(
+            @org.springframework.web.bind.annotation.PathVariable long id,
+            Authentication authentication
+    ) {
+        var actor = current(authentication);
+
+        if (!actor.administrator() || !actor.permits("BRANCH_ACCESS_MANAGE")) {
+            throw new AccessDeniedException(
+                    "Branch access administrator required"
+            );
+        }
+
+        return users.findById(id)
+                .filter(u ->
+                        u.isEnabled()
+                                && "ACT".equals(u.getStatus())
+                                && !Boolean.TRUE.equals(u.getDeleted())
+                )
+                .isPresent();
     }
+
     @GetMapping("/internal/ai/users")
     @Transactional(readOnly = true)
     public java.util.List<UserCard> users(Authentication authentication) {
         PermissionSnapshot actor = current(authentication);
+
         if (!actor.administrator() || !actor.permits("USER_VIEW")) {
             throw new AccessDeniedException("Permission denied");
         }
-        return users.findVisibleForAssistant(org.springframework.data.domain.PageRequest.of(0, 20,
-                        org.springframework.data.domain.Sort.by("id").descending()))
+
+        return users.findVisibleForAssistant(
+                        org.springframework.data.domain.PageRequest.of(
+                                0,
+                                20,
+                                org.springframework.data.domain.Sort
+                                        .by("id")
+                                        .descending()
+                        )
+                )
                 .stream()
-                .map(user -> new UserCard(user.getId(), user.getUsername(), user.getStatus(),
-                        user.isEnabled(), user.getCreatedAt()))
+                .map(user -> new UserCard(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getStatus(),
+                        user.isEnabled(),
+                        user.getCreatedAt()
+                ))
                 .toList();
     }
 
-    public record UserCard(Long id, String username, String status, boolean enabled,
-            java.time.LocalDateTime createdAt) {
+    public record UserCard(
+            Long id,
+            String username,
+            String status,
+            boolean enabled,
+            java.time.LocalDateTime createdAt
+    ) {
     }
 }

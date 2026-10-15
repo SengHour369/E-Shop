@@ -20,25 +20,49 @@ public class AiKnowledgeController {
     private final AiKnowledgeService knowledge;
 
     @org.springframework.web.bind.annotation.PutMapping("/api/ai/knowledge/{id}")
-    public Map<String, UUID> replace(@org.springframework.web.bind.annotation.PathVariable UUID id,
-            @Valid @RequestBody ApprovedDocument document) {
-        return Map.of("documentId", knowledge.replace(id, document.title(), document.language(), document.content()));
+    public Map<String, UUID> replace(
+            @org.springframework.web.bind.annotation.PathVariable UUID id,
+            @Valid @RequestBody ApprovedDocument document
+    ) {
+        return Map.of(
+                "documentId",
+                knowledge.replace(
+                        id,
+                        document.title(),
+                        document.language(),
+                        document.content()
+                )
+        );
     }
 
     @org.springframework.web.bind.annotation.DeleteMapping("/api/ai/knowledge/{id}")
-    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
-    public void revoke(@org.springframework.web.bind.annotation.PathVariable UUID id) {
+    @org.springframework.web.bind.annotation.ResponseStatus(
+            org.springframework.http.HttpStatus.NO_CONTENT
+    )
+    public void revoke(
+            @org.springframework.web.bind.annotation.PathVariable UUID id
+    ) {
         knowledge.revoke(id);
     }
 
     @PostMapping("/api/ai/knowledge")
-    public Map<String, UUID> approve(@Valid @RequestBody ApprovedDocument document) {
-        return Map.of("documentId", knowledge.approve(document.title(), document.language(), document.content()));
+    public Map<String, UUID> approve(
+            @Valid @RequestBody ApprovedDocument document
+    ) {
+        return Map.of(
+                "documentId",
+                knowledge.approve(
+                        document.title(),
+                        document.language(),
+                        document.content()
+                )
+        );
     }
 
     public record ApprovedDocument(
             @NotBlank @Size(max = 160) String title,
             @NotBlank @Pattern(regexp = "en|km") String language,
-            @NotBlank @Size(max = 20000) String content) {
+            @NotBlank @Size(max = 20000) String content
+    ) {
     }
 }

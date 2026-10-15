@@ -16,27 +16,53 @@ import java.time.ZoneId;
 @RequestMapping("/api/v1/admin/settings")
 @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
 public class StoreSettingsController {
+
     private final StoreSettingsService service;
 
     @GetMapping
     public APIResponse<StoreSettingsRequest> current() {
-        return APIResponse.success("Store settings", 200, service.current());
+        return APIResponse.success(
+                "Store settings",
+                200,
+                service.current()
+        );
     }
 
     @PutMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<APIResponse<StoreSettingsRequest>> save(@Valid @RequestBody StoreSettingsRequest request) {
+    public ResponseEntity<APIResponse<StoreSettingsRequest>> save(
+            @Valid @RequestBody StoreSettingsRequest request
+    ) {
         try {
             ZoneId.of(request.timezone());
         } catch (DateTimeException exception) {
-            return ResponseEntity.badRequest().body(APIResponse.error("Unknown timezone", 400));
+            return ResponseEntity.badRequest().body(
+                    APIResponse.error("Unknown timezone", 400)
+            );
         }
-        return ResponseEntity.ok(APIResponse.success("Store settings saved", 200, service.save(request)));
+
+        return ResponseEntity.ok(
+                APIResponse.success(
+                        "Store settings saved",
+                        200,
+                        service.save(request)
+                )
+        );
     }
 
-    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
-    public ResponseEntity<APIResponse<Void>> invalid(org.springframework.web.bind.MethodArgumentNotValidException exception) {
+    @ExceptionHandler(
+            org.springframework.web.bind.MethodArgumentNotValidException.class
+    )
+    public ResponseEntity<APIResponse<Void>> invalid(
+            org.springframework.web.bind.MethodArgumentNotValidException exception
+    ) {
         var error = exception.getBindingResult().getFieldErrors().get(0);
-        return ResponseEntity.badRequest().body(APIResponse.error(error.getField() + ": " + error.getDefaultMessage(), 400));
+
+        return ResponseEntity.badRequest().body(
+                APIResponse.error(
+                        error.getField() + ": " + error.getDefaultMessage(),
+                        400
+                )
+        );
     }
 }

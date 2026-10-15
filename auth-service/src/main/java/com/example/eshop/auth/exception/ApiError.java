@@ -1,4 +1,4 @@
-package com.example.eshop.auth.dto.response;
+package com.example.eshop.auth.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;

@@ -11,13 +11,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface PaymentToolClient {
 
     @GetMapping("/internal/ai/payments/revenue")
-    JsonNode revenue(@RequestHeader("Authorization") String token, @RequestParam("date") String date);
+    JsonNode revenue(
+            @RequestHeader("Authorization") String token,
+            @RequestParam("date") String date
+    );
 
     @GetMapping("/internal/ai/payments/{id}")
-    JsonNode mine(@RequestHeader("Authorization") String token, @PathVariable("id") long id);
+    JsonNode mine(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("id") long id
+    );
 
     @GetMapping("/internal/ai/payments/admin")
-    JsonNode admin(@RequestHeader("Authorization") String token,
+    JsonNode admin(
+            @RequestHeader("Authorization") String token,
             @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "date", required = false) String date);
+            @RequestParam(value = "date", required = false) String date
+    );
 }

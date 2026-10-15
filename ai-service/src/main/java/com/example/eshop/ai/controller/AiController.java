@@ -36,9 +36,11 @@ public class AiController {
     private final com.example.eshop.ai.service.AiChatPresenter presenter;
 
     @PostMapping("/confirm/{id}")
-    public ResponseEntity<AiResponse> confirm(@PathVariable UUID id,
+    public ResponseEntity<AiResponse> confirm(
+            @PathVariable UUID id,
             @RequestHeader("Authorization") String bearer,
-            jakarta.servlet.http.HttpServletRequest servlet) {
+            jakarta.servlet.http.HttpServletRequest servlet
+    ) {
         chatState.rateLimit(servlet.getRemoteAddr());
         AiResponse result = router.confirm(id, bearer);
         return ResponseEntity.status(httpStatus(result.status())).body(result);
@@ -49,87 +51,189 @@ public class AiController {
             @Valid @RequestBody com.example.eshop.ai.dto.AiChatRequest request,
             @RequestHeader(value = "Authorization", required = false) String bearer,
             @RequestHeader(value = "Idempotency-Key", required = false) UUID key,
-            jakarta.servlet.http.HttpServletRequest servlet) {
+            jakarta.servlet.http.HttpServletRequest servlet
+    ) {
         chatState.rateLimit(servlet.getRemoteAddr());
         boolean administrator = servlet.getRequestURI().endsWith("/admin/chat");
+
         if (bearer != null && !com.example.eshop.ai.registry.AiToolRegistry.authenticated()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authentication");
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid authentication"
+            );
         }
+
         if (administrator && !permissions.current().administrator()) {
-            throw new org.springframework.security.access.AccessDeniedException("Administrator access required");
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Administrator access required"
+            );
         }
+
         if (com.example.eshop.ai.registry.AiToolRegistry.authenticated()) {
-            return quota.process(key == null ? UUID.randomUUID() : key, "chat:"+administrator+":"+request.toString(),com.example.eshop.ai.dto.AiChatResponse.class,()->acceptedChat(request,bearer,administrator));
+            return quota.process(
+                    key == null ? UUID.randomUUID() : key,
+                    "chat:" + administrator + ":" + request.toString(),
+                    com.example.eshop.ai.dto.AiChatResponse.class,
+                    () -> acceptedChat(request, bearer, administrator)
+            );
         }
-        return acceptedChat(request,bearer,administrator);
+
+        return acceptedChat(request, bearer, administrator);
     }
 
-    private ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> acceptedChat(com.example.eshop.ai.dto.AiChatRequest request,String bearer,boolean administrator) {
+    private ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> acceptedChat(
+            com.example.eshop.ai.dto.AiChatRequest request,
+            String bearer,
+            boolean administrator
+    ) {
         UUID conversationId = chatState.conversation(request.conversationId());
+
         if (!administrator && CustomerPurchaseGuide.matches(request.message())) {
-            var guide = CustomerPurchaseGuide.response(conversationId, request.language());
-            chatState.rememberDialogue(conversationId, request.message(), guide.result().message());
+            var guide = CustomerPurchaseGuide.response(
+                    conversationId,
+                    request.language()
+            );
+            chatState.rememberDialogue(
+                    conversationId,
+                    request.message(),
+                    guide.result().message()
+            );
             return ResponseEntity.ok(guide);
         }
+
         if (AiQuickReply.reply(request.message(), request.language()) != null
                 || AiConversationRouting.isConversation(request.message())) {
             return conversational(conversationId, administrator, request);
         }
+
         String message = chatState.withContext(conversationId, request.message());
-        AiResponse result = router.execute(new AiRequest(message == null ? request.message() : message), UUID.randomUUID(), bearer);
-        if ("UNCERTAIN_INTENT".equals(result.errorCode()) || "UNKNOWN_INTENT".equals(result.errorCode())
+        AiResponse result = router.execute(
+                new AiRequest(message == null ? request.message() : message),
+                UUID.randomUUID(),
+                bearer
+        );
+
+        if ("UNCERTAIN_INTENT".equals(result.errorCode())
+                || "UNKNOWN_INTENT".equals(result.errorCode())
                 || "MISSING_PARAMETER".equals(result.errorCode())
-                || result.intent() == com.example.eshop.ai.enums.AiIntent.UNKNOWN && result.status() == AiExecutionStatus.NEEDS_INPUT) {
+                || result.intent() == com.example.eshop.ai.enums.AiIntent.UNKNOWN
+                && result.status() == AiExecutionStatus.NEEDS_INPUT) {
             return conversational(conversationId, administrator, request);
         }
+
         if (result.intent() == com.example.eshop.ai.enums.AiIntent.KNOWLEDGE_SEARCH
-                && result.status() == AiExecutionStatus.SUCCESS && result.data() != null
-                && "No approved knowledge is available.".equals(result.data().path("answer").asText())) {
+                && result.status() == AiExecutionStatus.SUCCESS
+                && result.data() != null
+                && "No approved knowledge is available.".equals(
+                result.data().path("answer").asText())) {
             return conversational(conversationId, administrator, request);
         }
+
         chatState.remember(conversationId, result);
-        var response = presenter.present(conversationId, administrator, request.language(), result);
-        if (administrator) workspace.remember(request.message(), response);
-        return ResponseEntity.status("AI_PROVIDER_BUSY".equals(result.errorCode()) ? HttpStatus.TOO_MANY_REQUESTS : httpStatus(result.status())).body(response);
+        var response = presenter.present(
+                conversationId,
+                administrator,
+                request.language(),
+                result
+        );
+
+        if (administrator) {
+            workspace.remember(request.message(), response);
+        }
+
+        return ResponseEntity.status(
+                "AI_PROVIDER_BUSY".equals(result.errorCode())
+                        ? HttpStatus.TOO_MANY_REQUESTS
+                        : httpStatus(result.status())
+        ).body(response);
     }
 
-    private ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> conversational(UUID id, boolean admin,
-            com.example.eshop.ai.dto.AiChatRequest request) {
+    private ResponseEntity<com.example.eshop.ai.dto.AiChatResponse> conversational(
+            UUID id,
+            boolean admin,
+            com.example.eshop.ai.dto.AiChatRequest request
+    ) {
         String answer;
         String errorCode = "AI_PROVIDER_FAILURE";
         String errorMessage = "The assistant could not respond. Please try again shortly.";
+
         try {
             answer = AiQuickReply.reply(request.message(), request.language());
-            if (answer == null) answer = conversation.reply(request.message(), request.language(), chatState.dialogue(id));
+
+            if (answer == null) {
+                answer = conversation.reply(
+                        request.message(),
+                        request.language(),
+                        chatState.dialogue(id)
+                );
+            }
         } catch (com.example.eshop.ai.service.AiFailure failure) {
             answer = null;
             errorCode = failure.code();
             errorMessage = failure.getMessage();
         }
+
         boolean success = answer != null;
-        if (success) chatState.rememberDialogue(id, request.message(), answer);
-        var result = new AiResponse(null, com.example.eshop.common.request.RequestIds.current(), null,
+
+        if (success) {
+            chatState.rememberDialogue(id, request.message(), answer);
+        }
+
+        var result = new AiResponse(
+                null,
+                com.example.eshop.common.request.RequestIds.current(),
+                null,
                 com.example.eshop.ai.enums.AiIntent.UNKNOWN,
                 success ? AiExecutionStatus.SUCCESS : AiExecutionStatus.FAILURE,
                 success ? answer : errorMessage,
-                success ? null : errorCode, null);
-        var response = new com.example.eshop.ai.dto.AiChatResponse(id, admin ? "SUPER_ADMIN" : "CUSTOMER",
-                success ? "ConversationCard" : "ErrorCard", java.util.List.of(), result);
-        if (admin) workspace.remember(request.message(), response);
-        return ResponseEntity.status(success ? HttpStatus.OK : "AI_PROVIDER_BUSY".equals(errorCode) ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.BAD_GATEWAY).body(response);
+                success ? null : errorCode,
+                null
+        );
+        var response = new com.example.eshop.ai.dto.AiChatResponse(
+                id,
+                admin ? "SUPER_ADMIN" : "CUSTOMER",
+                success ? "ConversationCard" : "ErrorCard",
+                java.util.List.of(),
+                result
+        );
+
+        if (admin) {
+            workspace.remember(request.message(), response);
+        }
+
+        return ResponseEntity.status(
+                success
+                        ? HttpStatus.OK
+                        : "AI_PROVIDER_BUSY".equals(errorCode)
+                        ? HttpStatus.TOO_MANY_REQUESTS
+                        : HttpStatus.BAD_GATEWAY
+        ).body(response);
     }
 
     @PostMapping("/execute")
-    public ResponseEntity<AiResponse> execute(@Valid @RequestBody AiRequest request,
+    public ResponseEntity<AiResponse> execute(
+            @Valid @RequestBody AiRequest request,
             @RequestHeader("Authorization") String bearer,
             @RequestHeader(value = "Idempotency-Key", required = false) UUID key,
-            jakarta.servlet.http.HttpServletRequest servlet) {
+            jakarta.servlet.http.HttpServletRequest servlet
+    ) {
         chatState.rateLimit(servlet.getRemoteAddr());
         UUID executionId = key == null ? UUID.randomUUID() : key;
-        return quota.process(executionId, "execute:"+request.toString(), AiResponse.class, () -> {
-            AiResponse result = router.execute(request, executionId, bearer);
-            return ResponseEntity.status(httpStatus(result.status())).body(result);
-        });
+        return quota.process(
+                executionId,
+                "execute:" + request.toString(),
+                AiResponse.class,
+                () -> {
+                    AiResponse result = router.execute(
+                            request,
+                            executionId,
+                            bearer
+                    );
+                    return ResponseEntity.status(
+                            httpStatus(result.status())
+                    ).body(result);
+                }
+        );
     }
 
     @GetMapping("/executions/{id}")
@@ -149,7 +253,3 @@ public class AiController {
         };
     }
 }
-
-
-
-

@@ -18,20 +18,48 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain security(HttpSecurity http, JwtTokenValidator validator, JwtProperties jwt,
-            AuditSecurityHandlers handlers) throws Exception {
+    SecurityFilterChain security(
+            HttpSecurity http,
+            JwtTokenValidator validator,
+            JwtProperties jwt,
+            AuditSecurityHandlers handlers
+    ) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/ai/chat").permitAll()
-                        .requestMatchers("/api/admin/audit-logs/**").hasAnyAuthority("ADMIN", "AUDIT_READ")
-                        .anyRequest().authenticated())
+                        .requestMatchers("/api/admin/audit-logs/**")
+                        .hasAnyAuthority("ADMIN", "AUDIT_READ")
+                        .anyRequest().authenticated()
+                )
                 .exceptionHandling(errors -> errors
-                        .authenticationEntryPoint((request, response, ex) -> handlers.reject(request, response, 401))
-                        .accessDeniedHandler((request, response, ex) -> handlers.reject(request, response, 403)))
-                .addFilterBefore(new JwtAuthFilter(validator, jwt), UsernamePasswordAuthenticationFilter.class)
+                        .authenticationEntryPoint(
+                                (request, response, ex) ->
+                                        handlers.reject(
+                                                request,
+                                                response,
+                                                401
+                                        )
+                        )
+                        .accessDeniedHandler(
+                                (request, response, ex) ->
+                                        handlers.reject(
+                                                request,
+                                                response,
+                                                403
+                                        )
+                        )
+                )
+                .addFilterBefore(
+                        new JwtAuthFilter(validator, jwt),
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .build();
     }
 }
