@@ -50,3 +50,6 @@ keycloak/local-import/
 keycloak/local-credentials.txt
 
 .env.local
+/env
+.env
+.env.*
