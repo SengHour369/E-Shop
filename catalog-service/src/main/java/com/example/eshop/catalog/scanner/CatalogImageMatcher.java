@@ -29,7 +29,7 @@ public final class CatalogImageMatcher {
         Map<Long, ImageCandidate> byProduct = new LinkedHashMap<>();
         double topModelConfidence = 0;
         for (VisionLabel label : labels) {
-            if (label == null || label.name() == null || label.name().isBlank() || Double.isNaN(label.confidence())) {
+            if (label == null || label.name() == null || label.name().isBlank() || !Double.isFinite(label.confidence())) {
                 continue;
             }
             double confidence = clamp(label.confidence());

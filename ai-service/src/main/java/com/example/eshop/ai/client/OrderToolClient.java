@@ -8,6 +8,21 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(name = "order-service")
 public interface OrderToolClient {
+    @GetMapping("/internal/ai/shopping/cart")
+    JsonNode cart(@RequestHeader("Authorization") String token);
+    @GetMapping("/internal/ai/shopping/checkout-preview")
+    JsonNode checkoutPreview(@RequestHeader("Authorization") String token,
+        @org.springframework.web.bind.annotation.RequestParam("addressId") long addressId,
+        @org.springframework.web.bind.annotation.RequestParam("paymentMethod") String paymentMethod);
+    @GetMapping("/internal/ai/shopping/reviews/{id}")
+    JsonNode review(@RequestHeader("Authorization") String token, @PathVariable("id") String id);
+    @org.springframework.web.bind.annotation.PostMapping("/internal/ai/shopping/cart/{action}")
+    JsonNode changeCart(@RequestHeader("Authorization") String token,
+        @RequestHeader("Idempotency-Key") String key, @PathVariable("action") String action,
+        @org.springframework.web.bind.annotation.RequestBody JsonNode body);
+    @org.springframework.web.bind.annotation.PostMapping("/internal/ai/shopping/orders/{reviewId}")
+    JsonNode createOrder(@RequestHeader("Authorization") String token, @PathVariable("reviewId") String reviewId);
+
 
     @org.springframework.web.bind.annotation.GetMapping(
             "/internal/ai/orders/automation/{id}"

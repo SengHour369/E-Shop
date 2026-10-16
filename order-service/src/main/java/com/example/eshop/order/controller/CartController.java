@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 public class CartController extends BaseController {
 
     private final CartService cartService;
+    private final com.example.eshop.common.security.LivePermissionService permissions;
+    private final com.example.eshop.order.service.impl.AiShoppingService shopping;
 
     @PostMapping("/user/id")
     public ResponseEntity<ResponseErrorTemplate> getCartByUserId(@RequestParam Long userId) {
@@ -31,8 +33,12 @@ public class CartController extends BaseController {
     @PostMapping("/user/id/items")
     public ResponseEntity<ResponseErrorTemplate> addItemToCart(
             @RequestParam Long userId,
-            @Valid @RequestBody CartRequest request) {
-        ResponseErrorTemplate cart = cartService.addItemToCart(userId, request);
+            @Valid @RequestBody CartRequest request,
+            @RequestHeader(value="Idempotency-Key",required=false) java.util.UUID key) {
+        com.example.eshop.common.security.CurrentCustomer.require(userId);
+        permissions.current();
+        ResponseErrorTemplate cart = key == null ? cartService.addItemToCart(userId, request)
+                : ResponseErrorTemplate.success("Cart updated", shopping.mutate(key,"add",request.getProductSkuId(),null,request.getQuantity()));
         return new ResponseEntity<>(cart, HttpStatus.CREATED);
     }
 
@@ -40,16 +46,24 @@ public class CartController extends BaseController {
     public ResponseEntity<ResponseErrorTemplate> updateCartItem(
             @RequestParam Long userId,
             @RequestParam Long cartItemId,
-            @Valid @RequestBody CartRequest request) {
-        ResponseErrorTemplate cart = cartService.updateCartItem(userId, cartItemId, request);
+            @Valid @RequestBody CartRequest request,
+            @RequestHeader(value="Idempotency-Key",required=false) java.util.UUID key) {
+        com.example.eshop.common.security.CurrentCustomer.require(userId);
+        permissions.current();
+        ResponseErrorTemplate cart = key == null ? cartService.updateCartItem(userId, cartItemId, request)
+                : ResponseErrorTemplate.success("Cart updated", shopping.mutate(key,"update",request.getProductSkuId(),cartItemId,request.getQuantity()));
         return ResponseEntity.ok(cart);
     }
 
     @PostMapping("/user/userId/items/cartItemId")
     public ResponseEntity<ResponseErrorTemplate> removeItemFromCart(
             @RequestParam Long userId,
-            @RequestParam Long cartItemId) {
-        ResponseErrorTemplate cart = cartService.removeItemFromCart(userId, cartItemId);
+            @RequestParam Long cartItemId,
+            @RequestHeader(value="Idempotency-Key",required=false) java.util.UUID key) {
+        com.example.eshop.common.security.CurrentCustomer.require(userId);
+        permissions.current();
+        ResponseErrorTemplate cart = key == null ? cartService.removeItemFromCart(userId, cartItemId)
+                : ResponseErrorTemplate.success("Cart updated", shopping.mutate(key,"remove",null,cartItemId,null));
         return ResponseEntity.ok(cart);
     }
 

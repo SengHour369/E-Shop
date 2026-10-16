@@ -13,6 +13,7 @@ import java.util.List;
 @Builder
 public class CategoryResponse {
     private Long id;
+    private long version;
     private String name;
     private String description;
     private String icon;

@@ -50,4 +50,10 @@ class CatalogImageMatcherTest {
         assertThat(response.getCandidates()).isEmpty();
         assertThat(response.isExact()).isFalse();
     }
+    @org.junit.jupiter.api.Test
+    void nonFiniteConfidenceCannotClaimARecognizedProduct() {
+        var result = CatalogImageMatcher.match(java.util.List.of(new VisionLabel("Phone", Double.POSITIVE_INFINITY)),
+                name -> java.util.List.of(new CatalogImageMatcher.ProductMatch(1L,2L,"Phone","SKU","/phone.png")),"req");
+        org.assertj.core.api.Assertions.assertThat(result.getCandidates()).isEmpty();
+    }
 }

@@ -168,8 +168,17 @@ public class AiQuotaService {
             Class<T> type,
             Supplier<ResponseEntity<T>> work
     ) {
+        return processInternal(key, payload, type, work, true);
+    }
+
+    /** Structured button actions perform no model inference, but retain the durable request cache. */
+    public <T> ResponseEntity<T> processRegistered(UUID key, String payload, Class<T> type, Supplier<ResponseEntity<T>> work) {
+        return processInternal(key, payload, type, work, false);
+    }
+
+    private <T> ResponseEntity<T> processInternal(UUID key, String payload, Class<T> type, Supplier<ResponseEntity<T>> work, boolean charge) {
         long user = CurrentActor.userId();
-        boolean free = unlimited();
+        boolean free = !charge || unlimited();
         String id = user + ":" + key;
         String fingerprint = hash(payload);
         AiQuotaRequest accepted = null;

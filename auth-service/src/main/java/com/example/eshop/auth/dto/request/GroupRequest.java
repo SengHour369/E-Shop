@@ -11,12 +11,17 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GroupRequest {
+    @JsonProperty("group_code")
+    @jakarta.validation.constraints.Pattern(regexp = "[A-Z0-9_-]{1,10}")
+    private String groupCode;
+
 
 
     @NotBlank(message = "Group name cannot be blank")
     @JsonProperty("group_name")
     private String name;
 
+    @Size(max = 500)
     private String description;
 
     private String status;

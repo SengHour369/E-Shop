@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.mail.MailSendException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,7 +40,6 @@ public class EmailService {
     /**
      * Send verification email with token (for link-based verification)
      */
-    @Async
     public void sendVerificationEmailWithToken(String toEmail, String token) {
         try {
             String verificationLink = baseUrl + "/api/v1/public/verify?email=" + toEmail + "&code=" + token;
@@ -56,14 +55,13 @@ public class EmailService {
             emailSender.send(message);
             log.info(" Verification email sent to: {}", toEmail);
         } catch (MessagingException e) {
-            log.error(" Failed to send verification email to {}: {}", toEmail, e.getMessage());
+            throw new MailSendException("Unable to prepare verification email", e);
         }
     }
 
     /**
      * Send verification code email (for code-based verification)
      */
-    @Async
     public void sendVerificationCodeEmail(String toEmail, String code) {
         try {
             String subject = "Account Verification";
@@ -80,17 +78,16 @@ public class EmailService {
             emailSender.send(message);
             log.info(" Verification code email sent to: {}", toEmail);
         } catch (MessagingException e) {
-            log.error(" Failed to send verification code email to {}: {}", toEmail, e.getMessage());
+            throw new MailSendException("Unable to prepare verification email", e);
         }
     }
 
     /**
      * Send password reset email
      */
-    @Async
     public void sendPasswordResetEmail(String toEmail, String token) {
         try {
-            String resetLink = baseUrl + "/api/v1/public/reset-password?token=" + token;
+            String resetLink = baseUrl + "/api/v1/public/reset-password-page?token=" + java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8);
 
             MimeMessage message = emailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -103,7 +100,7 @@ public class EmailService {
             emailSender.send(message);
             log.info(" Password reset email sent to: {}", toEmail);
         } catch (MessagingException e) {
-            log.error(" Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+            throw new MailSendException("Unable to prepare password reset email", e);
         }
     }
 

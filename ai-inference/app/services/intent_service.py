@@ -21,6 +21,7 @@ from app.schemas.ai_response import (
     unknown_response,
 )
 from app.services.prompt_service import build_instructions
+from app.services.product_search import extract_product_search
 from app.services.provider_service import AiProviderService
 from app.tools.allowed_tools import requires_confirmation, value_matches
 from app.tools.registry import index_tools
@@ -46,19 +47,30 @@ class IntentService:
         normalized = re.sub(
             r"\s+",
             " ",
-            request.message.strip().lower(),
-        ).rstrip(".!?")
+            request.message.replace("\u200b", "").strip().lower(),
+        ).rstrip(".!?។៖")
 
         explicit_reads = {
             "show my orders": "MY_ORDERS",
             "list my orders": "MY_ORDERS",
             "my orders": "MY_ORDERS",
+            "បង្ហាញការបញ្ជាទិញរបស់ខ្ញុំ": "MY_ORDERS",
+            "មើលការបញ្ជាទិញរបស់ខ្ញុំ": "MY_ORDERS",
+            "ការបញ្ជាទិញរបស់ខ្ញុំ": "MY_ORDERS",
             "show my returns": "MY_RETURNS",
             "list my returns": "MY_RETURNS",
+            "បង្ហាញការត្រឡប់ទំនិញរបស់ខ្ញុំ": "MY_RETURNS",
+            "មើលការប្រគល់ទំនិញត្រឡប់របស់ខ្ញុំ": "MY_RETURNS",
             "show my notifications": "MY_NOTIFICATIONS",
             "my notifications": "MY_NOTIFICATIONS",
+            "បង្ហាញការជូនដំណឹងរបស់ខ្ញុំ": "MY_NOTIFICATIONS",
+            "មើលការជូនដំណឹងរបស់ខ្ញុំ": "MY_NOTIFICATIONS",
+            "ការជូនដំណឹងរបស់ខ្ញុំ": "MY_NOTIFICATIONS",
             "show my latest order status": "MY_ORDER_STATUS",
             "track my latest order": "MY_ORDER_STATUS",
+            "what is the status of my latest order": "MY_ORDER_STATUS",
+            "តាមដានការបញ្ជាទិញចុងក្រោយរបស់ខ្ញុំ": "MY_ORDER_STATUS",
+            "បង្ហាញស្ថានភាពការបញ្ជាទិញចុងក្រោយរបស់ខ្ញុំ": "MY_ORDER_STATUS",
         }
 
         name = explicit_reads.get(normalized)
@@ -76,6 +88,14 @@ class IntentService:
                     parameters={},
                 ),
             )
+
+        search_tool = next((tool for tool in request.tools if tool.name == "PRODUCT_SEARCH"), None)
+        # Older clients supplying query-only schemas keep their existing provider path.
+        if search_tool and {"query", "minPrice", "maxPrice"}.issubset(search_tool.parameters):
+            parameters = extract_product_search(request.message)
+            if parameters is not None:
+                return self.accept(request, ModelDecision(intent="PRODUCT_SEARCH", tool="PRODUCT_SEARCH",
+                                                         confidence=1.0, parameters=parameters))
 
         instructions = build_instructions(request.tools)
 

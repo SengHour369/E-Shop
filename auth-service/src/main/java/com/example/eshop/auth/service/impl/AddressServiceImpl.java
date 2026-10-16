@@ -34,8 +34,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public ResponseErrorTemplate createAddress(AddressRequest request, Long userId) {
-        User user = userRepository.findUserById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        User user = requireOwner(userId);
 
         Address address = AddressMapper.toEntity(request);
 
@@ -45,6 +44,7 @@ public class AddressServiceImpl implements AddressService {
 
         Address savedAddress = addressRepository.save(address);
 
+        if (user.getAddresses() == null) user.setAddresses(new java.util.ArrayList<>());
         user.getAddresses().add(savedAddress);
         userRepository.save(user);
 
@@ -54,6 +54,9 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getAddressById(Long id) {
+        long user = com.example.eshop.common.security.CurrentActor.userId();
+        requireOwner(user);
+        if (!addressRepository.isUserHasAddress(user,id)) throw new ResourceNotFoundException("Address unavailable");
         Address address = addressRepository.findByAddressId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
         return AddressMapper.toResponse(address);
@@ -62,17 +65,18 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getUserAddresses(Long userId, Pageable pageable) {
+        requireOwner(userId);
 
         if (!userRepository.existsByIdAndDeletedFalse(userId)) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
-        List<Address> addresses = addressRepository.findByUserId(userId);
-        return Page.empty();
+        return addressRepository.findOwnedPage(userId,pageable).map(AddressMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ResponseErrorTemplate> getUserAddresses(Long userId) {
+        requireOwner(userId);
         if (!userRepository.existsByIdAndDeletedFalse(userId)) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
@@ -84,6 +88,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public ResponseErrorTemplate updateAddress(Long id, AddressRequest request, Long userId) {
+        requireOwner(userId);
         Optional<Address> address = addressRepository.findByAddressId(id);
            if (address.isEmpty() ) {
               log.info("address not found with id: " + id);
@@ -106,6 +111,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public void deleteAddress(Long id, Long userId) {
+        requireOwner(userId);
         Optional<Address> address = addressRepository.findByAddressId(id);
         if(address.isEmpty() ) {
             log.info("address not found with id: " + id);
@@ -118,7 +124,7 @@ public class AddressServiceImpl implements AddressService {
 
 
         User user = userRepository.findUserById(userId).get();
-        user.getAddresses().remove(address);
+        user.getAddresses().remove(address.get());
         userRepository.save(user);
         address.get().setDeleted(true);
         addressRepository.save(address.get());
@@ -126,6 +132,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public ResponseErrorTemplate setDefaultAddress(Long addressId, Long userId) {
+        requireOwner(userId);
         Optional<Address> address = addressRepository.findByAddressId(addressId);
 
         if (address.isEmpty() ) {
@@ -146,11 +153,18 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getDefaultAddress(Long userId) {
+        requireOwner(userId);
         Optional<Address> address = addressRepository.findDefaultAddressByUserId(userId);
         if (address.isEmpty()) {
             throw new ResourceNotFoundException("No default address found for user");
         }
             return AddressMapper.toResponse(address.get());
 
+    }
+    private User requireOwner(Long userId) {
+        com.example.eshop.common.security.CurrentCustomer.require(userId);
+        return userRepository.findUserById(userId)
+                .filter(User::isEnabled).filter(user -> !Boolean.TRUE.equals(user.getDeleted()))
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Current account unavailable"));
     }
 }

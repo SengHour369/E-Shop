@@ -33,7 +33,7 @@ ERROR_CODES = {
     "DUPLICATE_BRANCH",
     "DUPLICATE_PRODUCT",
     "MISSING_CATEGORY",
-    "UNKNOWN_BRANCH",
+    "UNKNOWN_BRANCH", "UNKNOWN_CATEGORY", "STALE_RESOURCE_VERSION",
     "BRANCH_ACCESS_DENIED",
     "BRANCH_INVENTORY_MISMATCH",
     "IMAGE_ATTACHMENT_REQUIRED",
@@ -41,6 +41,9 @@ ERROR_CODES = {
 }
 
 FIELDS = {
+    "CATEGORY_BULK_UPDATE": ["id", "expectedVersion", "name", "description", "status"],
+    "BRANCH_BULK_UPDATE": ["id", "expectedVersion", "name", "address"],
+    "PRODUCT_BULK_UPDATE": ["id", "expectedVersion", "name", "subCategoryId", "description", "isActive"],
     "CATEGORY_BULK_CREATE": ["name", "description", "status"],
     "BRANCH_BULK_CREATE": ["name", "address"],
     "PRODUCT_BULK_CREATE": ["name", "subCategoryId", "description", "isActive"],
@@ -66,6 +69,7 @@ FIELDS = {
 class MappingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     tool: Literal[
+        "CATEGORY_BULK_UPDATE", "BRANCH_BULK_UPDATE", "PRODUCT_BULK_UPDATE",
         "BRANCH_BULK_CREATE",
         "PRODUCT_BULK_CREATE",
         "CATEGORY_BULK_CREATE",

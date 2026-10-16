@@ -167,11 +167,18 @@ public class  UserServiceImpl implements UserService {
         if (user.isEmpty()) {
             throw new ResourceNotFoundException("User is not found", "id", id);
         }
+        if (request.getStatus() != null && !List.of("ACT", "BLK").contains(request.getStatus())) {
+            throw new BadRequestException("Status must be ACT or BLK");
+        }
         log.info("update user successfully by id is {}", id);
-        user.get().setPassword(passwordEncoder.encode(request.getPassword()));
-        user.get().setFullName(request.getFullName());
-        user.get().setEmail(request.getEmail());
-        user.get().setBirthdate(request.getBirthdate());
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.get().setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        if (request.getFullName() != null) user.get().setFullName(request.getFullName());
+        if (request.getEmail() != null) user.get().setEmail(request.getEmail());
+        if (request.getBirthdate() != null) user.get().setBirthdate(request.getBirthdate());
+        if (request.getPhoneNumber() != null) user.get().setPhone(request.getPhoneNumber());
+        if (request.getStatus() != null) user.get().setStatus(request.getStatus());
 
         return UserMapper.toResponse(this.userRepository.save(user.get()));
     }

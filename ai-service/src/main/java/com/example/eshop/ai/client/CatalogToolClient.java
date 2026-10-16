@@ -13,6 +13,10 @@ import java.util.Map;
 
 @FeignClient(name = "catalog-service")
 public interface CatalogToolClient {
+    @PostMapping(value="/api/v1/product-scanner/recognize", consumes="multipart/form-data")
+    JsonNode recognize(@RequestHeader("Authorization") String token,
+        @org.springframework.web.bind.annotation.RequestPart("image") org.springframework.web.multipart.MultipartFile image);
+
 
     @PostMapping("/internal/ai/promotions/{id}/disable")
     JsonNode disablePromotion(@RequestHeader("Authorization") String token, @PathVariable("id") long id);
@@ -27,7 +31,10 @@ public interface CatalogToolClient {
 
     @GetMapping("/internal/ai/products")
     JsonNode search(@RequestHeader(value = "Authorization", required = false) String token,
-            @RequestParam("query") String query);
+            @RequestParam("query") String query,
+            @RequestParam(value = "minPrice", required = false) java.math.BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) java.math.BigDecimal maxPrice,
+            @RequestParam(value = "inStock", required = false) Boolean inStock);
 
     @GetMapping("/internal/ai/inventory/{skuId}")
     JsonNode inventory(@RequestHeader("Authorization") String token, @PathVariable("skuId") long id);

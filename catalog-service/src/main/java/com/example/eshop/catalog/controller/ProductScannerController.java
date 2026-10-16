@@ -23,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class ProductScannerController {
     private final ProductScannerService scanner;
+    private final com.example.eshop.catalog.scanner.CatalogVisualComparison comparison;
+    private final com.example.eshop.common.security.LivePermissionService permissions;
 
     @PostMapping("/scan")
     public ResponseEntity<APIResponse<ScanResponse>> scan(@Valid @RequestBody ScanRequest request) {
@@ -33,7 +35,8 @@ public class ProductScannerController {
 
     @PostMapping(value = "/recognize", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse<ImageMatchResponse>> recognize(@RequestParam("image") MultipartFile image) {
-        ImageMatchResponse body = scanner.recognize(image);
+        permissions.current();
+        ImageMatchResponse body = comparison.compare(image, scanner.recognize(image));
         return ResponseEntity.ok(APIResponse.success(body.getMessage(), 200, body));
     }
 

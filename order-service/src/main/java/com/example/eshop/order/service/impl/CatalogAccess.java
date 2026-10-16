@@ -45,6 +45,10 @@ public class CatalogAccess {
         );
     }
 
+    public CheckoutResult quote(Long userId, List<CheckoutRequest.Line> items) {
+        return client.quote(token(), new CheckoutRequest(1L, userId, items));
+    }
+
     public CheckoutResult reserve(CheckoutRequest request) {
         return client.reserve(token(), request);
     }

@@ -30,7 +30,7 @@ class CustomerCancellationTest {
     @Test void savesSelectedReasonInExistingAuditRecordAndCancelsOnlyOwnedPendingOrders() {
         var repo=mock(OrderRepository.class);var cancellations=mock(OrderCancelationRepository.class);
         @SuppressWarnings("unchecked") ObjectProvider<AutomationEvents> events=mock(ObjectProvider.class);
-        var service=new OrderServiceImpl(events,repo,cancellations,mock(OrderMapper.class),mock(OrderItemMapper.class),mock(CheckoutCoordinator.class));
+        var service=new OrderServiceImpl(events,repo,cancellations,mock(OrderMapper.class),mock(OrderItemMapper.class),mock(CheckoutCoordinator.class),mock(com.example.eshop.common.security.LivePermissionService.class));
         var auth=new UsernamePasswordAuthenticationToken("customer",null,List.of());auth.setDetails(Map.of("userId",7L));SecurityContextHolder.getContext().setAuthentication(auth);
         var order=new OrderDetail();order.setId(1L);order.setUserId(7L);order.setOrderNumber("ORD-1");order.setStatus("PENDING");order.setTotalAmount(BigDecimal.TEN);
         when(repo.lockById(1L)).thenReturn(Optional.of(order));when(repo.save(order)).thenReturn(order);

@@ -10,7 +10,7 @@ ALLOWED_PARAMETER_TYPES = frozenset({"boolean", "integer", "number", "string"})
 
 # Spring Boot makes the final risk decision. These names ask for confirmation.
 WRITE_TOOLS = frozenset({
-    "ORDER_CANCEL",
+    "ADMIN_IMPORT_DRAFT", "ORDER_CANCEL", "CART_ADD", "CART_UPDATE", "CART_REMOVE", "ORDER_CREATE", "PAYMENT_INITIATE_KHQR", "RETURN_CREATE",
     "PROMOTION_CREATE",
     "PROMOTION_DISABLE",
     "PAYMENT_REFUND",

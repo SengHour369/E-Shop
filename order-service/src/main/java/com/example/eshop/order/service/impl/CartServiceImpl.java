@@ -33,11 +33,24 @@ public class CartServiceImpl implements CartService {
     private final CatalogAccess catalog;
 
     @Override
-    @Transactional(readOnly = true)
     public ResponseErrorTemplate getCartByUserId(Long userId) {
         com.example.eshop.common.security.CurrentCustomer.require(userId);
-        Cart cart = cartRepository.findByUserIdWithItems(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user id: " + userId));
+        Cart cart = cartRepository.lockByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+        if (cart.getCheckoutOrderId() == null && !cart.getCartItems().isEmpty()) {
+            // Basket-wide promotion thresholds must see all items, exactly as checkout does.
+            var quote = catalog.quote(userId, cart.getCartItems().stream()
+                    .map(item -> new com.example.eshop.common.dto.CheckoutRequest.Line(item.getProductSkuId(), item.getQuantity())).toList());
+            var prices = quote.items().stream().collect(java.util.stream.Collectors.toMap(
+                    com.example.eshop.common.dto.CheckoutResult.Line::productSkuId, java.util.function.Function.identity()));
+            for (var item : cart.getCartItems()) {
+                var line = prices.get(item.getProductSkuId());
+                if (line == null || !item.getQuantity().equals(line.quantity()) || line.finalPrice() == null || line.finalPrice().signum() < 0)
+                    throw new com.example.eshop.common.exception.BusinessLogicException("Catalog quote does not match the cart");
+                item.setTotalPrice(line.finalPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            }
+            updateCartTotals(cart);
+        }
         return cartMapper.toResponse(cart);
     }
 
@@ -48,12 +61,11 @@ public class CartServiceImpl implements CartService {
             cart.setCartItems(new ArrayList<>());
         }
 
-        // Catalog is authoritative; legacy unit_price input is ignored.
-        BigDecimal unitPrice = catalog.quote(userId, request.getProductSkuId(), request.getQuantity()).items().get(0).finalPrice();
-
         Optional<CartItem> existingItem = cart.getCartItems().stream()
-                .filter(item -> item.getProductSkuId().equals(request.getProductSkuId()))
-                .findFirst();
+                .filter(item -> item.getProductSkuId().equals(request.getProductSkuId())).findFirst();
+        long requestedQuantity = Math.addExact(existingItem.map(CartItem::getQuantity).orElse(0L), request.getQuantity());
+        if (requestedQuantity > 999) throw new com.example.eshop.common.exception.BusinessLogicException("Cart quantity must not exceed 999");
+        BigDecimal unitPrice = catalog.quote(userId, request.getProductSkuId(), requestedQuantity).items().get(0).finalPrice();
 
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();

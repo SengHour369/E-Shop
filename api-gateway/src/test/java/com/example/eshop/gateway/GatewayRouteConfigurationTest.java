@@ -48,6 +48,30 @@ class GatewayRouteConfigurationTest {
         });
   }
 
+  @Test void mailEndpointsHavePriorityAndEnoughTimeForSmtp() {
+    var routes = definitions.getRouteDefinitions().collectList().block();
+    var mail = routes.stream().filter(route -> route.getId().equals("auth-email")).findFirst().orElseThrow();
+    assertThat(mail.getOrder()).isLessThan(0);
+    assertThat(mail.getMetadata().get("response-timeout").toString()).isEqualTo("30000");
+    assertThat(mail.getPredicates()).anySatisfy(predicate -> {
+      assertThat(predicate.getName()).isEqualTo("Method");
+      assertThat(predicate.getArgs().values()).contains("POST");
+    });
+    assertThat(mail.getFilters().get(0).getArgs().values()).contains("authEmailCB");
+  }
+
+  @Test void imageUploadsUseDedicatedTimeoutWithoutChangingScannerRoutes() {
+    var routes = definitions.getRouteDefinitions().collectList().block();
+    var upload = routes.stream().filter(route -> route.getId().equals("catalog-image-upload")).findFirst().orElseThrow();
+    assertThat(upload.getOrder()).isLessThan(0);
+    assertThat(upload.getMetadata().get("response-timeout").toString()).isEqualTo("120000");
+    assertThat(upload.getPredicates()).anySatisfy(predicate -> {
+      assertThat(predicate.getName()).isEqualTo("Header");
+      assertThat(predicate.getArgs().values()).contains("Content-Type", "multipart/form-data.*");
+    });
+    assertThat(upload.getPredicates().get(0).getArgs().values()).noneMatch(value -> value.contains("product-scanner"));
+  }
+
   @Test void seedImagesArePublicButImageManagementRemainsProtected() {
     client.get().uri("/api/v1/category-icons/seed/laptops.svg").exchange()
         .expectStatus().isEqualTo(503);

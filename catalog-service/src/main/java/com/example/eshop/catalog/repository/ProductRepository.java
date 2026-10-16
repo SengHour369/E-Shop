@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Product> {
+    @Query("select (count(p)>0) from Product p where lower(p.name)=lower(:name) and p.subCategory.id=:category and p.id<>:id and (p.deleted=false or p.deleted is null)")
+    boolean existsImportDuplicateExcept(@Param("name") String name,@Param("category")long category,@Param("id")long id);
     @Query("select (count(p)>0) from Product p where lower(p.name)=lower(:name) and p.subCategory.id=:category and (p.deleted=false or p.deleted is null)")
     boolean existsImportDuplicate(@Param("name") String name,@Param("category")long category);
     @Query("""
@@ -60,7 +62,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("""
             select p from Product p
-            where (p.deleted is null or p.deleted = false)
+            where (p.deleted is null or p.deleted = false) and p.isActive = true
               and (lower(p.name) = lower(:name) or lower(p.name) like lower(concat('%', :name, '%')))
             order by case when lower(p.name) = lower(:name) then 0 else 1 end, p.id
             """)

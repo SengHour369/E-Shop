@@ -43,3 +43,11 @@ async def test_product_mapping_cannot_infer_protected_image_references():
     assert result["mapping"] == {"Title": "name", "Category": "subCategoryId"}
     assert result["confirmationRequired"]
 
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tool", ["CATEGORY_BULK_UPDATE", "BRANCH_BULK_UPDATE", "PRODUCT_BULK_UPDATE"])
+async def test_update_mapping_keeps_version_and_id_as_real_header_references(tool):
+    provider = SimpleNamespace(route=AsyncMock(return_value={"intent": "IMPORT_MAPPING", "parameters": {"id": "Record", "expectedVersion": "Version", "name": "Name", "url": "API"}}))
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(import_provider=provider)))
+    result = await suggest(MappingRequest(tool=tool, headers=["Record", "Version", "Name", "API"]), request)
+    assert result == {"mapping": {"Record": "id", "Version": "expectedVersion", "Name": "name"}, "confirmationRequired": True}

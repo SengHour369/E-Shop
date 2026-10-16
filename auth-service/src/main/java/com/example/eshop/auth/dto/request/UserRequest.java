@@ -18,5 +18,6 @@ public class UserRequest{
     private String fullName;
     private String phoneNumber;
     private String birthdate;
+    private String status;
 
 }

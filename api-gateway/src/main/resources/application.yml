@@ -114,6 +114,19 @@ spring:
                   args:
                     name: paymentServiceCB
                     fallbackUri: forward:/fallback/payment
+            - id: auth-email
+              order: -10
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/v1/public/register,/api/v1/public/resend,/api/v1/public/forgot-password
+                - Method=POST
+              metadata:
+                response-timeout: ${AUTH_EMAIL_RESPONSE_TIMEOUT_MS:30000}
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: authEmailCB
+                    fallbackUri: forward:/fallback/auth
             - id: auth-service
               uri: lb://auth-service
               predicates:
@@ -129,6 +142,20 @@ spring:
                 - Path=/api/v1/product-scanner/recognize
               metadata:
                 response-timeout: 3600000
+            - id: catalog-image-upload
+              order: -10
+              uri: lb://catalog-service
+              predicates:
+                - Path=/api/v1/products/**,/api/v1/categories/**,/api/v1/subcategories/**,/api/v1/category-icons/**,/api/v1/brand-logos/**
+                - Method=POST,PUT,PATCH
+                - Header=Content-Type, multipart/form-data.*
+              metadata:
+                response-timeout: ${IMAGE_UPLOAD_RESPONSE_TIMEOUT_MS:120000}
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: imageUploadCB
+                    fallbackUri: forward:/fallback/catalog
             - id: catalog-service
               uri: lb://catalog-service
               predicates:
@@ -264,6 +291,10 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 5
   timelimiter:
     instances:
+      imageUploadCB:
+        timeout-duration: ${IMAGE_UPLOAD_GATEWAY_TIMEOUT:120s}
+      authEmailCB:
+        timeout-duration: ${AUTH_EMAIL_GATEWAY_TIMEOUT:30s}
       aiServiceCB:
         timeout-duration: ${AI_GATEWAY_TIMEOUT:30s}
     configs:

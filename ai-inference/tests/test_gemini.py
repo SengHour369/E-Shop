@@ -115,3 +115,20 @@ async def test_missing_key_does_not_call_google():
         with pytest.raises(AiRouteError) as caught:
             await provider(http,key="").route("Rules",message="Hello",tools=[])
     assert caught.value.status == 503 and called == []
+
+
+@pytest.mark.asyncio
+async def test_gemini_compares_original_and_actual_catalog_image_without_product_authority():
+    seen = {}
+    async def handler(request):
+        seen.update(json.loads(request.content))
+        return httpx.Response(200, json=output('{"matches":[{"index":0,"confidence":0.91}]}'))
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        result = await provider(http).compare_products(media_type="image/jpeg", image_base64="original-photo",
+            candidates=[{"mediaType":"image/jpeg","imageBase64":"catalog-photo"}])
+    assert result == {"matches":[{"index":0,"confidence":0.91}]}
+    parts = seen["contents"][0]["parts"]
+    assert parts[1]["inlineData"]["data"] == "original-photo"
+    assert parts[3]["inlineData"]["data"] == "catalog-photo"
+    assert "barcode" in str(seen["systemInstruction"]).lower()
+    assert "productId" not in json.dumps(seen)

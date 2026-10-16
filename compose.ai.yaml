@@ -68,8 +68,9 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
       LOG_LEVEL: ${AI_LOG_LEVEL:-INFO}
+      AI_VISION_SERVICE_KEY: ${AI_VISION_SERVICE_KEY:-}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready')"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -126,6 +127,7 @@ services:
     environment:
       AI_IMPORT_SIGNING_KEY: ${AI_IMPORT_SIGNING_KEY:-}
       SCANNER_AI_INFERENCE_URL: http://ai-inference:8000
+      AI_VISION_SERVICE_KEY: ${AI_VISION_SERVICE_KEY:-}
 volumes:
   kafka_data:
   ai_db_data:

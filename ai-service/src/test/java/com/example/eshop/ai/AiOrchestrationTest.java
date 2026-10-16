@@ -189,12 +189,48 @@ class AiOrchestrationTest {
     @Test
     void guestCanSearchPublicProducts() throws Exception {
         intent(AiIntent.PRODUCT_SEARCH, "{\"query\":\"shoes\"}");
-        when(catalog.search(isNull(), eq("shoes"))).thenReturn(mapper.readTree("[{\"id\":42}]"));
+        when(catalog.search(isNull(), eq("shoes"), isNull(), isNull(), isNull())).thenReturn(mapper.readTree("[{\"id\":42}]"));
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"Show shoes\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.data[0].id").value(42));
         verifyNoInteractions(permissions);
+    }
+
+    @Test
+    void productSearchForwardsValidatedPriceAndStockFilters() throws Exception {
+        intent(AiIntent.PRODUCT_SEARCH, "{\"query\":\"phone\",\"maxPrice\":300,\"inStock\":true}");
+        when(catalog.search(isNull(), eq("phone"), isNull(), eq(new java.math.BigDecimal("300")), eq(true)))
+                .thenReturn(mapper.readTree("[{\"id\":24,\"name\":\"Phone\",\"images\":[\"https://example.test/phone.png\"],\"skus\":[{\"id\":88,\"effectivePrice\":240,\"available\":5}]}]"));
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"រកទូរស័ព្ទតម្លៃក្រោម ៣០០ ដុល្លារ\",\"language\":\"km\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.cardType").value("ProductList"))
+                .andExpect(jsonPath("$.result.data[0].skus[0].effectivePrice").value(240));
+        verify(catalog).search(isNull(), eq("phone"), isNull(), eq(new java.math.BigDecimal("300")), eq(true));
+    }
+
+    @Test
+    void invalidProductPriceRangeCannotCallCatalog() throws Exception {
+        intent(AiIntent.PRODUCT_SEARCH, "{\"query\":\"phone\",\"minPrice\":500,\"maxPrice\":300}");
+        request(token(7), UUID.randomUUID().toString()).andExpect(jsonPath("$.errorCode").value("INVALID_PARAMETERS"));
+        verifyNoInteractions(catalog);
+    }
+
+    @Test
+    void emptyProductSearchHasExplicitNoResultsMessage() throws Exception {
+        intent(AiIntent.PRODUCT_SEARCH, "{\"query\":\"phone\"}");
+        when(catalog.search(isNull(), eq("phone"), isNull(), isNull(), isNull())).thenReturn(mapper.readTree("[]"));
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"Find phones\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.message").value(org.hamcrest.Matchers.containsString("No matching products")));
+    }
+
+    @Test
+    void productServiceFailureIsSafeAndNotPresentedAsProducts() throws Exception {
+        intent(AiIntent.PRODUCT_SEARCH, "{\"query\":\"phone\"}");
+        when(catalog.search(isNull(), eq("phone"), isNull(), isNull(), isNull())).thenThrow(new IllegalStateException("private upstream details"));
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"Find phones\"}"))
+                .andExpect(jsonPath("$.cardType").value("ErrorCard"))
+                .andExpect(jsonPath("$.result.message").value("Product search is temporarily unavailable. Please try again."));
     }
 
     @Test
@@ -380,6 +416,127 @@ class AiOrchestrationTest {
                 .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.code").value("AI_DAILY_LIMIT_EXCEEDED")).andExpect(jsonPath("$.used").value(5));
         mvc.perform(get("/api/ai/quota").header("Authorization",bearer)).andExpect(status().isOk()).andExpect(jsonPath("$.remaining").value(0));
     }
+    @Test void revokedAccountCannotReplayCachedAiResponse() throws Exception {
+        String bearer = token(901, "USER"); String key = UUID.randomUUID().toString();
+        intent(AiIntent.SKU_GET, "{\"skuId\":1}");
+        when(catalog.sku(anyString(), anyLong())).thenReturn(mapper.readTree("{\"id\":1}"));
+        request(bearer, key).andExpect(status().isOk());
+        doThrow(new org.springframework.security.access.AccessDeniedException("disabled")).when(permissions).current();
+        request(bearer, key).andExpect(status().isForbidden());
+        verify(catalog, times(1)).sku(anyString(), anyLong());
+        verify(provider, times(1)).detect(anyString(), anyList());
+    }
+
+    @Test void revokedFunctionCannotReplayPreviouslyCachedAdminData() throws Exception {
+        String bearer = token(902, "ADMIN"); String key = UUID.randomUUID().toString();
+        intent(AiIntent.ADMIN_ORDER_LIST, "{}");
+        when(orders.admin(anyString(), isNull(), isNull())).thenReturn(mapper.readTree("[]"));
+        request(bearer, key).andExpect(status().isOk());
+        doReturn(new com.example.eshop.common.security.PermissionSnapshot(902, true, Set.of())).when(permissions).current();
+        request(bearer, key).andExpect(status().isForbidden());
+        verify(orders, times(1)).admin(anyString(), isNull(), isNull());
+    }
+
+    @Test void executeKeyCannotMasqueradeAsAConfirmationKey() throws Exception {
+        String bearer = token(903, "USER"); UUID key = UUID.randomUUID();
+        intent(AiIntent.SKU_GET, "{\"skuId\":1}");
+        when(catalog.sku(anyString(), anyLong())).thenReturn(mapper.readTree("{\"id\":1}"));
+        request(bearer, key.toString()).andExpect(status().isOk());
+        mvc.perform(post("/api/ai/confirm/" + key).header("Authorization", bearer)).andExpect(status().isConflict());
+        verify(confirmations, never()).consume(any());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+        "{\"success\":false,\"status\":200}",
+        "{\"errorCode\":\"PROVIDER_ERROR\"}",
+        "{\"errorCode\":\"1\"}",
+        "{\"status\":\"503\"}",
+        "null"
+    })
+    void errorEnvelopesCannotBecomeSuccessfulToolResults(String body) throws Exception {
+        intent(AiIntent.SKU_GET, "{\"skuId\":1}");
+        when(catalog.sku(anyString(), anyLong())).thenReturn(mapper.readTree(body));
+        request(token(904, "ADMIN"), UUID.randomUUID().toString()).andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.errorCode").value("DOWNSTREAM_REJECTED"));
+    }
+
+    @Test void customerIdentityCannotBePassedAsAToolArgument() throws Exception {
+        intent(AiIntent.MY_ORDERS, "{\"userId\":999}");
+        request(token(905, "USER"), UUID.randomUUID().toString()).andExpect(status().isUnprocessableEntity());
+        verifyNoInteractions(orders);
+    }
+
+    @Test void structuredProductDetailsCannotChooseAnArbitraryEndpoint() throws Exception {
+        when(catalog.product(anyString(), eq(24L))).thenReturn(mapper.readTree("{\"id\":24,\"name\":\"Phone\",\"skus\":[]}"));
+        mvc.perform(post("/api/ai/tools/PRODUCT_DETAIL").header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content("{\"id\":24}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.id").value(24));
+        mvc.perform(post("/api/ai/tools/PRODUCT_DETAIL").header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content("{\"id\":24,\"url\":\"https://unapproved.example\"}"))
+                .andExpect(status().isUnprocessableEntity());
+        verify(catalog,times(1)).product(anyString(),eq(24L)); verifyNoInteractions(provider);
+    }
+
+    @Test void cartWritesRequireConfirmationAndForwardTheConfirmationKey() throws Exception {
+        UUID confirmation = UUID.randomUUID();
+        var parameters = mapper.readTree("{\"skuId\":88,\"quantity\":2}");
+        when(confirmations.prepare(eq(AiIntent.CART_ADD), any())).thenReturn(mapper.readTree("{\"confirmationId\":\""+confirmation+"\"}"));
+        mvc.perform(post("/api/ai/tools/CART_ADD").header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content(parameters.toString()))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.errorCode").value("CONFIRMATION_REQUIRED"));
+        verifyNoInteractions(orders);
+        when(confirmations.consume(confirmation)).thenReturn(new AiConfirmationService.Pending(AiIntent.CART_ADD,parameters));
+        when(orders.changeCart(anyString(),eq(confirmation.toString()),eq("add"),eq(parameters))).thenReturn(mapper.readTree("{\"items\":[],\"total_price\":20}"));
+        mvc.perform(post("/api/ai/confirm/"+confirmation).header("Authorization",token(7)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("SUCCESS"));
+        mvc.perform(post("/api/ai/confirm/"+confirmation).header("Authorization",token(7))).andExpect(status().isOk());
+        verify(orders,times(1)).changeCart(anyString(),eq(confirmation.toString()),eq("add"),eq(parameters));
+    }
+
+    @Test void adminDraftRejectsCustomersAndRevokedDomainPermissionBeforeStaging() throws Exception {
+        var parameters=mapper.createObjectNode().put("toolType","CATEGORY_BULK_CREATE")
+            .put("valuesJson","{\"name\":\"Phone\",\"status\":true}");
+        mvc.perform(post("/api/ai/tools/ADMIN_IMPORT_DRAFT").header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content(parameters.toString())).andExpect(status().isForbidden());
+        doReturn(new com.example.eshop.common.security.PermissionSnapshot(7,true,Set.of("IMPORT_UPLOAD"))).when(permissions).current();
+        doThrow(new org.springframework.security.access.AccessDeniedException("Denied")).when(permissions).require("CATEGORY_CREATE");
+        mvc.perform(post("/api/ai/tools/ADMIN_IMPORT_DRAFT").header("Authorization",token(7,"ADMIN")).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content(parameters.toString())).andExpect(status().isForbidden());
+        verifyNoInteractions(confirmations,catalog);
+    }
+
+    @Test void structuredToolsCannotSpoofCustomerOrCallDisabledRefunds() throws Exception {
+        mvc.perform(post("/api/ai/tools/CART_GET").header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content("{\"userId\":8}"))
+                .andExpect(status().isUnprocessableEntity());
+        mvc.perform(post("/api/ai/tools/RETURN_CREATE").header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(orders);
+    }
+
+    @Test void photoToolIsAuthenticatedIdempotentAndBoundToTheUploadRequest() throws Exception {
+        var image = new org.springframework.mock.web.MockMultipartFile("image","photo.jpg","image/jpeg",new byte[]{(byte)255,(byte)216,(byte)255,0});
+        when(catalog.recognize(anyString(),any())).thenReturn(mapper.readTree("{\"code\":200,\"data\":{\"matchType\":\"AI_VISUAL_COMPARISON\",\"requiresSelection\":true,\"candidates\":[{\"productId\":24,\"name\":\"Phone\",\"confidence\":0.8}]}}"));
+        String key = UUID.randomUUID().toString();
+        for(int i=0;i<2;i++) mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/ai/visual-search")
+                .file(image).header("Authorization",token(7)).header("Idempotency-Key",key))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.candidates[0].productId").value(24));
+        verify(catalog,times(1)).recognize(anyString(),any()); verifyNoInteractions(provider);
+        mvc.perform(post("/api/ai/tools/PRODUCT_VISUAL_SEARCH").header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json").content("{\"uploadId\":\"invented\"}"))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.errorCode").value("IMAGE_ATTACHMENT_REQUIRED"));
+        verify(catalog,times(1)).recognize(anyString(),any());
+    }
+    @Test void invalidPhotoIsRejectedWithoutCallingVision() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/ai/visual-search")
+                .file(new org.springframework.mock.web.MockMultipartFile("image","file.txt","text/plain",new byte[]{1}))
+                .header("Authorization",token(7)).header("Idempotency-Key",UUID.randomUUID().toString()))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.errorCode").value("INVALID_IMAGE"));
+        verifyNoInteractions(catalog,provider);
+    }
+
 }
 
 

@@ -13,3 +13,7 @@ class AiProvider(ABC):
     @abstractmethod
     async def identify_products(self, *, media_type: str, image_base64: str) -> dict:
         """Return product-name suggestions. Do not return catalog ids or prices."""
+
+    async def compare_products(self, *, media_type: str, image_base64: str, candidates: list[dict]) -> dict:
+        from app.core.errors import AiRouteError, AI_PROVIDER_ERROR
+        raise AiRouteError(AI_PROVIDER_ERROR, "Visual image comparison is unavailable for this provider.", 503)

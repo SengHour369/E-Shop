@@ -148,7 +148,7 @@ ai-inference/
 │
 ├── requirements.txt
 ├── Dockerfile
-├── .env.example
+├── .env
 └── README.md
 ```
 

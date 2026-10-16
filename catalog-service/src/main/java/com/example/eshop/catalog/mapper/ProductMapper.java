@@ -36,7 +36,7 @@ public class ProductMapper {
                         .toList();
 
         return ProductResponse.builder()
-                .id(product.getId())
+                .id(product.getId()).version(product.getVersion())
                 .name(product.getName())
                 .description(product.getDescription())
                 .skus(skuResponses)

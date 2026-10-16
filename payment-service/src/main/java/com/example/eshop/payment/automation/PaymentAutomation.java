@@ -4,6 +4,7 @@ import com.example.eshop.common.automation.*;
 import com.example.eshop.common.exception.BusinessLogicException;
 import com.example.eshop.common.security.CurrentActor;
 import com.example.eshop.payment.bakong.service.BakongService;
+import com.example.eshop.payment.bakong.KhqrType;
 import com.example.eshop.payment.bakong.dto.*;
 import com.example.eshop.payment.model.*;
 import com.example.eshop.payment.repository.*;
@@ -51,17 +52,13 @@ public class PaymentAutomation implements CommerceHandler {
     @Value("${automation.acquiring-bank:}")
     private String acquiringBank;
 
+    @Value("${bakong.khqr-type:MERCHANT}")
+    private KhqrType khqrType = KhqrType.MERCHANT;
+
     @jakarta.annotation.PostConstruct
     public void validateMerchantConfiguration() {
-        if (recipient == null
-                || recipient.isBlank()
-                || merchantName.isBlank()
-                || merchantId.isBlank()
-                || acquiringBank.isBlank()) {
-            throw new IllegalStateException(
-                    "Explicit KHQR merchant configuration is required "
-                            + "when automation is enabled"
-            );
+        if (!khqrType.configured(recipient, merchantName, merchantId, acquiringBank)) {
+            throw new IllegalStateException("KHQR account configuration is required; MERCHANT mode also requires registered merchant details");
         }
     }
 
@@ -114,13 +111,7 @@ public class PaymentAutomation implements CommerceHandler {
             return;
         }
 
-        if (merchantName.isBlank()
-                || merchantId.isBlank()
-                || acquiringBank.isBlank()
-                || recipient == null
-                || recipient.isBlank()) {
-            throw new IllegalStateException("Merchant configuration required");
-        }
+        validateMerchantConfiguration();
 
         if (order.amount() == null
                 || order.amount().signum() <= 0
@@ -355,8 +346,7 @@ public class PaymentAutomation implements CommerceHandler {
         var order = orders.get(orderId);
 
         if (order == null
-                || !CurrentActor.has("ADMIN")
-                && order.userId() != CurrentActor.userId()) {
+                || order.userId() != CurrentActor.userId()) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "Order unavailable"
             );

@@ -37,12 +37,20 @@ class CheckoutIntegrationTest {
     @Configuration @EntityScan("com.example.eshop.order.model")
     @EnableJpaRepositories("com.example.eshop.order.repository")
     @Import({CheckoutCoordinator.class, OrderMapper.class, OrderItemMapper.class,
-        CartServiceImpl.class, CartMapper.class, CartItemMapper.class})
+        CartServiceImpl.class, CartMapper.class, CartItemMapper.class, AiShoppingService.class})
     static class Config {
+        @Bean com.fasterxml.jackson.databind.ObjectMapper mapper() { return new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules(); }
+        @Bean OrderService orderService() { return mock(OrderService.class); }
+        @Bean com.example.eshop.order.automation.CheckoutAddressVerifier verifier() { return mock(com.example.eshop.order.automation.CheckoutAddressVerifier.class); }
+        @Bean org.springframework.data.redis.core.StringRedisTemplate redis() { return mock(org.springframework.data.redis.core.StringRedisTemplate.class); }
         @Bean TransactionTemplate transactions(PlatformTransactionManager m) { return new TransactionTemplate(m); }
         @Bean CatalogAccess catalog() { return mock(CatalogAccess.class); }
         @Bean com.example.eshop.common.automation.AutomationEvents automation() { return mock(com.example.eshop.common.automation.AutomationEvents.class); }
     }
+    @Autowired AiShoppingService shopping;
+    @Autowired org.springframework.data.redis.core.StringRedisTemplate redis;
+    @Autowired com.example.eshop.order.automation.CheckoutAddressVerifier verifier;
+    @Autowired OrderService orderService;
     @Autowired CheckoutCoordinator checkout;
     @Autowired CartServiceImpl carts;
     @Autowired CartRepository cartRepository;
@@ -54,7 +62,12 @@ class CheckoutIntegrationTest {
     private long user;
 
     @BeforeEach void setup() {
-        reset(catalog,automation); user=++sequence;
+        reset(catalog,automation,redis,verifier,orderService); user=++sequence;
+        var values = mock(org.springframework.data.redis.core.ValueOperations.class);
+        when(redis.opsForValue()).thenReturn(values);
+        var reviews = new java.util.HashMap<String,String>();
+        doAnswer(invocation -> { reviews.put(invocation.getArgument(0), invocation.getArgument(1)); return null; }).when(values).set(anyString(),anyString(),any(java.time.Duration.class));
+        when(values.get(anyString())).thenAnswer(invocation -> reviews.get(invocation.getArgument(0)));
         var auth = new UsernamePasswordAuthenticationToken("customer", null, List.of());
         auth.setDetails(Map.of("userId",user));
         SecurityContextHolder.getContext().setAuthentication(auth);
@@ -66,6 +79,11 @@ class CheckoutIntegrationTest {
         when(catalog.reserve(any())).thenAnswer(invocation -> result(((com.example.eshop.common.dto.CheckoutRequest)invocation.getArgument(0)).orderId()));
         when(catalog.confirm(anyLong())).thenAnswer(invocation -> result(invocation.getArgument(0)));
         when(catalog.quote(anyLong(), anyLong(), anyLong())).thenReturn(result(1L));
+        when(catalog.quote(anyLong(), org.mockito.ArgumentMatchers.<com.example.eshop.common.dto.CheckoutRequest.Line>anyList())).thenAnswer(invocation -> {
+            java.util.List<com.example.eshop.common.dto.CheckoutRequest.Line> requested = invocation.getArgument(1);
+            var lines = requested.stream().map(line -> new CheckoutResult.Line(line.productSkuId(),line.quantity(),new BigDecimal("100"),new BigDecimal("20"),new BigDecimal("80"),7L,"Sale")).toList();
+            return new CheckoutResult(1L,"QUOTE",lines,lines.stream().map(line->line.finalPrice().multiply(BigDecimal.valueOf(line.quantity()))).reduce(BigDecimal.ZERO,BigDecimal::add));
+        });
     }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
     private CheckoutResult result(Long id) {
@@ -85,6 +103,75 @@ class CheckoutIntegrationTest {
         assertThat(repeated.getId()).isEqualTo(first.getId());
         verify(catalog,times(1)).reserve(any()); verify(catalog,times(1)).confirm(first.getId());
         assertThat(cartRepository.findByUserId(user).orElseThrow().getTotalItems()).isZero();
+    }
+    @Test void cartReviewUsesOneBasketQuoteAndReplacesStaleStoredPrices() {
+        tx.executeWithoutResult(t -> {
+            var cart = cartRepository.lockByUserId(user).orElseThrow();
+            cart.getCartItems().add(CartItemMapper.toEntity(cart,2L,1L,new BigDecimal("999")));
+        });
+        when(catalog.quote(anyLong(), org.mockito.ArgumentMatchers.<com.example.eshop.common.dto.CheckoutRequest.Line>anyList())).thenReturn(
+                new CheckoutResult(1L,"QUOTE",List.of(
+                        new CheckoutResult.Line(1L,2L,new BigDecimal("100"),new BigDecimal("70"),new BigDecimal("30"),7L,"Basket promotion"),
+                        new CheckoutResult.Line(2L,1L,new BigDecimal("50"),BigDecimal.ZERO,new BigDecimal("50"),null,null)),new BigDecimal("110")));
+        var reviewed = (CartResponse)carts.getCartByUserId(user).object();
+        assertThat(reviewed.getTotalPrice()).isEqualByComparingTo("110");
+        verify(catalog).quote(eq(user),org.mockito.ArgumentMatchers.<java.util.List<com.example.eshop.common.dto.CheckoutRequest.Line>>argThat(lines -> lines.size()==2));
+        verify(catalog,never()).quote(anyLong(),anyLong(),anyLong());
+    }
+    @Test void deliveryAddressOwnershipIsRequiredBeforeAnyOrderIsCreated() {
+        doThrow(new com.example.eshop.common.exception.BusinessLogicException("Delivery address does not belong to the customer"))
+                .when(verifier).require(user,1L);
+        assertThatThrownBy(() -> checkout.create(user,request())).hasMessageContaining("does not belong");
+        verify(catalog,never()).reserve(any());
+        assertThat(orders.findByUserIdAndCheckoutKey(user,request().getCheckoutKey())).isEmpty();
+    }
+    @Test void checkoutReviewIsOwnedAndExpiresWithoutAnOrderSideEffect() {
+        var preview = shopping.preview(1L,"CASH_ON_DELIVERY");
+        UUID id = UUID.fromString(preview.path("reviewId").asText());
+        assertThat(shopping.review(id).path("cart").path("total_price").decimalValue()).isEqualByComparingTo("160");
+        verify(verifier).require(user,1L);
+        var other = new UsernamePasswordAuthenticationToken("other",null,List.of()); other.setDetails(Map.of("userId",user+1000));
+        SecurityContextHolder.getContext().setAuthentication(other);
+        assertThatThrownBy(() -> shopping.review(id)).hasMessageContaining("expired or unavailable");
+        verifyNoInteractions(orderService);
+    }
+    @Test void changedPriceRequiresANewCheckoutReviewBeforeOrderCreation() {
+        var preview = shopping.preview(1L,"CASH_ON_DELIVERY");
+        when(catalog.quote(anyLong(), org.mockito.ArgumentMatchers.<com.example.eshop.common.dto.CheckoutRequest.Line>anyList())).thenReturn(new CheckoutResult(1L,"QUOTED",List.of(
+                new CheckoutResult.Line(1L,2L,new BigDecimal("100"),BigDecimal.TEN,new BigDecimal("90"),null,null)),new BigDecimal("180")));
+        UUID id = UUID.fromString(preview.path("reviewId").asText());
+        assertThatThrownBy(() -> shopping.create(id)).hasMessageContaining("Cart or price changed");
+        verifyNoInteractions(orderService);
+    }
+    @Test void cartWriteReceiptsPreventDuplicateAdditionAndConflictingKeyReuse() {
+        UUID key = UUID.randomUUID();
+        var first = shopping.mutate(key,"add",1L,null,1L);
+        var second = shopping.mutate(key,"add",1L,null,1L);
+        assertThat(second.toString()).isEqualTo(first.toString());
+        assertThat(second.path("items").get(0).path("quantity").asLong()).isEqualTo(3);
+        verify(catalog,times(1)).quote(user,1L,3L);
+        assertThatThrownBy(() -> shopping.mutate(key,"add",1L,null,2L)).hasMessageContaining("another cart operation");
+        assertThat(((CartResponse)carts.getCartByUserId(user).object()).getItems().get(0).getQuantity()).isEqualTo(3);
+    }
+    @Test void anotherCustomersCartItemCannotBeUpdated() {
+        long itemId = ((CartResponse)carts.getCartByUserId(user).object()).getItems().get(0).getId();
+        var auth = new UsernamePasswordAuthenticationToken("other", null, List.of()); auth.setDetails(Map.of("userId", user + 1000));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        assertThatThrownBy(() -> shopping.mutate(UUID.randomUUID(),"update",1L,itemId,3L)).hasMessageContaining("Cart item unavailable");
+        verify(catalog,never()).quote(anyLong(),anyLong(),anyLong());
+    }
+    @Test void changedConfirmedPriceReleasesReservationAndNeverEmitsPaymentEvent() {
+        var request = request(); request.setExpectedTotal(new BigDecimal("100"));
+        var result = (OrderResponse)checkout.create(user, request).object();
+        assertThat(result.getStatus()).isEqualTo("FAILED");
+        verify(catalog).release(result.getId()); verify(catalog,never()).confirm(anyLong());
+        verifyNoInteractions(automation);
+        assertThat(cartRepository.findByUserId(user).orElseThrow().getCheckoutOrderId()).isNull();
+    }
+    @Test void changedCartFingerprintCannotCreateAnOrder() {
+        var request = request(); request.setExpectedCartFingerprint("0".repeat(64));
+        assertThatThrownBy(() -> checkout.create(user, request)).hasMessageContaining("Cart changed");
+        verify(catalog,never()).reserve(any());
     }
     @Test void interruptionKeepsCartLockedAndRecoveryFinishesSameOrder() {
         when(catalog.confirm(anyLong())).thenThrow(new IllegalStateException("network unavailable"))

@@ -53,10 +53,34 @@ public class AiExecutionService {
         return result;
     }
 
+    @Transactional(readOnly = true)
+    public Optional<AiExecution> existing(UUID id, String operation) {
+        Optional<AiExecution> result = existing(id);
+        String expected = fingerprint(operation);
+        result.ifPresent(execution -> {
+            if (!expected.equals(execution.getRequestFingerprint())) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.CONFLICT,
+                        "This execution key belongs to another request. Use a new key.");
+            }
+        });
+        return result;
+    }
+
+    private static String fingerprint(String operation) {
+        try {
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(operation.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        } catch (java.security.NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 unavailable", impossible);
+        }
+    }
+
     @Transactional
-    public AiExecution start(UUID id) {
+    public AiExecution start(UUID id, String operation) {
         AiExecution execution = new AiExecution();
         execution.setId(id);
+        execution.setRequestFingerprint(fingerprint(operation));
         execution.setUserId(CurrentActor.userId());
         execution.setRequestId(RequestIds.current());
         execution.setTraceId(MDC.get("traceId"));

@@ -23,6 +23,13 @@ public class GroupServiceImpl implements GroupService {
 
     private final GroupRepository groupRepository;
 
+    private String resolveCode(String requested, String name, String current) {
+        if (requested == null) return generateUniqueGroupCode(name);
+        if (!requested.matches("[A-Z0-9_-]{1,10}")) throw new com.example.eshop.auth.exception.BadRequestException("Invalid group code");
+        if (!requested.equals(current) && groupRepository.existsByGroupCode(requested)) throw new DuplicateResourceException("Group", "code", requested);
+        return requested;
+    }
+
     // Helper: generate unique group code from name
     private String generateUniqueGroupCode(String name) {
         String base = name.toUpperCase().replaceAll("\\s+", "");
@@ -47,7 +54,7 @@ public class GroupServiceImpl implements GroupService {
         log.info("Creating group with name: {}", request.getName());
 
         Group group = GroupMapper.toEntity(
-                generateUniqueGroupCode(request.getName()),
+                resolveCode(request.getGroupCode(), request.getName(), null),
                 request.getName(),
                 request.getDescription(),
                 request.getStatus(),
@@ -86,6 +93,8 @@ public class GroupServiceImpl implements GroupService {
         Group existing = groupRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + id));
         existing.setName(request.getName());
+        if (request.getGroupCode() != null) existing.setGroupCode(resolveCode(request.getGroupCode(), request.getName(), existing.getGroupCode()));
+        if (request.getType() != null) existing.setType(request.getType());
         existing.setDescription(request.getDescription());
         existing.setStatus(request.getStatus());
         if (request.getIsActive() != null) {

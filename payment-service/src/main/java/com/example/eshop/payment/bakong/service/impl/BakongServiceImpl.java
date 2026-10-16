@@ -7,13 +7,7 @@ import com.example.eshop.payment.bakong.dto.GetQRImageRequest;
 import com.example.eshop.payment.bakong.service.BakongService;
 import com.example.eshop.payment.bakong.service.BakongTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import jakarta.validation.Valid;
 import kh.gov.nbc.bakong_khqr.BakongKHQR;
 import kh.gov.nbc.bakong_khqr.model.KHQRCurrency;
@@ -21,6 +15,8 @@ import kh.gov.nbc.bakong_khqr.model.KHQRData;
 import kh.gov.nbc.bakong_khqr.model.KHQRDeepLinkData;
 import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
 import kh.gov.nbc.bakong_khqr.model.MerchantInfo;
+import kh.gov.nbc.bakong_khqr.model.IndividualInfo;
+import com.example.eshop.payment.bakong.KhqrType;
 import kh.gov.nbc.bakong_khqr.model.SourceInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +26,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -51,12 +45,33 @@ public class BakongServiceImpl implements BakongService {
     @Value("${app.base-url}")
     private String appDeepLinkCallback;
 
+    @Value("${bakong.khqr-type:MERCHANT}")
+    private KhqrType khqrType = KhqrType.MERCHANT;
+    @Value("${bakong.city:KH}")
+    private String individualCity = "KH";
+
     private final RestClient restClient;
     private final ObjectMapper mapper;
     private final BakongTokenService bakongTokenService;
 
     @Override
     public KHQRResponse<KHQRData> generateQR(BakongRequest bakongRequest) {
+
+        if (khqrType == KhqrType.INDIVIDUAL) {
+            if (bakongAccountId == null || bakongAccountId.isBlank()) throw new IllegalStateException("Bakong account is required");
+            var individual = new IndividualInfo();
+            individual.setBakongAccountId(bakongAccountId);
+            // This is an account display label, not an invented registered merchant identity.
+            String label = bakongAccountId.split("@", 2)[0];
+            individual.setMerchantName(label.substring(0, Math.min(label.length(), 25)));
+            individual.setMerchantCity(individualCity);
+            individual.setCurrency(KHQRCurrency.valueOf(bakongRequest.currency()));
+            individual.setAmount(bakongRequest.amount());
+            individual.setBillNumber(bakongRequest.billNumber());
+            individual.setPurposeOfTransaction(bakongRequest.purposeOfTransaction());
+            individual.setExpirationTimestamp(System.currentTimeMillis() + bakongRequest.expirationTimestamp() * 60_000L);
+            return BakongKHQR.generateIndividual(individual);
+        }
 
         MerchantInfo merchantInfo = new MerchantInfo();
 
@@ -95,21 +110,7 @@ public class BakongServiceImpl implements BakongService {
                 return "Invalid QR data".getBytes(StandardCharsets.UTF_8);
             }
 
-            String qrCodeText = qr.qr();
-
-            QRCodeWriter qrCodeWriter = new QRCodeWriter();
-
-            Map<EncodeHintType, Object> hints = new HashMap<>();
-            hints.put(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name());
-            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
-            hints.put(EncodeHintType.MARGIN, 1);
-
-            BitMatrix bitMatrix = qrCodeWriter.encode(qrCodeText, BarcodeFormat.QR_CODE, 300, 300, hints);
-
-            ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
-            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
-
-            return pngOutputStream.toByteArray();
+            return com.example.eshop.payment.bakong.BakongQrRenderer.render(qr.qr());
 
         } catch (WriterException e) {
             log.error("Error encoding QR data: {}", e.getMessage());

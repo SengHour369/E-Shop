@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 public class ProductResponse {
     private Long id;
+    private long version;
     private String name;
     private String description;
     private Long SubcategoryId;

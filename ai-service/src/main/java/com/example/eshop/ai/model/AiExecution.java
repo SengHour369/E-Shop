@@ -28,6 +28,9 @@ public class AiExecution {
     @Id
     private UUID id;
 
+    @Column(length = 64)
+    private String requestFingerprint;
+
     @Version
     private Long version;
 

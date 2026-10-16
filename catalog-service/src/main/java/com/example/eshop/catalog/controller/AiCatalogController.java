@@ -25,6 +25,7 @@ import java.util.List;
 public class AiCatalogController {
 
     private final ProductRepository products;
+    private final com.example.eshop.catalog.service.impl.AiProductSearchService productSearch;
     private final ProductSkuRepository skus;
     private final ProductResponseService responses;
     private final PromotionService promotions;
@@ -60,15 +61,11 @@ public class AiCatalogController {
 
     @GetMapping("/products")
     @Transactional(readOnly = true)
-    public Object search(@RequestParam String query) {
-        if (query.isBlank() || query.length() > 120) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST);
-        }
-        var page = products.searchByNameAndActive(query, true,
-                org.springframework.data.domain.PageRequest.of(0, 20));
-        return responses.toProductResponses(page.getContent()).stream()
-                .map(ProductCard::from)
-                .toList();
+    public Object search(@RequestParam String query,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean inStock) {
+        return productSearch.search(query, minPrice, maxPrice, inStock);
     }
 
     @GetMapping("/products/{id}")
@@ -119,17 +116,21 @@ public class AiCatalogController {
 
     public record ProductCard(Long id, String name, String description, List<String> images, List<SkuCard> skus) {
 
-        static ProductCard from(com.example.eshop.catalog.dto.response.ProductResponse product) {
+        public static ProductCard from(com.example.eshop.catalog.dto.response.ProductResponse product) {
             return new ProductCard(product.getId(), product.getName(), product.getDescription(), product.getImage(),
                     product.getSkus().stream().map(SkuCard::from).toList());
         }
     }
 
-    public record SkuCard(Long id, String sku, BigDecimal basePrice, BigDecimal effectivePrice, Long available) {
+    public record SkuCard(Long id, String sku, BigDecimal basePrice, BigDecimal effectivePrice, Long available,
+            Boolean isDefault, boolean hasPromotion, BigDecimal discountAmount, BigDecimal discountPercentage,
+            String promotionName, List<com.example.eshop.catalog.dto.response.ProductAttributeResponse> attributes) {
 
         static SkuCard from(com.example.eshop.catalog.dto.response.ProductSkuResponse sku) {
             Long available = sku.getInventory() == null ? null : sku.getInventory().getAvailableQuantity();
-            return new SkuCard(sku.getId(), sku.getSku(), sku.getPrice(), sku.getFinalPrice(), available);
+            return new SkuCard(sku.getId(), sku.getSku(), sku.getPrice(), sku.getFinalPrice(), available,
+                    sku.getIsDefault(), sku.isHasPromotion(), sku.getDiscountAmount(), sku.getDiscountPercentage(),
+                    sku.getPromotion() == null ? null : sku.getPromotion().promotionName(), sku.getProductAttributeResponse());
         }
     }
 }

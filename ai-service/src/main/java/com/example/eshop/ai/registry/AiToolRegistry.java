@@ -53,6 +53,30 @@ public class AiToolRegistry {
 
     public AiToolRegistry(LivePermissionService permissions) {
         this.permissions = permissions;
+        register(AiIntent.ADMIN_IMPORT_DRAFT, "Stage a category, branch, product, inventory or promotion draft using existing import schemas. toolType is a registered ImportTool name (CATEGORY_BULK_CREATE/UPDATE, BRANCH_BULK_CREATE/UPDATE, PRODUCT_BULK_CREATE/UPDATE, PRODUCT_SKU_BULK_CREATE, INVENTORY_STOCK_IN_BULK, INVENTORY_STOCK_ADJUST_BULK, PROMOTION_BULK_CREATE). valuesJson is a JSON object encoded as a string. No catalog write occurs until the existing validation and independent review/approval workflow completes.", "ai-service", "POST", "/api/ai/imports", "IMPORT_UPLOAD", LOW_RISK_WRITE, true, true,
+                Map.of("toolType",parameter("string",true),"valuesJson",parameter("string",true)));
+        register(AiIntent.PRODUCT_VISUAL_SEARCH, "Visual search requires an authenticated image upload; text cannot supply a trusted image", "catalog-service", "POST", "/api/v1/product-scanner/recognize", AUTHENTICATED, READ_ONLY, false, true, Map.of("uploadId", parameter("string", true)));
+        register(AiIntent.RETURN_CREATE, "Return creation is disabled until its eligibility policy is configured", "order-service", "POST", "/internal/ai/returns", AUTHENTICATED, HIGH_RISK_WRITE, true, false, Map.of("orderId", parameter("integer", true), "skuId", parameter("integer", true), "reason", parameter("string", true)));
+        for (var name : List.of(AiIntent.PRODUCT_DETAIL, AiIntent.PRODUCT_VARIANTS))
+            read(name, "Get real product details and selectable SKU variants", "catalog-service", "/internal/ai/products/{id}", PUBLIC, Map.of("id", parameter("integer", true)));
+        read(AiIntent.PRODUCT_STOCK_CHECK, "Get public SKU price and available stock", "catalog-service", "/internal/ai/skus/{skuId}", PUBLIC, Map.of("skuId", parameter("integer", true)));
+        read(AiIntent.CART_GET, "Get the authenticated customer's cart", "order-service", "/internal/ai/shopping/cart", AUTHENTICATED, Map.of());
+        read(AiIntent.CHECKOUT_PREVIEW, "Refresh cart prices and review a delivery address and payment method before ordering", "order-service", "/internal/ai/shopping/checkout-preview", AUTHENTICATED,
+                Map.of("addressId", parameter("integer", true), "paymentMethod", parameter("string", true)));
+        read(AiIntent.ORDER_LIST, "List the authenticated customer's orders", "order-service", "/internal/ai/orders", AUTHENTICATED, Map.of());
+        read(AiIntent.PAYMENT_GET_STATUS, "Get authoritative payment status for an owned order; never infer payment from a screenshot", "payment-service", "/api/v1/payments/orders/{orderId}/qr", AUTHENTICATED, Map.of("orderId", parameter("integer", true)));
+        read(AiIntent.RETURN_GET_STATUS, "Read the authenticated customer's return status", "order-service", "/internal/ai/returns", AUTHENTICATED, Map.of());
+        read(AiIntent.NOTIFICATION_LIST, "List current customer notifications", "notification-service", "/api/notifications", AUTHENTICATED, Map.of());
+        register(AiIntent.CART_ADD, "Add a SKU to the owned cart after confirmation", "order-service", "POST", "/internal/ai/shopping/cart/add", AUTHENTICATED, LOW_RISK_WRITE, true, true,
+                Map.of("skuId", parameter("integer", true), "quantity", parameter("integer", true)));
+        register(AiIntent.CART_UPDATE, "Set an owned cart item's quantity after confirmation", "order-service", "POST", "/internal/ai/shopping/cart/update", AUTHENTICATED, LOW_RISK_WRITE, true, true,
+                Map.of("cartItemId", parameter("integer", true), "skuId", parameter("integer", true), "quantity", parameter("integer", true)));
+        register(AiIntent.CART_REMOVE, "Remove an owned cart item after confirmation", "order-service", "POST", "/internal/ai/shopping/cart/remove", AUTHENTICATED, LOW_RISK_WRITE, true, true,
+                Map.of("cartItemId", parameter("integer", true)));
+        register(AiIntent.ORDER_CREATE, "Create an order only from an unexpired owned checkout review; requires explicit confirmation", "order-service", "POST", "/internal/ai/shopping/orders", AUTHENTICATED, HIGH_RISK_WRITE, true, true,
+                Map.of("reviewId", parameter("string", true)));
+        register(AiIntent.PAYMENT_INITIATE_KHQR, "Request the Payment Service's KHQR for an owned order after confirmation; never generate QR from model text", "payment-service", "GET", "/api/v1/payments/orders/{orderId}/qr", AUTHENTICATED, HIGH_RISK_WRITE, true, true,
+                Map.of("orderId", parameter("integer", true)));
         read(
                 AiIntent.KNOWLEDGE_SEARCH,
                 "Retrieve approved policy, FAQ or help text. "
@@ -76,7 +100,7 @@ public class AiToolRegistry {
         );
         register(
                 PRODUCT_SEARCH,
-                "Search products; one page",
+                "Search active products by name, brand or category words with optional USD price and stock filters; at most 20 results",
                 "catalog-service",
                 "GET",
                 "/internal/ai/products",
@@ -84,7 +108,8 @@ public class AiToolRegistry {
                 READ_ONLY,
                 false,
                 true,
-                Map.of("query", parameter("string", true))
+                Map.of("query", parameter("string", true), "minPrice", parameter("number", false),
+                        "maxPrice", parameter("number", false), "inStock", parameter("boolean", false))
         );
         register(
                 SKU_GET,
@@ -405,6 +430,11 @@ public class AiToolRegistry {
     }
 
     public void validate(AiToolDefinition tool, JsonNode params) {
+        // Schemas supplied by callers or provider output are never authoritative.
+        tool = tool == null ? null : find(tool.toolName());
+        if (tool == null || !tool.enabled()) {
+            throw new AiFailure("TOOL_DISABLED", AiExecutionStatus.DENIED, "This operation is unavailable through AI.");
+        }
         if (params == null || !params.isObject()) {
             throw invalid("Invalid parameters.");
         }
@@ -423,6 +453,22 @@ public class AiToolRegistry {
 
         if (tool.toolName() == ORDER_GET || tool.toolName() == ORDER_CANCEL) {
             requireOrderNumber(params.path("orderNumber").asText());
+        }
+
+        if (params.hasNonNull("paymentMethod") && !java.util.Set.of("BAKONG", "KHQR", "ABA", "CASH_ON_DELIVERY").contains(params.path("paymentMethod").asText())) throw invalid("Unsupported payment method.");
+        if (params.hasNonNull("reviewId")) {
+            try { java.util.UUID.fromString(params.path("reviewId").asText()); }
+            catch (IllegalArgumentException invalid) { throw invalid("Invalid review ID."); }
+        }
+        if (tool.toolName() == AiIntent.ADMIN_IMPORT_DRAFT) {
+            var draft=AiDraftArguments.parse(params);
+            permissions.require(draft.tool().permission);
+        }
+        if (tool.toolName() == PRODUCT_SEARCH) {
+            if (params.hasNonNull("minPrice") && params.hasNonNull("maxPrice")
+                    && params.get("minPrice").decimalValue().compareTo(params.get("maxPrice").decimalValue()) > 0) {
+                throw invalid("Minimum price must not exceed maximum price.");
+            }
         }
 
         if (tool.toolName() == PROMOTION_CREATE) {
@@ -488,7 +534,15 @@ public class AiToolRegistry {
 
         switch (spec.type()) {
             case "integer" -> requireInteger(key, value);
-            case "number" -> requirePercentage(value);
+            case "number" -> {
+                if ("minPrice".equals(key) || "maxPrice".equals(key)) {
+                    if (!value.isNumber() || !Double.isFinite(value.doubleValue())
+                            || value.decimalValue().signum() < 0
+                            || value.decimalValue().compareTo(new BigDecimal("1000000")) > 0
+                            || value.decimalValue().stripTrailingZeros().scale() > 2) throw invalid("Invalid USD price.");
+                } else requirePercentage(value);
+            }
+            case "boolean" -> { if (!value.isBoolean()) throw invalid("Invalid " + key + "."); }
             default -> requireText(key, value);
         }
     }
@@ -500,7 +554,7 @@ public class AiToolRegistry {
 
         long number = value.longValue();
         long minimum = "threshold".equals(key) ? 0 : 1;
-        boolean aboveMaximum = "threshold".equals(key) && number > MAX_THRESHOLD;
+        boolean aboveMaximum = ("threshold".equals(key) && number > MAX_THRESHOLD) || ("quantity".equals(key) && number > 999);
 
         if (number < minimum || aboveMaximum) {
             throw invalid("Invalid " + key + ".");
@@ -508,7 +562,7 @@ public class AiToolRegistry {
     }
 
     private static void requirePercentage(JsonNode value) {
-        if (!value.isNumber()) {
+        if (!value.isNumber() || !Double.isFinite(value.doubleValue())) {
             throw invalid("Discount must be greater than zero and at most 100.");
         }
 
@@ -529,7 +583,7 @@ public class AiToolRegistry {
         String text = value.textValue();
 
         if (text.isBlank()
-                || text.length() > MAX_TEXT_LENGTH
+                || text.length() > ("valuesJson".equals(key) ? 4000 : MAX_TEXT_LENGTH)
                 || text.chars().anyMatch(Character::isISOControl)) {
             throw invalid("Invalid " + key + ".");
         }

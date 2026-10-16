@@ -29,7 +29,7 @@ public class AiReturnController {
     @GetMapping
     public List<ReturnCard> mine() {
         permissions.current();
-        return returns.findByCustomerId(CurrentActor.userId(), page())
+        return returns.findOwnedByCustomer(CurrentActor.userId(), page())
                 .stream()
                 .map(ReturnCard::from)
                 .toList();

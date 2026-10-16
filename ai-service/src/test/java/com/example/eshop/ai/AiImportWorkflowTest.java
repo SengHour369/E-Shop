@@ -63,6 +63,28 @@ class AiImportWorkflowTest {
     AiImportBatch approved(String... names) {
         var batch = mapped(names); batch = service.submit(batch.getId(),batch.getRevision(),2); actor(2); return service.decide(batch.getId(),batch.getRevision(),"APPROVED","Reviewed");
     }
+    @Test void assistantDraftIsMappedOwnedAndNeverExecutedWithoutReview() {
+        var result=service.stage(new ImportContracts.Row(ImportTool.CATEGORY_BULK_CREATE,Map.of("name","Assistant category","status","true")));
+        var id=UUID.fromString(result.get("batchId").toString());
+        var preview=service.preview(id,0,10,null);
+        assertThat(batches.findById(id).orElseThrow().getOwnerId()).isEqualTo(1);
+        assertThat(result.get("status")).isEqualTo("DRAFT");
+        assertThat(preview.rows().getContent()).hasSize(1);
+        assertThat(preview.rows().getContent().get(0).getValuesJson()).contains("Assistant category");
+        verifyNoInteractions(domain);
+        assertThatThrownBy(()->service.execute(id,(Integer)result.get("revision"))).hasMessageContaining("approved");
+        actor(9);
+        when(permissions.current()).thenReturn(new PermissionSnapshot(9,false,Set.of("IMPORT_UPLOAD")));
+        assertThatThrownBy(()->service.preview(id,0,10,null)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    }
+    @Test void assistantDraftRequiresSpecificDomainPermissionBeforePersistence() {
+        long count=batches.count();
+        when(permissions.current()).thenReturn(new PermissionSnapshot(1,false,Set.of("IMPORT_UPLOAD")));
+        assertThatThrownBy(()->service.stage(new ImportContracts.Row(ImportTool.CATEGORY_BULK_CREATE,Map.of("name","Denied","status","true"))))
+            .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        assertThat(batches.count()).isEqualTo(count);
+    }
+
     @Test void addedRowsAreStagedVersionedAndCannotBeDuplicated() {
         var batch = mapped("Original"); var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0);
         UUID rowId = UUID.randomUUID(); int previousVersion = batch.getRevision();

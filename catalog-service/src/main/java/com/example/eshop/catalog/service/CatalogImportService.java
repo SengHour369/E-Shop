@@ -143,6 +143,29 @@ public class CatalogImportService {
         String duplicate = null, affected = null;
 
         switch (row.tool()) {
+            case CATEGORY_BULK_UPDATE -> {
+                long id=Long.parseLong(v.get("id")); affected=Long.toString(id); duplicate="CATEGORY_UPDATE:"+id;
+                var entity=categories.findByCategoryId(id);
+                if(entity.isEmpty())errors.add("UNKNOWN_CATEGORY");
+                else if(entity.get().getVersion()!=Long.parseLong(v.get("expectedVersion")))errors.add("STALE_RESOURCE_VERSION");
+                if(categories.existsByNameIgnoreCaseAndDeletedFalseAndIdNot(v.get("name"),id))errors.add("DUPLICATE_CATEGORY");
+            }
+            case BRANCH_BULK_UPDATE -> {
+                long id=Long.parseLong(v.get("id")); affected=Long.toString(id); duplicate="BRANCH_UPDATE:"+id;
+                var entity=branches.findById(id);
+                if(entity.isEmpty())errors.add("UNKNOWN_BRANCH");
+                else if(entity.get().getVersion()!=Long.parseLong(v.get("expectedVersion")))errors.add("STALE_RESOURCE_VERSION");
+                if(branches.existsByNameKeyAndIdNot(BranchService.key(v.get("name")),id))errors.add("DUPLICATE_BRANCH");
+            }
+            case PRODUCT_BULK_UPDATE -> {
+                long id=Long.parseLong(v.get("id")); affected=Long.toString(id); duplicate="PRODUCT_UPDATE:"+id;
+                var entity=products.findByIdNotDeleted(id);
+                if(entity.isEmpty())errors.add("UNKNOWN_PRODUCT");
+                else if(entity.get().getVersion()!=Long.parseLong(v.get("expectedVersion")))errors.add("STALE_RESOURCE_VERSION");
+                long category=Long.parseLong(v.get("subCategoryId"));
+                if(subcategories.findById(category).isEmpty())errors.add("MISSING_CATEGORY");
+                if(products.existsImportDuplicateExcept(v.get("name").trim(),category,id))errors.add("DUPLICATE_PRODUCT");
+            }
             case BRANCH_BULK_CREATE -> {
                 duplicate = "BRANCH:" + BranchService.key(v.get("name"));
 
@@ -347,6 +370,9 @@ public class CatalogImportService {
         Map<String, String> data = row.values();
 
         switch (row.tool()) {
+            case CATEGORY_BULK_UPDATE -> { keys.add("CATEGORY_ID:"+data.get("id")); keys.add("CATEGORY:"+data.get("name").toLowerCase(Locale.ROOT)); }
+            case BRANCH_BULK_UPDATE -> { keys.add("BRANCH_ID:"+data.get("id")); keys.add("BRANCH:"+BranchService.key(data.get("name"))); }
+            case PRODUCT_BULK_UPDATE -> { keys.add("PRODUCT_ID:"+data.get("id")); keys.add("PRODUCT:"+data.get("subCategoryId")+":"+data.get("name").trim().toLowerCase(Locale.ROOT)); }
             case BRANCH_BULK_CREATE ->
                     keys.add("BRANCH:" + BranchService.key(data.get("name")));
             case PRODUCT_BULK_CREATE ->
@@ -409,6 +435,16 @@ public class CatalogImportService {
         String id;
 
         switch (row.tool()) {
+            case CATEGORY_BULK_UPDATE -> {
+                id=v.get("id");
+                categoryService.updateCategory(Long.valueOf(id),CategoryRequest.builder().name(v.get("name")).description(v.get("description")).status(Boolean.valueOf(v.get("status"))).build());
+            }
+            case BRANCH_BULK_UPDATE -> id=branchService.update(Long.parseLong(v.get("id")),Long.parseLong(v.get("expectedVersion")),v.get("name"),v.get("address")).getId().toString();
+            case PRODUCT_BULK_UPDATE -> {
+                id=v.get("id");
+                productService.updateProduct(Long.valueOf(id),ProductRequest.builder().name(v.get("name").trim()).description(v.get("description"))
+                        .subCategoryId(Long.valueOf(v.get("subCategoryId"))).isActive(Boolean.valueOf(v.get("isActive"))).build(),List.of(),List.of());
+            }
             case BRANCH_BULK_CREATE ->
                     id = branchService
                             .create(v.get("name"), v.get("address"))

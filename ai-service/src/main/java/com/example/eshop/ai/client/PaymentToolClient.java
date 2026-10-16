@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "payment-service")
 public interface PaymentToolClient {
+    @GetMapping("/api/v1/payments/orders/{orderId}/qr")
+    JsonNode orderQr(@RequestHeader("Authorization") String token, @PathVariable("orderId") long id);
+
 
     @GetMapping("/internal/ai/payments/revenue")
     JsonNode revenue(

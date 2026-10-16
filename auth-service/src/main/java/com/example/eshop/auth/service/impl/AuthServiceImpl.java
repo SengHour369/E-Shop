@@ -132,7 +132,7 @@ public class AuthServiceImpl implements AuthService {
                     String.valueOf(HttpStatus.BAD_REQUEST.value()));
         }
 
-        if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
+        if (user.getVerificationCodeExpiresAt() == null || user.getVerificationCode() == null || user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
             throw new CustomMessageException("Verification code has expired. Please request a new one.",
                     String.valueOf(HttpStatus.GONE.value()));
         }

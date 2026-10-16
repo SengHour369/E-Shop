@@ -3,3 +3,7 @@
 **/target
 .env
 *.log
+
+# Local credentials must not enter Docker build contexts.
+.env.*
+env

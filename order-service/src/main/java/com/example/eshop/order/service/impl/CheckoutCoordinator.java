@@ -36,9 +36,8 @@ public class CheckoutCoordinator {
         CurrentCustomer.require(userId);
         var verifier = addressVerifier.getIfAvailable();
 
-        if (verifier != null) {
-            verifier.require(userId, request.getAddressId());
-        }
+        if (verifier == null) throw new BusinessLogicException("Delivery address verification is unavailable");
+        verifier.require(userId, request.getAddressId());
 
         if (request.getCurrency() != null
                 && !"USD".equalsIgnoreCase(request.getCurrency())) {
@@ -100,6 +99,18 @@ public class CheckoutCoordinator {
                 return cart.getCheckoutOrderId();
             }
 
+            if (request.getReviewedItems() != null) {
+                var reviewed = new java.util.TreeMap<Long,Long>();
+                for (var line : request.getReviewedItems()) {
+                    if (line.skuId() == null || line.quantity() == null || reviewed.put(line.skuId(), line.quantity()) != null)
+                        throw new BusinessLogicException("Invalid reviewed cart.");
+                }
+                var actual = new java.util.TreeMap<Long,Long>();
+                cart.getCartItems().forEach(item -> actual.put(item.getProductSkuId(), item.getQuantity()));
+                if (!actual.equals(reviewed)) throw new BusinessLogicException("Cart changed. Review again before confirming.");
+            }
+            if (request.getExpectedCartFingerprint() != null && !request.getExpectedCartFingerprint().equals(AiShoppingService.cartFingerprint(cart)))
+                throw new BusinessLogicException("Cart changed. Review again before confirming.");
             if (cart.getCartItems().isEmpty()) {
                 throw new BusinessLogicException("Cart is empty");
             }
@@ -110,6 +121,7 @@ public class CheckoutCoordinator {
                     .orderDate(LocalDateTime.now())
                     .status("CHECKOUT_PENDING")
                     .totalAmount(BigDecimal.ZERO)
+                    .expectedTotal(request.getExpectedTotal())
                     .shippingAddressId(request.getAddressId())
                     .paymentMethod(request.getPaymentMethod())
                     .checkoutKey(key)
@@ -190,6 +202,14 @@ public class CheckoutCoordinator {
                 throw ex;
             }
 
+            if (order.getExpectedTotal() != null && order.getExpectedTotal().compareTo(reserved.total()) != 0) {
+                catalog.release(id);
+                order.setStatus("FAILED");
+                order.setCatalogCompleted(true);
+                var cart = carts.lockByUserId(order.getUserId()).orElseThrow();
+                if (Objects.equals(cart.getCheckoutOrderId(), id)) cart.setCheckoutOrderId(null);
+                return; // No payment event and no COD stock confirmation for a changed price.
+            }
             boolean cash = "CASH_ON_DELIVERY".equals(
                     order.getPaymentMethod()
             );

@@ -30,6 +30,9 @@ public class AiToolExecutor {
     private final AiKnowledgeService knowledge;
     private final com.example.eshop.ai.client.AuthToolClient auth;
     private final AiAuditLookupService auditLookup;
+    private final AiImageAttachment imageAttachment;
+    private final AiImportService imports;
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper;
 
     public JsonNode execute(AiToolDefinition tool, JsonNode parameters, String bearer) {
         // Resolve the canonical definition again; callers cannot forge tool metadata.
@@ -38,14 +41,14 @@ public class AiToolExecutor {
         if (tool.risk() != com.example.eshop.ai.enums.AiToolRisk.READ_ONLY) {
             throw new AiFailure("CONFIRMATION_REQUIRED", AiExecutionStatus.DENIED, "Explicit confirmation is required.");
         }
-        return dispatch(tool, parameters, bearer);
+        return dispatch(tool, parameters, bearer, null);
     }
 
     ConfirmedResult executeConfirmed(java.util.UUID confirmationId, String bearer) {
         var pending = confirmations.consume(confirmationId);
         var tool = registry.authorize(pending.intent());
         registry.validate(tool, pending.parameters());
-        return new ConfirmedResult(tool, dispatch(tool, pending.parameters(), bearer));
+        return new ConfirmedResult(tool, dispatch(tool, pending.parameters(), bearer, confirmationId.toString()));
     }
 
     record ConfirmedResult(AiToolDefinition tool, JsonNode data) {
@@ -62,30 +65,46 @@ public class AiToolExecutor {
             }
             return preview;
         }
+        if (tool.toolName() == com.example.eshop.ai.enums.AiIntent.ADMIN_IMPORT_DRAFT) {
+            var row=com.example.eshop.ai.registry.AiDraftArguments.parse(parameters);
+            return mapper.valueToTree(java.util.Map.of("operation",row.tool().name(),"proposedValues",row.values(),"nextStep","Validate and submit this draft for independent review before execution."));
+        }
+        if (tool.toolName() == com.example.eshop.ai.enums.AiIntent.ORDER_CREATE) return orders.review(bearer, parameters.path("reviewId").asText());
         if (tool.toolName() == com.example.eshop.ai.enums.AiIntent.PROMOTION_DISABLE) {
             return catalog.promotion(bearer, parameters.path("id").longValue());
         }
         return null;
     }
 
-    private JsonNode dispatch(AiToolDefinition tool, JsonNode parameters, String bearer) {
+    private JsonNode dispatch(AiToolDefinition tool, JsonNode parameters, String bearer, String key) {
         return switch (tool.toolName()) {
+            case ADMIN_IMPORT_DRAFT -> mapper.valueToTree(imports.stage(com.example.eshop.ai.registry.AiDraftArguments.parse(parameters)));
+            case PRODUCT_VISUAL_SEARCH -> visualSearch(bearer, parameters);
             case KNOWLEDGE_SEARCH -> knowledge.retrieve(parameters.path("query").textValue());
-            case PRODUCT_GET -> catalog.product(bearer, parameters.path("id").longValue());
-            case SKU_GET -> catalog.sku(bearer, parameters.path("skuId").longValue());
-            case PRODUCT_SEARCH -> catalog.search(bearer, parameters.path("query").textValue());
+            case PRODUCT_GET, PRODUCT_DETAIL, PRODUCT_VARIANTS -> catalog.product(bearer, parameters.path("id").longValue());
+            case SKU_GET, PRODUCT_STOCK_CHECK -> catalog.sku(bearer, parameters.path("skuId").longValue());
+            case PRODUCT_SEARCH -> catalog.search(bearer, parameters.path("query").textValue(),
+                    parameters.hasNonNull("minPrice") ? parameters.get("minPrice").decimalValue() : null,
+                    parameters.hasNonNull("maxPrice") ? parameters.get("maxPrice").decimalValue() : null,
+                    parameters.hasNonNull("inStock") ? parameters.get("inStock").booleanValue() : null);
             case INVENTORY_GET -> catalog.inventory(bearer, parameters.path("skuId").longValue());
             case INVENTORY_LOW_STOCK -> catalog.lowStock(
                     bearer,
                     parameters.path("threshold").asLong(DEFAULT_LOW_STOCK_THRESHOLD),
                     LOW_STOCK_PAGE,
                     LOW_STOCK_SIZE);
+            case CART_GET -> orders.cart(bearer);
+            case CHECKOUT_PREVIEW -> orders.checkoutPreview(bearer, parameters.path("addressId").longValue(), parameters.path("paymentMethod").asText());
+            case CART_ADD, CART_UPDATE, CART_REMOVE -> orders.changeCart(bearer, key,
+                    tool.toolName().name().substring(5).toLowerCase(java.util.Locale.ROOT), parameters);
+            case ORDER_CREATE -> createOrder(bearer, parameters);
+            case PAYMENT_INITIATE_KHQR, PAYMENT_GET_STATUS -> payments.orderQr(bearer, parameters.path("orderId").longValue());
             case ORDER_GET -> orders.order(bearer, parameters.path("orderNumber").textValue());
-            case MY_ORDERS -> orders.mine(bearer);
+            case MY_ORDERS, ORDER_LIST -> orders.mine(bearer);
             case MY_ORDER_STATUS -> orders.latest(bearer);
             case MY_PAYMENT_STATUS -> payments.mine(bearer, parameters.path("id").longValue());
-            case MY_RETURNS -> orders.returns(bearer);
-            case MY_NOTIFICATIONS -> notifications.mine(bearer);
+            case MY_RETURNS, RETURN_GET_STATUS -> orders.returns(bearer);
+            case MY_NOTIFICATIONS, NOTIFICATION_LIST -> notifications.mine(bearer);
             case ADMIN_ORDER_LIST -> orders.admin(bearer, parameters.path("status").textValue(), date(parameters));
             case ADMIN_ORDER_SUMMARY -> orders.summary(bearer);
             case ADMIN_PAYMENT_LIST -> payments.admin(bearer, parameters.path("status").textValue(), date(parameters));
@@ -100,6 +119,22 @@ public class AiToolExecutor {
             case ORDER_CANCEL -> orders.cancel(bearer, parameters.path("orderNumber").asText());
             default -> throw new AiFailure("TOOL_DISABLED", AiExecutionStatus.DENIED, "Operation unavailable.");
         };
+    }
+
+    private JsonNode visualSearch(String bearer, JsonNode parameters) {
+        var response = catalog.recognize(bearer, imageAttachment.require(parameters.path("uploadId").asText()));
+        if (response == null || !response.path("data").isObject() || !"200".equals(response.path("code").asText()))
+            throw new AiFailure("VISUAL_SEARCH_UNAVAILABLE",AiExecutionStatus.FAILURE,"Photo recognition is unavailable. Search by product name.");
+        if ("AI_UNAVAILABLE".equals(response.path("data").path("matchType").asText()))
+            throw new AiFailure("VISUAL_SEARCH_UNAVAILABLE",AiExecutionStatus.FAILURE,"Photo recognition is unavailable. Search by product name.");
+        return response.path("data");
+    }
+
+    private JsonNode createOrder(String bearer, JsonNode parameters) {
+        var result = orders.createOrder(bearer, parameters.path("reviewId").asText());
+        if (result != null && java.util.Set.of("FAILED", "CANCELLED").contains(result.path("status").asText()))
+            throw new AiFailure("ORDER_NOT_CREATED", AiExecutionStatus.FAILURE, "The order could not be completed. Review current prices and stock before trying again.");
+        return result;
     }
 
     private static String date(JsonNode parameters) {

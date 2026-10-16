@@ -21,6 +21,7 @@ public class Group extends BaseEntity {
     private String groupCode;
 
     private String name;
+    @Column(length = 500)
     private String description;
     private String status;
     private String type;

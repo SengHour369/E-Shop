@@ -21,17 +21,15 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     public Image uploadImage(MultipartFile imageModel) {
-        try {
-            if (imageModel.isEmpty()) {
-                return null;
-            }
-            Image image = new Image();
-            image.setUrl(cloudinaryService.uploadFile(imageModel, "folder_1"));
-            return image.getUrl() != null ? image : null;
-        } catch (Exception e) {
-            log.error("Failed to upload image to Cloudinary", e);
-            return null;
+        if (imageModel == null || imageModel.isEmpty()) {
+            throw new com.example.eshop.common.exception.CustomMessageException("Choose a non-empty image file.", "400");
         }
+        Image image = new Image();
+        image.setUrl(cloudinaryService.uploadFile(imageModel, "folder_1"));
+        if (image.getUrl() == null || image.getUrl().isBlank()) {
+            throw new com.example.eshop.common.exception.CustomMessageException("Image provider did not confirm the uploaded image.", "502");
+        }
+        return image;
     }
 
 }

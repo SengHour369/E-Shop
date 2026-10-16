@@ -52,7 +52,7 @@ public class AiChatStateService {
                     ids.add(product.path("id").asLong());
                 }
             });
-        } else if (response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_GET) {
+        } else if ((response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_GET || response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_DETAIL || response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_VARIANTS)) {
             context.set("selectedProductId", data.path("id"));
         } else if (response.intent() == com.example.eshop.ai.enums.AiIntent.SKU_GET) {
             context.set("selectedSkuId", data.path("id"));
@@ -92,6 +92,7 @@ public class AiChatStateService {
     }
 
     public java.util.List<java.util.Map<String, String>> dialogue(UUID id) {
+        if (!AiToolRegistry.authenticated()) return java.util.List.of();
         String json = redis.opsForValue().get(dialogueKey(id));
         if (json == null) return java.util.List.of();
         try {
@@ -102,6 +103,7 @@ public class AiChatStateService {
     }
 
     public void rememberDialogue(UUID id, String question, String answer) {
+        if (!AiToolRegistry.authenticated()) return;
         var turns = new java.util.ArrayList<>(dialogue(id));
         turns.add(java.util.Map.of("role", "user", "content", question));
         turns.add(java.util.Map.of("role", "assistant", "content", answer));

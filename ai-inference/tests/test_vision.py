@@ -80,3 +80,39 @@ async def test_openai_vision_request_has_no_catalog_authority():
     assert "input_image" in seen["body"]
     assert seen["auth"] == "Bearer sk-test"
     await http.aclose()
+
+
+def test_non_finite_or_boolean_confidence_never_becomes_a_visual_match():
+    result = public_candidates({"candidates": [
+        {"name": "Phone", "confidence": float("inf")},
+        {"name": "Phone", "confidence": float("nan")},
+        {"name": "Phone", "confidence": True},
+    ]})
+    assert result == []
+
+
+def test_visual_comparison_requires_service_authentication_and_only_returns_supplied_indices(client, fake):
+    client.app.state.settings.ai_vision_service_key = "private-test-key"
+    body = {"mediaType": "image/jpeg", "imageBase64": _JPEG,
+            "candidates": [{"mediaType": "image/jpeg", "imageBase64": _JPEG}]}
+    denied = client.post("/api/v1/ai/vision/compare", json=body)
+    assert denied.status_code == 403
+    assert fake.calls == 0
+
+    async def compare(**kwargs):
+        fake.calls += 1
+        assert len(kwargs["candidates"]) == 1
+        return {"matches": [{"index": 99, "confidence": 1}, {"index": 0, "confidence": 0.8},
+                            {"index": 0, "confidence": True}, {"index": -1, "confidence": 0.9}]}
+    fake.compare_products = compare
+    response = client.post("/api/v1/ai/vision/compare", json=body,
+                           headers={"X-Vision-Service-Key": "private-test-key"})
+    assert response.status_code == 200
+    assert response.json() == {"matches": [{"index": 0, "confidence": 0.8}]}
+    assert fake.calls == 1
+
+
+def test_comparison_cannot_accept_a_model_selected_url(client):
+    response = client.post("/api/v1/ai/vision/compare", json={"mediaType": "image/jpeg", "imageBase64": _JPEG,
+        "candidates": [{"mediaType": "image/jpeg", "imageBase64": _JPEG, "url": "http://localhost/private"}]})
+    assert response.status_code == 422

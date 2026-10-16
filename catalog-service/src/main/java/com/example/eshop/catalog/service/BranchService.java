@@ -130,6 +130,21 @@ public class BranchService {
         return b;
     }
 
+    @Transactional
+    public Branch update(long id,long expectedVersion,String name,String address) {
+        require("BRANCH_UPDATE");
+        if(name==null||name.isBlank()||name.length()>120||address!=null&&address.length()>500)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid branch details");
+        var branch=branches.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Branch unavailable"));
+        if(branch.getVersion()!=expectedVersion)throw new ResponseStatusException(HttpStatus.CONFLICT,"Branch changed since review");
+        if(branches.existsByNameKeyAndIdNot(key(name),id))throw new ResponseStatusException(HttpStatus.CONFLICT,"DUPLICATE_BRANCH");
+        var before=Map.of("name",branch.getName(),"address",Objects.toString(branch.getAddress(),""));
+        branch.setName(name.trim());branch.setNameKey(key(name));branch.setAddress(address);
+        branches.saveAndFlush(branch);
+        audit.record(AuditEvent.success(AuditAction.UPDATE,"BRANCH",id,before,Map.of("name",branch.getName(),"address",Objects.toString(address,""))));
+        return branch;
+    }
+
     @Transactional(readOnly = true)
     public List<BranchAccess> members(long branchId) {
         administrator();

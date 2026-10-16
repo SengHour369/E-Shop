@@ -6,6 +6,9 @@ import java.util.*;
 
 /** Fixed handlers and schemas shared by staging and the authoritative domain boundary. */
 public enum ImportTool {
+    CATEGORY_BULK_UPDATE("CATEGORY_UPDATE",true,true,"id:id! expectedVersion:zero! name:text! description:text status:boolean!"),
+    BRANCH_BULK_UPDATE("BRANCH_UPDATE",true,true,"id:id! expectedVersion:zero! name:text! address:text"),
+    PRODUCT_BULK_UPDATE("PRODUCT_UPDATE",true,true,"id:id! expectedVersion:zero! name:text! subCategoryId:id! description:text isActive:boolean!"),
     CATEGORY_BULK_CREATE(
             "CATEGORY_CREATE",
             false,

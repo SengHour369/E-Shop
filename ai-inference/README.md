@@ -73,7 +73,7 @@ Send `X-Request-ID`. A missing or unsafe value is replaced and returned on the r
 
 ## Configuration
 
-See `.env.example`. Do not commit real keys.
+See `.env`. Do not commit real keys.
 
 ```text
 AI_PROVIDER=OPENAI

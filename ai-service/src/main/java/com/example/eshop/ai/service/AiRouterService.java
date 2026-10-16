@@ -44,15 +44,16 @@ public class AiRouterService {
     private final io.micrometer.core.instrument.MeterRegistry metrics;
 
     public AiResponse confirm(UUID id, String bearer) {
-        var previous = history.existing(id);
+        String operation = "confirm:" + id;
+        var previous = history.existing(id, operation);
         if (previous.isPresent()) {
             return replay(previous.get());
         }
         AiExecution execution;
         try {
-            execution = history.start(id);
+            execution = history.start(id, operation);
         } catch (DataIntegrityViolationException exception) {
-            return replay(history.existing(id).orElseThrow());
+            return replay(history.existing(id, operation).orElseThrow());
         }
         Outcome outcome;
         try {
@@ -84,16 +85,17 @@ public class AiRouterService {
                     org.slf4j.MDC.get("traceId"), outcome.intent(), outcome.status(),
                     outcome.message(), outcome.code(), outcome.data());
         }
-        Optional<AiExecution> previous = history.existing(id);
+        String operation = "execute:" + request.message();
+        Optional<AiExecution> previous = history.existing(id, operation);
         if (previous.isPresent()) {
             return replay(previous.get());
         }
 
         AiExecution execution;
         try {
-            execution = history.start(id);
+            execution = history.start(id, operation);
         } catch (DataIntegrityViolationException ex) {
-            return replay(history.existing(id).orElseThrow());
+            return replay(history.existing(id, operation).orElseThrow());
         }
 
         Outcome outcome = run(request, bearer);
@@ -110,12 +112,28 @@ public class AiRouterService {
         return outcome;
     }
 
+    public AiResponse executeRegistered(AiIntent intent, JsonNode parameters, UUID id, String bearer) {
+        String operation = "tool:" + intent + ":" + parameters;
+        var previous = history.existing(id, operation);
+        if (previous.isPresent()) return replay(previous.get());
+        AiExecution execution;
+        try { execution = history.start(id, operation); }
+        catch (DataIntegrityViolationException conflict) { return replay(history.existing(id, operation).orElseThrow()); }
+        Outcome outcome = evaluateDecision(() -> new AiIntentResult(intent, 1.0, parameters), bearer);
+        history.finish(id, outcome.intent(), outcome.tool(), outcome.status(), outcome.code(), outcome.resourceId());
+        return response(id, execution, outcome);
+    }
+
     private Outcome evaluate(AiRequest request, String bearer) {
+        return evaluateDecision(() -> provider.detect(request.message(), registry.available()), bearer);
+    }
+
+    private Outcome evaluateDecision(java.util.function.Supplier<AiIntentResult> detection, String bearer) {
         AiIntent intent = AiIntent.UNKNOWN;
         AiToolDefinition tool = null;
         boolean dispatched = false;
         try {
-            AiIntentResult detected = provider.detect(request.message(), registry.available());
+            AiIntentResult detected = detection.get();
             requireConfident(detected);
             intent = detected.intent();
             tool = registry.authorize(intent);
@@ -158,19 +176,19 @@ public class AiRouterService {
 
     /** A body is rejected when it is missing or carries a non-success code, HTTP status, or error code. */
     private static boolean rejected(JsonNode data) {
-        if (data == null) {
-            return true;
-        }
-        if (data.has("code")) {
+        if (data == null || data.isNull() || data.isMissingNode()) return true;
+        if (data.hasNonNull("success") && (!data.path("success").isBoolean() || !data.path("success").booleanValue())) return true;
+        if (data.hasNonNull("code")) {
             String code = data.path("code").asText();
-            if (!"200".equals(code) && !"201".equals(code)) {
-                return true;
-            }
+            if (!"200".equals(code) && !"201".equals(code)) return true;
         }
-        if (data.path("status").isInt() && data.path("status").asInt() >= 400) {
-            return true;
-        }
-        return data.path("errorCode").isInt() && data.path("errorCode").asInt() != 0;
+        JsonNode status = data.path("status");
+        if (status.isIntegralNumber() && status.asLong() >= 400) return true;
+        if (status.isTextual() && status.textValue().matches("[0-9]{3}") && Integer.parseInt(status.textValue()) >= 400) return true;
+        JsonNode error = data.path("errorCode");
+        return !error.isMissingNode() && !error.isNull()
+                && !(error.isIntegralNumber() && error.asLong() == 0)
+                && !(error.isTextual() && "0".equals(error.textValue()));
     }
 
     private static String promotionId(AiIntent intent, JsonNode data) {
@@ -205,18 +223,30 @@ public class AiRouterService {
                 outcome.intent(), outcome.status(), outcome.message(), outcome.code(), data);
     }
 
+    public void authorizeReplay(AiResponse response) {
+        if (response == null || response.intent() == null || response.intent() == AiIntent.UNKNOWN) return;
+        if (response.status() != SUCCESS && response.status() != NEEDS_INPUT) return;
+        try {
+            registry.authorize(response.intent());
+        } catch (AiFailure denied) {
+            throw new org.springframework.security.access.AccessDeniedException("This operation is no longer authorized.");
+        }
+    }
+
     private AiResponse replay(AiExecution execution) {
-        return new AiResponse(execution.getId(), execution.getRequestId(), execution.getTraceId(),
+        AiResponse response = new AiResponse(execution.getId(), execution.getRequestId(), execution.getTraceId(),
                 execution.getIntent(), execution.getStatus(),
                 "This request was already accepted; it has not been executed again. RUNNING executions may require reconciliation after an interrupted request.",
                 execution.getErrorCode(), null);
+        authorizeReplay(response);
+        return response;
     }
 
     private record Outcome(AiIntent intent, AiToolDefinition tool, AiExecutionStatus status,
             String code, String message, String resourceId, JsonNode data) {
 
         static Outcome success(AiIntent intent, AiToolDefinition tool, JsonNode data, String resourceId) {
-            return new Outcome(intent, tool, SUCCESS, null, "Operation completed.", resourceId, data);
+            return new Outcome(intent, tool, SUCCESS, null, intent == AiIntent.ADMIN_IMPORT_DRAFT ? "Draft staged. No catalog change was executed. Validate it and submit it for independent review before execution." : "Operation completed.", resourceId, data);
         }
 
         static Outcome of(AiIntent intent, AiToolDefinition tool, AiExecutionStatus status, String code, String message) {

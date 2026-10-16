@@ -224,6 +224,13 @@ services:
       gateway-redis:
         condition: service_healthy
     environment:
+      BAKONG_KHQR_TYPE: ${BAKONG_KHQR_TYPE:-MERCHANT}
+      BAKONG_CITY: ${BAKONG_CITY:-KH}
+      BAKONG_ACCOUNT_ID: ${BAKONG_ACCOUNT_ID:-}
+      BAKONG_BASE_URL: ${BAKONG_BASE_URL:-https://api-bakong.nbc.gov.kh}
+      BAKONG_EMAIL: ${BAKONG_EMAIL:-}
+      BAKONG_APP_ICON_URL: ${BAKONG_APP_ICON_URL:-}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:4200}
       AUTHORIZATION_AUTH_URL: http://auth-service:8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://payment-db:5432/payment_db
       REDIS_HOST: gateway-redis

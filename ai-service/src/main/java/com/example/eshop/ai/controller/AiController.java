@@ -27,6 +27,8 @@ import java.util.UUID;
 public class AiController {
 
     private final AiRouterService router;
+    private final com.example.eshop.ai.service.AiImageAttachment imageAttachment;
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper;
     private final com.example.eshop.ai.service.AiQuotaService quota;
     private final com.example.eshop.ai.service.AiAdminWorkspaceService workspace;
     private final com.example.eshop.ai.service.AiConversationService conversation;
@@ -35,6 +37,53 @@ public class AiController {
     private final com.example.eshop.common.security.LivePermissionService permissions;
     private final com.example.eshop.ai.service.AiChatPresenter presenter;
 
+    @org.springframework.web.bind.annotation.ExceptionHandler(com.example.eshop.ai.service.AiFailure.class)
+    public ResponseEntity<AiResponse> safeFailure(com.example.eshop.ai.service.AiFailure failure) {
+        return ResponseEntity.status(httpStatus(failure.status())).body(new AiResponse(null,
+                com.example.eshop.common.request.RequestIds.current(),org.slf4j.MDC.get("traceId"),
+                com.example.eshop.ai.enums.AiIntent.PRODUCT_VISUAL_SEARCH,failure.status(),failure.getMessage(),failure.code(),null));
+    }
+
+    @PostMapping(value="/visual-search", consumes="multipart/form-data")
+    public ResponseEntity<AiResponse> visual(
+            @org.springframework.web.bind.annotation.RequestPart("image") org.springframework.web.multipart.MultipartFile image,
+            @RequestHeader("Authorization") String bearer,
+            @RequestHeader("Idempotency-Key") UUID key,
+            jakarta.servlet.http.HttpServletRequest servlet) {
+        chatState.rateLimit(servlet.getRemoteAddr()); permissions.current();
+        String fingerprint = imageAttachment.fingerprint(image);
+        var cached = quota.process(key,"visual:"+image.getContentType()+":"+fingerprint,AiResponse.class,() -> {
+            UUID upload = UUID.randomUUID();
+            var parameters=mapper.createObjectNode().put("uploadId",upload.toString());
+            return imageAttachment.with(upload,image,() -> {
+                var result=router.executeRegistered(com.example.eshop.ai.enums.AiIntent.PRODUCT_VISUAL_SEARCH,parameters,key,bearer);
+                return ResponseEntity.status(httpStatus(result.status())).body(result);
+            });
+        });
+        router.authorizeReplay(cached.getBody()); return cached;
+    }
+
+    @PostMapping("/tools/{tool}")
+    public ResponseEntity<AiResponse> tool(
+            @PathVariable com.example.eshop.ai.enums.AiIntent tool,
+            @RequestBody com.fasterxml.jackson.databind.JsonNode parameters,
+            @RequestHeader("Authorization") String bearer,
+            @RequestHeader("Idempotency-Key") UUID key,
+            @RequestHeader(value="X-Conversation-ID",required=false) UUID conversationId,
+            jakarta.servlet.http.HttpServletRequest servlet) {
+        chatState.rateLimit(servlet.getRemoteAddr());
+        permissions.current();
+        if (conversationId != null) chatState.conversation(conversationId);
+        var cached = quota.processRegistered(key, "tool:" + tool + ":" + parameters, AiResponse.class,
+                () -> {
+                    var result = router.executeRegistered(tool, parameters, key, bearer);
+                    return ResponseEntity.status(httpStatus(result.status())).body(result);
+                });
+        router.authorizeReplay(cached.getBody());
+        if (conversationId != null && cached.getBody() != null) chatState.remember(conversationId,cached.getBody());
+        return cached;
+    }
+
     @PostMapping("/confirm/{id}")
     public ResponseEntity<AiResponse> confirm(
             @PathVariable UUID id,
@@ -42,6 +91,7 @@ public class AiController {
             jakarta.servlet.http.HttpServletRequest servlet
     ) {
         chatState.rateLimit(servlet.getRemoteAddr());
+        permissions.current();
         AiResponse result = router.confirm(id, bearer);
         return ResponseEntity.status(httpStatus(result.status())).body(result);
     }
@@ -70,12 +120,16 @@ public class AiController {
         }
 
         if (com.example.eshop.ai.registry.AiToolRegistry.authenticated()) {
-            return quota.process(
+            permissions.current();
+            if (request.conversationId() != null) chatState.conversation(request.conversationId());
+            var cached = quota.process(
                     key == null ? UUID.randomUUID() : key,
                     "chat:" + administrator + ":" + request.toString(),
                     com.example.eshop.ai.dto.AiChatResponse.class,
                     () -> acceptedChat(request, bearer, administrator)
             );
+            if (cached.getBody() != null) router.authorizeReplay(cached.getBody().result());
+            return cached;
         }
 
         return acceptedChat(request, bearer, administrator);
@@ -139,6 +193,8 @@ public class AiController {
 
         if (administrator) {
             workspace.remember(request.message(), response);
+        } else {
+            chatState.rememberDialogue(conversationId, request.message(), response.result().message());
         }
 
         return ResponseEntity.status(
@@ -218,8 +274,9 @@ public class AiController {
             jakarta.servlet.http.HttpServletRequest servlet
     ) {
         chatState.rateLimit(servlet.getRemoteAddr());
+        permissions.current();
         UUID executionId = key == null ? UUID.randomUUID() : key;
-        return quota.process(
+        var cached = quota.process(
                 executionId,
                 "execute:" + request.toString(),
                 AiResponse.class,
@@ -234,6 +291,8 @@ public class AiController {
                     ).body(result);
                 }
         );
+        router.authorizeReplay(cached.getBody());
+        return cached;
     }
 
     @GetMapping("/executions/{id}")

@@ -130,6 +130,24 @@ public class AiImportService {
     }
 
     @Transactional
+    public Map<String,Object> stage(ImportContracts.Row row) {
+        require("IMPORT_UPLOAD");require(row.tool().permission);
+        var headers=new ArrayList<>(row.values().keySet());
+        byte[] bytes;
+        try(var workbook=new org.apache.poi.xssf.usermodel.XSSFWorkbook();var output=new java.io.ByteArrayOutputStream()) {
+            var sheet=workbook.createSheet("Draft");var header=sheet.createRow(0);var values=sheet.createRow(1);
+            for(int i=0;i<headers.size();i++){header.createCell(i).setCellValue(headers.get(i));values.createCell(i).setCellValue(row.values().get(headers.get(i)));}
+            workbook.write(output);bytes=output.toByteArray();
+        }catch(java.io.IOException invalid){throw bad("Draft could not be prepared");}
+        var batch=upload(new ExcelImportParser.ParsedFile("assistant-draft.xlsx",bytes,List.of(
+                new ExcelImportParser.ParsedSheet("Draft",headers,List.of(new ExcelImportParser.ParsedRow(2,row.values()))))));
+        var sheet=sheets.findByBatchId(batch.getId()).get(0);
+        var columns=new LinkedHashMap<String,String>();headers.forEach(header->columns.put(header,header));
+        batch=confirmMapping(batch.getId(),sheet.getId(),batch.getRevision(),row.tool(),columns);
+        return Map.of("batchId",batch.getId().toString(),"revision",batch.getRevision(),"status",batch.getStatus(),"toolType",row.tool().name());
+    }
+
+    @Transactional
     public AiImportBatch upload(ExcelImportParser.ParsedFile parsed) {
         require("IMPORT_UPLOAD");
         AiImportBatch batch = new AiImportBatch();
@@ -336,6 +354,9 @@ public class AiImportService {
     private ImportTool detect(String name) {
         String n = name.toLowerCase(Locale.ROOT).replaceAll("[^a-z]", "");
 
+        if (n.contains("update") && n.contains("categor")) return ImportTool.CATEGORY_BULK_UPDATE;
+        if (n.contains("update") && n.contains("branch")) return ImportTool.BRANCH_BULK_UPDATE;
+        if (n.contains("update") && n.contains("product") && !n.contains("sku")) return ImportTool.PRODUCT_BULK_UPDATE;
         if (n.contains("categor")) return ImportTool.CATEGORY_BULK_CREATE;
         if (n.contains("branch")) return ImportTool.BRANCH_BULK_CREATE;
         if (n.contains("sku")) return ImportTool.PRODUCT_SKU_BULK_CREATE;

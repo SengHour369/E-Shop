@@ -89,7 +89,7 @@ public class HttpProductVisionClient implements ProductVisionClient {
                 continue;
             }
             double confidence = row.path("confidence").asDouble(Double.NaN);
-            if (Double.isNaN(confidence)) {
+            if (!Double.isFinite(confidence)) {
                 continue;
             }
             labels.add(new VisionLabel(name, confidence));

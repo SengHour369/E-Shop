@@ -33,6 +33,7 @@ public class UserMapper {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .phone(user.getPhone())
                 .status(user.getStatus())
                 // TODO: cross-service call via Feign - profile image lives in catalog-service; populate via Feign lookup if needed
                 .birthdate(user.getBirthdate())

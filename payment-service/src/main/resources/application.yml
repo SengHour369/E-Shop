@@ -49,6 +49,8 @@ springdoc:
     enabled: true
 
 bakong:
+  khqr-type: ${BAKONG_KHQR_TYPE:MERCHANT}
+  city: ${BAKONG_CITY:KH}
   account-id: ${BAKONG_ACCOUNT_ID:}
   base-url: ${BAKONG_BASE_URL:https://api-bakong.nbc.gov.kh}
   email: ${BAKONG_EMAIL:}

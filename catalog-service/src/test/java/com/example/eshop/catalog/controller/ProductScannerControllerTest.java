@@ -41,6 +41,8 @@ class ProductScannerControllerTest {
     @Autowired JwtProperties jwt;
     @MockitoBean com.example.eshop.common.audit.AuditLogService audit;
     @MockitoBean ProductScannerService scanner;
+    @MockitoBean com.example.eshop.catalog.scanner.CatalogVisualComparison comparison;
+    @MockitoBean com.example.eshop.common.security.LivePermissionService permissions;
 
     @Test void anonymousCallerIsRejectedAndTheRequestIdIsPreserved() throws Exception {
         mvc.perform(post("/api/v1/product-scanner/scan").contentType(MediaType.APPLICATION_JSON)
@@ -92,9 +94,16 @@ class ProductScannerControllerTest {
                 .andExpect(jsonPath("$.requestId").value("req_limited"));
     }
 
+    @Test void disabledAccountCannotUseVisionRecognition() throws Exception {
+        org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("disabled")).when(permissions).current();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/v1/product-scanner/recognize")
+                .file(new org.springframework.mock.web.MockMultipartFile("image","photo.png","image/png",new byte[]{1}))
+                .header("Authorization",token("USER"))).andExpect(status().isForbidden());
+        verify(scanner,never()).recognize(any());
+    }
     private String token(String role) {
         return "Bearer " + Jwts.builder().setSubject("scanner-user").claim("authorities", List.of(role))
-                .claim("isEnable", true).claim("type", "access")
+                .claim("isEnable", true).claim("userId",7).claim("type", "access")
                 .setExpiration(Date.from(Instant.now().plusSeconds(60)))
                 .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwt.getSecret()))).compact();
     }

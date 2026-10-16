@@ -63,6 +63,29 @@ class CatalogImportServiceTest {
         verify(categoryService,times(1)).createCategory(any()); verify(proof,times(2)).verify("proof",key,row,2);
         assertThatThrownBy(() -> service.execute(key,"proof",new ImportContracts.Row(row.tool(),Map.of("name","Changed","status","true")))).hasMessageContaining("mismatch");
     }
+    @Test void approvedCategoryUpdateRejectsStaleVersionAndReusesTheExistingDomainService() throws Exception {
+        when(permissions.current()).thenReturn(new PermissionSnapshot(2,false,Set.of("IMPORT_REVIEW","IMPORT_APPROVE","IMPORT_EXECUTE","CATEGORY_UPDATE")));
+        var category = new Category();category.setId(55L);category.setVersion(3L);
+        when(categories.findByCategoryId(55L)).thenReturn(Optional.of(category));
+        var row = new ImportContracts.Row(ImportTool.CATEGORY_BULK_UPDATE,Map.of("id","55","expectedVersion","2","name","Updated","status","true"));
+        assertThat(service.validate(row).errors()).contains("STALE_RESOURCE_VERSION");
+        verifyNoInteractions(categoryService);
+        var approved = new ImportContracts.Row(ImportTool.CATEGORY_BULK_UPDATE,Map.of("id","55","expectedVersion","3","name","Updated","status","true"));
+        receipt(approved);
+        assertThat(service.execute(key,"proof",approved).resourceId()).isEqualTo("55");
+        assertThat(service.execute(key,"proof",approved).resourceId()).isEqualTo("55");
+        verify(categoryService,times(1)).updateCategory(eq(55L),argThat(request -> request.getName().equals("Updated")));
+        verify(proof,times(2)).verify("proof",key,approved,2);
+        assertThat(ImportTool.CATEGORY_BULK_UPDATE.highRisk).isTrue();
+    }
+    @Test void branchAndProductUpdatesRequireAnExistingCurrentResource() {
+        when(permissions.current()).thenReturn(new PermissionSnapshot(2,false,Set.of("IMPORT_REVIEW","BRANCH_UPDATE","PRODUCT_UPDATE")));
+        var branch = new Branch();branch.setId(1L);branch.setVersion(5);
+        when(branches.findById(1L)).thenReturn(Optional.of(branch));
+        assertThat(service.validate(new ImportContracts.Row(ImportTool.BRANCH_BULK_UPDATE,Map.of("id","1","expectedVersion","4","name","Branch"))).errors()).contains("STALE_RESOURCE_VERSION");
+        assertThat(service.validate(new ImportContracts.Row(ImportTool.PRODUCT_BULK_UPDATE,Map.of("id","99","expectedVersion","0","name","Product","subCategoryId","1","isActive","true"))).errors()).contains("UNKNOWN_PRODUCT");
+        verifyNoInteractions(branchService,productService);
+    }
     @Test void stockInLocksInventoryAndAddsToCurrentQuantity() throws Exception {
         var row = new ImportContracts.Row(ImportTool.INVENTORY_STOCK_IN_BULK,Map.of("inventoryId","1","quantity","5")); receipt(row);
         var item = new Inventory(); item.setId(1L); item.setQuantity(20L); item.setReservedQuantity(10L);

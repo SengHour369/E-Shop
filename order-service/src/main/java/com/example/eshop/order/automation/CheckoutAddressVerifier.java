@@ -12,12 +12,11 @@ import org.springframework.web.client.RestClient;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "automation.enabled", havingValue = "true")
 public class CheckoutAddressVerifier {
 
     private final JwtProperties jwt;
 
-    @Value("${automation.auth-url:http://auth-service:8081}")
+    @Value("${automation.auth-url:${AUTHORIZATION_AUTH_URL:http://auth-service:8081}}")
     private String authUrl;
 
     public void require(long userId, Long id) {

@@ -75,6 +75,9 @@ public class AiInferenceClient implements AiProviderClient {
                 throw failure(codeFor(response.statusCode(), response.body()));
             }
             AiIntentResult result = toResult(response.body());
+            final AiIntent selected = result.intent();
+            if (selected != AiIntent.UNKNOWN && (allowed == null || allowed.stream().noneMatch(tool -> tool.enabled() && tool.toolName() == selected)))
+                result = new AiIntentResult(AiIntent.UNKNOWN, 0, mapper.createObjectNode());
             log.info("AI inference completed intent={} status={}", result.intent(), response.statusCode());
             return result;
         } catch (HttpTimeoutException ex) {

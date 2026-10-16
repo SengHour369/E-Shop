@@ -47,6 +47,7 @@ public class OrderDetail extends BaseEntity {
 
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
+    @Column(precision = 19, scale = 2) private BigDecimal expectedTotal;
 
     // Was `Address shippingAddress` (@ManyToOne) — auth-service owns Address.
     // TODO: cross-service call via Feign to auth-service to resolve address details.

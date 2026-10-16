@@ -220,6 +220,7 @@ public class ProductServiceImpl implements ProductService {
                     .filter(Objects::nonNull)
                     .toList();
 
+            if (newImages.size() != files.size()) throw new IllegalStateException("Product image storage did not confirm every image");
             product.getImage().clear();
 
             for (Image image : newImages) {

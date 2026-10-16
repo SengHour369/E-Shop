@@ -47,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemMapper orderItemMapper;
 
     private final CheckoutCoordinator checkout;
+    private final com.example.eshop.common.security.LivePermissionService permissions;
 
     @Override
     public ResponseErrorTemplate createOrderFromCart(Long userId, OrderRequest request) {
@@ -56,6 +57,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrders(GetOrderRequest request) {
+        permissions.require("ORDER_VIEW_ALL");
         log.info("getOrders: criteriaType={}, criteriaValue={}, page={}, size={}",
                 request.getCriteriaType(), request.getCriteriaValue(), request.getPage(), request.getSize());
 
@@ -135,6 +137,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrderById(Long id) {
+        permissions.require("ORDER_VIEW_ALL");
         OrderDetail order = orderRepository.findByIdWithFullDetail(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         return orderMapper.toResponse(order);
@@ -143,6 +146,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrderByNumber(String orderNumber) {
+        permissions.require("ORDER_VIEW_ALL");
         OrderDetail order = orderRepository.findByOrderNumberWithFullDetail(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with number: " + orderNumber));
         return orderMapper.toResponse(order);
@@ -151,6 +155,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getUserOrders(Long userId, Pageable pageable) {
+        com.example.eshop.common.security.CurrentCustomer.require(userId);
+        permissions.current();
         return orderRepository.findByUserId(userId, pageable)
                 .map(orderMapper::toResponse);
     }
@@ -158,6 +164,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getAllOrders(Pageable pageable) {
+        permissions.require("ORDER_VIEW_ALL");
         return orderRepository.findAll(pageable)
                 .map(orderMapper::toResponse);
     }
@@ -247,6 +254,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrderDetailByUserId(Long userId, Long orderId) {
+        com.example.eshop.common.security.CurrentCustomer.require(userId);
+        permissions.current();
         OrderDetail order = orderRepository.findByIdAndUserIdWithFullDetail(orderId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId + " for user: " + userId));
         return orderMapper.toResponse(order);
@@ -255,6 +264,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResponseErrorTemplate> getOrderDetailHistory(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        com.example.eshop.common.security.CurrentCustomer.require(userId);
+        permissions.current();
         return orderRepository.findOrderDetailHistory(userId, status, startDate, endDate, pageable)
                 .map(orderMapper::toResponse);
     }
@@ -282,6 +293,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     @Override
     public ResponseErrorTemplate getOrderStatusSummary() {
+        permissions.require("REPORT_VIEW");
         OrderStatusSummaryResponse response = orderRepository.getOrderStatusSummary();
         return ResponseErrorTemplate.success("Order status summary retrieved successfully", response);
     }
@@ -289,6 +301,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrderItemsByOrderId(Long orderId) {
+        permissions.require("ORDER_VIEW_ALL");
         OrderDetail order = orderRepository.findByIdWithFullDetail(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 

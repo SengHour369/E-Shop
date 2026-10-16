@@ -24,6 +24,17 @@ class PaymentAutomationTest {
       when(repository.findById(3L)).thenReturn(Optional.of(record));when(repository.lockById(3L)).thenReturn(Optional.of(record));
       doAnswer(i->{java.util.function.Consumer<org.springframework.transaction.TransactionStatus> c=i.getArgument(0);c.accept(new SimpleTransactionStatus());return null;}).when(tx).executeWithoutResult(any());
     }
+    @Test void individualModeAcceptsAccountWithoutMerchantDetailsButMerchantModeStillRejects(){
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"recipient","senghour_soeurng@bkrt");
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"merchantName","");
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"merchantId","");
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"acquiringBank","");
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"khqrType",com.example.eshop.payment.bakong.KhqrType.INDIVIDUAL);
+      assertThatCode(service::validateMerchantConfiguration).doesNotThrowAnyException();
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"khqrType",com.example.eshop.payment.bakong.KhqrType.MERCHANT);
+      assertThatThrownBy(service::validateMerchantConfiguration).isInstanceOf(IllegalStateException.class);
+      verifyNoInteractions(bakong,events);
+    }
     @Test void unavailableProviderCannotReleaseOrComplete(){when(bakong.checkTransactionByMD5(any())).thenThrow(new IllegalStateException("unavailable"));assertThatThrownBy(()->service.verify(3)).isInstanceOf(IllegalStateException.class);assertThat(record.getStatus()).isEqualTo(TransactionStatus.PENDING);verifyNoInteractions(events);}
     @Test void wrongRecipientCannotComplete(){when(bakong.checkTransactionByMD5(any())).thenReturn(BakongResponse.builder().responseCode(0).data(Map.of("hash","a".repeat(64),"amount",10,"currency","USD","toAccountId","attacker@bank")).build());assertThatThrownBy(()->service.verify(3)).isInstanceOf(IllegalStateException.class);assertThat(record.getStatus()).isEqualTo(TransactionStatus.PENDING);verifyNoInteractions(events);}
     @Test void authoritativeNotFoundAfterExpiryEmitsFailure(){when(bakong.checkTransactionByMD5(any())).thenReturn(BakongResponse.builder().responseCode(1).errorCode(1).build());service.verify(3);assertThat(record.getStatus()).isEqualTo(TransactionStatus.FAILED);verify(events).emit(anyString(),argThat(e->e.type()==com.example.eshop.common.automation.CommerceEvent.Type.PAYMENT_EXPIRED));}

@@ -21,9 +21,11 @@ public class CategoryMapper {
     public static ResponseErrorTemplate toResponse(Category category) {
         CategoryResponse categoryResponse = CategoryResponse.builder()
                 .id(category.getId())
+                .version(category.getVersion())
                 .name(category.getName())
                 .description(category.getDescription())
                 .icon(category.getIcon())
+                .status(category.getStatus())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
                 .build();
@@ -33,6 +35,7 @@ public class CategoryMapper {
     public static void updateEntity(Category category, CategoryRequest request) {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
+        if (request.getStatus() != null) category.setStatus(request.getStatus());
     }
     public static ResponseErrorTemplate toResponseWithSubCategory(Category category) {
         CategoryResponseWithSubCategory categoryResponse = CategoryResponseWithSubCategory.builder()
