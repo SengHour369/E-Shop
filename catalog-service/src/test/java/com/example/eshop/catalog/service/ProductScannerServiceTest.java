@@ -34,12 +34,13 @@ class ProductScannerServiceTest {
     private final VariantAttributeRepository variantAttributes = mock(VariantAttributeRepository.class);
     private final ProductRepository products = mock(ProductRepository.class);
     private final PromotionPricingService pricing = mock(PromotionPricingService.class);
+    private final com.example.eshop.catalog.scanner.CatalogPhotoSearch photoSearch = mock(com.example.eshop.catalog.scanner.CatalogPhotoSearch.class);
     private final ProductVisionClient vision = mock(ProductVisionClient.class);
     private final AtomicLong clock = new AtomicLong(10_000);
     private ProductScannerService scanner;
 
     @BeforeEach void setUp() {
-        scanner = new ProductScannerService(skus, inventories, attributes, variantAttributes, products, pricing, vision,
+        scanner = new ProductScannerService(skus, inventories, attributes, variantAttributes, products, pricing, vision, photoSearch,
                 new ScanCoalescer(1500, clock::get), new ScanRateLimiter(30, 10, clock::get));
         signIn("USER");
         MDC.put("requestId", "req_scan_1");
@@ -170,7 +171,7 @@ class ProductScannerServiceTest {
 
     @Test void distinctScansAreRateLimited() {
         ProductScannerService limited = new ProductScannerService(skus, inventories, attributes, variantAttributes,
-                products, pricing, vision, new ScanCoalescer(1500, clock::get), new ScanRateLimiter(2, 10, clock::get));
+                products, pricing, vision, photoSearch, new ScanCoalescer(1500, clock::get), new ScanRateLimiter(2, 10, clock::get));
         when(skus.findByBarcodes(any())).thenReturn(List.of());
         limited.scan(new ScanRequest("8850123456787", ScanFormat.EAN_13));
         limited.scan(new ScanRequest("96385074", ScanFormat.EAN_8));
@@ -191,19 +192,13 @@ class ProductScannerServiceTest {
     }
 
     @Test void imageRecognitionUsesCatalogMatchesAndFailsClosed() {
-        Product product = new Product();
-        product.setId(100L);
-        product.setName("Nike Air Max");
-        product.setDeleted(false);
-        when(vision.identify(any(), any())).thenReturn(new VisionOutcome(true, List.of(new VisionLabel("Nike Air Max", 0.95))));
-        when(products.findForScannerName(any(), any())).thenReturn(List.of(product));
-        when(products.findImageUrls(any())).thenReturn(List.of());
-        when(skus.findForScannerProducts(any())).thenReturn(List.of());
+        when(photoSearch.search(any(), any(), any())).thenReturn(com.example.eshop.catalog.dto.response.ImageMatchResponse.builder()
+            .matchType("AI_VISUAL_COMPARISON").candidates(List.of(new com.example.eshop.catalog.dto.response.ImageCandidate(100L,null,"qwerty",null,null,.95))).build());
         var matched = scanner.recognize(jpeg());
-        assertThat(matched.getMatchType()).isEqualTo("AI_IMAGE");
+        assertThat(matched.getMatchType()).isEqualTo("AI_VISUAL_COMPARISON");
         assertThat(matched.getCandidates()).extracting(item -> item.getProductId()).containsExactly(100L);
 
-        when(vision.identify(any(), any())).thenReturn(VisionOutcome.unavailable());
+        when(photoSearch.search(any(), any(), any())).thenReturn(com.example.eshop.catalog.scanner.CatalogImageMatcher.unavailable("request"));
         var down = scanner.recognize(jpeg());
         assertThat(down.getMatchType()).isEqualTo("AI_UNAVAILABLE");
         assertThat(down.getCandidates()).isEmpty();
@@ -217,17 +212,17 @@ class ProductScannerServiceTest {
         when(file.getSize()).thenReturn(4000L * 1024 * 1024);
         when(file.getContentType()).thenReturn("image/png");
         when(file.getInputStream()).thenAnswer(invocation -> new java.io.ByteArrayInputStream(encoded.toByteArray()));
-        when(vision.identify(any(), any())).thenAnswer(invocation -> {
+        when(photoSearch.search(any(), any(), any())).thenAnswer(invocation -> {
             byte[] bytes = invocation.getArgument(0);
             assertThat(bytes.length).isLessThanOrEqualTo(1_500_000);
             assertThat((String) invocation.getArgument(1)).isEqualTo("image/jpeg");
             var result = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(bytes));
             assertThat(result.getWidth()).isLessThanOrEqualTo(1024);
-            return VisionOutcome.unavailable();
+            return com.example.eshop.catalog.scanner.CatalogImageMatcher.unavailable("request");
         });
         assertThat(scanner.recognize(file).getMatchType()).isEqualTo("AI_UNAVAILABLE");
         verify(file, never()).getBytes();
-        verify(vision).identify(any(), any());
+        verify(photoSearch).search(any(), any(), any());
     }
 
     @Test void rejectsAbove4000MbBeforeOpeningTheStream() throws Exception {

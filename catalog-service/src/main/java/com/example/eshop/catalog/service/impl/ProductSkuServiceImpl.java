@@ -172,7 +172,11 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     private void assignBarcode(ProductSku sku, String raw, Long currentId) {
         String barcode = com.example.eshop.catalog.scanner.ScanCodes.storedBarcode(raw);
         if (barcode == null) {
-            sku.setBarcode(null);
+            if (currentId != null && sku.getBarcode() != null && !sku.getBarcode().isBlank()) return;
+            do {
+                barcode = "ESHOP-" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase(java.util.Locale.ROOT);
+            } while (productSkuRepository.existsByBarcode(barcode));
+            sku.setBarcode(barcode);
             return;
         }
         boolean taken = currentId == null

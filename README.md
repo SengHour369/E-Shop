@@ -72,3 +72,12 @@ bash run-docker.sh frontend
 `compose.frontend.yaml` builds the adjacent `../Order_Shop_Frontend` checkout and serves it at http://localhost:4200 on the existing backend network. A plain `bash run-docker.sh` starts the complete configured stack, including the frontend.
 
 The updated checkout is a single page: saved address selection and inline address management, configured payment choices, actual cart summary and an explicit Place Order action. Phone navigation is replaced by the checkout's fixed action bar on this route. See `docs/SINGLE_PAGE_CHECKOUT.md` for validation and limits.
+
+
+For automatic KHQR verification and paid-order approval, include the commerce overlay when recreating services:
+
+```bash
+docker compose --env-file env --env-file .env.local -f compose.yaml -f compose.ai.yaml -f compose.automation.yaml up -d --build
+```
+
+Use the environment files configured for your installation (`env` is the legacy file; use `.env` instead when applicable). Omitting `compose.automation.yaml` disables order/payment automation. Automatic approval requires matching provider-verified payment evidence; Gemini routes requests but does not decide whether money was received. Pending, mismatched, or unavailable provider results must not approve an order.

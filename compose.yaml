@@ -172,6 +172,9 @@ services:
       gateway-redis:
         condition: service_healthy
     environment:
+      SCANNER_AI_INFERENCE_URL: ${SCANNER_AI_INFERENCE_URL:-http://ai-inference:8000}
+      SCANNER_AI_TIMEOUT_SECONDS: ${SCANNER_AI_TIMEOUT_SECONDS:-60}
+      AI_VISION_SERVICE_KEY: ${AI_VISION_SERVICE_KEY:-}
       AUTHORIZATION_AUTH_URL: http://auth-service:8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://catalog-db:5432/catalog_db
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}

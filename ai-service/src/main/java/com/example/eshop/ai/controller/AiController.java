@@ -88,11 +88,14 @@ public class AiController {
     public ResponseEntity<AiResponse> confirm(
             @PathVariable UUID id,
             @RequestHeader("Authorization") String bearer,
+            @RequestHeader(value="X-Conversation-ID",required=false) UUID conversationId,
             jakarta.servlet.http.HttpServletRequest servlet
     ) {
         chatState.rateLimit(servlet.getRemoteAddr());
         permissions.current();
+        if(conversationId!=null)chatState.conversation(conversationId);
         AiResponse result = router.confirm(id, bearer);
+        if(conversationId!=null)chatState.remember(conversationId,result);
         return ResponseEntity.status(httpStatus(result.status())).body(result);
     }
 

@@ -56,6 +56,7 @@ public class ProductScannerService {
     private final ProductRepository products;
     private final PromotionPricingService pricing;
     private final ProductVisionClient vision;
+    private final com.example.eshop.catalog.scanner.CatalogPhotoSearch photoSearch;
     private final ScanCoalescer coalescer;
     private final ScanRateLimiter limiter;
 
@@ -88,10 +89,7 @@ public class ProductScannerService {
         try {
             limiter.acquire(actorKey());
             CheckedImage checked = checked(image);
-            VisionOutcome outcome = vision.identify(checked.bytes(), checked.mediaType());
-            ImageMatchResponse response = outcome.available()
-                    ? CatalogImageMatcher.match(outcome.labels(), this::searchNames, RequestIds.current())
-                    : CatalogImageMatcher.unavailable(RequestIds.current());
+            ImageMatchResponse response = photoSearch.search(checked.bytes(), checked.mediaType(), RequestIds.current());
             matchType = response.getMatchType();
             candidates = response.getCandidates().size();
             return response;

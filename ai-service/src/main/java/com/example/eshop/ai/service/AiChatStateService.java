@@ -44,6 +44,9 @@ public class AiChatStateService {
             return;
         }
         var context = mapper.createObjectNode();
+        try { var previous=mapper.readTree(redis.opsForValue().get(conversationKey(conversationId)));if(previous!=null&&previous.isObject())context.setAll((com.fasterxml.jackson.databind.node.ObjectNode)previous); } catch(Exception ignored) { }
+        if(response.intent().name().startsWith("CART_")){context.remove("reviewId");context.remove("reviewedAddressId");context.remove("reviewedPaymentMethod");}
+
         var data = response.data();
         if (response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_SEARCH && data.isArray()) {
             var ids = context.putArray("productIdsInDisplayOrder");
@@ -59,6 +62,20 @@ public class AiChatStateService {
         } else if (response.intent() == com.example.eshop.ai.enums.AiIntent.MY_ORDER_STATUS
                 || response.intent() == com.example.eshop.ai.enums.AiIntent.ORDER_GET) {
             context.set("selectedOrderNumber", data.path("orderNumber"));
+            if(data.path("id").isIntegralNumber())context.set("selectedOrderId",data.path("id"));
+        }
+        if(response.intent()==com.example.eshop.ai.enums.AiIntent.CHECKOUT_PREVIEW){
+            if(data.path("reviewId").isTextual())context.set("reviewId",data.path("reviewId"));
+            if(data.path("addressId").isIntegralNumber())context.set("reviewedAddressId",data.path("addressId"));
+            if(data.path("paymentMethod").isTextual())context.set("reviewedPaymentMethod",data.path("paymentMethod"));
+        }
+        if(response.intent()==com.example.eshop.ai.enums.AiIntent.ORDER_CREATE){
+            if(data.path("id").isIntegralNumber())context.set("selectedOrderId",data.path("id"));
+            if(data.path("order_number").isTextual())context.set("selectedOrderNumber",data.path("order_number"));
+            context.remove("reviewId");
+        }
+        if(response.intent()==com.example.eshop.ai.enums.AiIntent.PAYMENT_GET_STATUS||response.intent()==com.example.eshop.ai.enums.AiIntent.PAYMENT_INITIATE_KHQR){
+            if(data.path("orderId").isIntegralNumber())context.set("selectedOrderId",data.path("orderId"));
         }
         if (!context.isEmpty()) {
             redis.opsForValue().set(conversationKey(conversationId), context.toString(), Duration.ofMinutes(30));

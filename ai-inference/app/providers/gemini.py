@@ -36,7 +36,7 @@ class GeminiProvider(AiProvider):
         self.api_key = api_key
         self.model = model
         self.http = http
-        self.timeout = httpx.Timeout(timeout_seconds, connect=3.0)
+        self.timeout = httpx.Timeout(timeout_seconds, connect=min(10.0, timeout_seconds))
 
     async def _generate(
             self,

@@ -17,6 +17,7 @@ services:
       COMMERCE_AUTOMATION_ENABLED: "true"
       AUTOMATION_ADMIN_USER_IDS: ${AUTOMATION_ADMIN_USER_IDS:-}
       BAKONG_EMAIL: ${BAKONG_EMAIL:?Set your registered Bakong email}
+      BAKONG_KHQR_TYPE: ${BAKONG_KHQR_TYPE:-MERCHANT}
       BAKONG_BASE_URL: ${BAKONG_BASE_URL:-https://api-bakong.nbc.gov.kh}
       BAKONG_APP_ICON_URL: ${BAKONG_APP_ICON_URL:-}
       APP_BASE_URL: ${APP_BASE_URL:-}

@@ -60,8 +60,8 @@ public class AiToolRegistry {
         for (var name : List.of(AiIntent.PRODUCT_DETAIL, AiIntent.PRODUCT_VARIANTS))
             read(name, "Get real product details and selectable SKU variants", "catalog-service", "/internal/ai/products/{id}", PUBLIC, Map.of("id", parameter("integer", true)));
         read(AiIntent.PRODUCT_STOCK_CHECK, "Get public SKU price and available stock", "catalog-service", "/internal/ai/skus/{skuId}", PUBLIC, Map.of("skuId", parameter("integer", true)));
-        read(AiIntent.CART_GET, "Get the authenticated customer's cart", "order-service", "/internal/ai/shopping/cart", AUTHENTICATED, Map.of());
-        read(AiIntent.CHECKOUT_PREVIEW, "Refresh cart prices and review a delivery address and payment method before ordering", "order-service", "/internal/ai/shopping/checkout-preview", AUTHENTICATED,
+        read(AiIntent.CART_GET, "Get the authenticated customer's cart. Use this when the customer wants to order or checkout but has not selected a real delivery address and payment method; the checkout card collects those choices. Never invent address IDs.", "order-service", "/internal/ai/shopping/cart", AUTHENTICATED, Map.of());
+        read(AiIntent.CHECKOUT_PREVIEW, "Refresh cart prices and review a real delivery address and payment method before ordering. Requires a known owned address ID; otherwise use CART_GET to open checkout choices.", "order-service", "/internal/ai/shopping/checkout-preview", AUTHENTICATED,
                 Map.of("addressId", parameter("integer", true), "paymentMethod", parameter("string", true)));
         read(AiIntent.ORDER_LIST, "List the authenticated customer's orders", "order-service", "/internal/ai/orders", AUTHENTICATED, Map.of());
         read(AiIntent.PAYMENT_GET_STATUS, "Get authoritative payment status for an owned order; never infer payment from a screenshot", "payment-service", "/api/v1/payments/orders/{orderId}/qr", AUTHENTICATED, Map.of("orderId", parameter("integer", true)));

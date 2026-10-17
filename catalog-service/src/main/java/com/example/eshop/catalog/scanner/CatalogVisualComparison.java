@@ -33,11 +33,16 @@ public class CatalogVisualComparison {
     }
 
     public ImageMatchResponse compare(MultipartFile photo, ImageMatchResponse labels) {
+        if(photo.getSize()>8*1024*1024)return CatalogImageMatcher.unavailable(labels.getRequestId());
+        try { return compare(photo.getBytes(), photo.getContentType(), labels); }
+        catch(java.io.IOException invalid) { return CatalogImageMatcher.unavailable(labels.getRequestId()); }
+    }
+    public ImageMatchResponse compare(byte[] original, String mediaType, ImageMatchResponse labels) {
         if (labels.getCandidates().isEmpty()) return labels;
         ImageMatchResponse fallback = ImageMatchResponse.builder().matchType("AI_LABEL_CANDIDATES")
                 .exact(false).requiresSelection(true).message("Select a catalog candidate; visual similarity has not been verified")
                 .requestId(labels.getRequestId()).candidates(labels.getCandidates()).build();
-        if (key.isBlank() || cloud.isBlank() || photo.getSize()>8*1024*1024) return fallback;
+        if (key.isBlank() || cloud.isBlank() || original.length>8*1024*1024) return fallback;
         try {
             var candidates=new ArrayList<ImageCandidate>();var images=new ArrayList<Map<String,String>>();
             for (var candidate:labels.getCandidates()) {
@@ -45,11 +50,8 @@ public class CatalogVisualComparison {
                 if(image!=null){candidates.add(candidate);images.add(image);}
             }
             if(images.isEmpty())return fallback;
-            byte[] original;
-            try(var input=photo.getInputStream()){original=input.readNBytes(8*1024*1024+1);}
-            if(original.length>8*1024*1024)return fallback;
-            var body=Map.of("mediaType",photo.getContentType(),"imageBase64",Base64.getEncoder().encodeToString(original),"candidates",images);
-            var builder=HttpRequest.newBuilder(endpoint).timeout(Duration.ofSeconds(25)).header("Content-Type","application/json")
+            var body=Map.of("mediaType",mediaType,"imageBase64",Base64.getEncoder().encodeToString(original),"candidates",images);
+            var builder=HttpRequest.newBuilder(endpoint).timeout(Duration.ofSeconds(60)).header("Content-Type","application/json")
                     .header("X-Vision-Service-Key",key).POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)));
             if(RequestIds.current()!=null)builder.header(RequestIds.HEADER,RequestIds.current());
             var response=http.send(builder.build(),HttpResponse.BodyHandlers.ofInputStream());

@@ -45,6 +45,7 @@ public class  UserServiceImpl implements UserService {
     final FunctionPermissionRepository functionPermissionRepository;
     final UserPermissionRepository userPermissionRepository;
     final PasswordEncoder passwordEncoder;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     @Override
     @Transactional
@@ -146,6 +147,7 @@ public class  UserServiceImpl implements UserService {
                 .created(savedUser.getCreatedAt())
                 .build();
 
+        events.publishEvent(new UserCreatedMail.Event(savedUser.getId(), savedUser.getEmail(), savedUser.getFullName(), savedUser.getUsername()));
         return ResponseErrorTemplate.success("User created successfully", response);
     }
 

@@ -36,7 +36,7 @@ public class ProductScannerController {
     @PostMapping(value = "/recognize", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse<ImageMatchResponse>> recognize(@RequestParam("image") MultipartFile image) {
         permissions.current();
-        ImageMatchResponse body = comparison.compare(image, scanner.recognize(image));
+        ImageMatchResponse body = scanner.recognize(image);
         return ResponseEntity.ok(APIResponse.success(body.getMessage(), 200, body));
     }
 
