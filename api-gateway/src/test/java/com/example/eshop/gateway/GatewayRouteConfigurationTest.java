@@ -85,6 +85,11 @@ class GatewayRouteConfigurationTest {
         .expectHeader().exists("X-Correlation-Id").expectHeader().exists("X-Request-ID");
   }
 
+  @Test void secondFactorIsPublicButUserEditorRemainsProtected() {
+    client.post().uri("/api/v1/public/second-factor").exchange().expectStatus().isEqualTo(503);
+    client.get().uri("/api/v1/user/editor-options").exchange().expectStatus().isUnauthorized();
+  }
+
   @Test void publicLoginReturnsStableFallbackWhenServiceIsUnavailable() {
     client.post().uri("/api/v1/public/email/username/login").exchange()
         .expectStatus().isEqualTo(503).expectHeader().exists("X-Correlation-Id")

@@ -38,6 +38,17 @@ public class User extends BaseEntity implements Serializable {
     private String status;
     // TODO: cross-service call via Feign - Image belongs to catalog-service; store an imageId/URL reference instead if needed
     private String birthdate;
+    private String jobTitle;
+    private String department;
+    private Long managerId;
+    private String gender;
+    @Column(length = 255)
+    private String profileAddress;
+    private String language;
+    private boolean twoFactorRequired;
+    @Column(columnDefinition = "text")
+    private String profileImage;
+
     @Column(name = "deleted", nullable = false)
     private Boolean deleted =  false;
     @Column(name = "phone",unique = true,nullable = false)

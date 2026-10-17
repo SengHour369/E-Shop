@@ -1,0 +1,10 @@
+BEGIN;
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS job_title varchar(255);
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS department varchar(255);
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS manager_id bigint REFERENCES tbl_user(id);
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS gender varchar(255);
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS profile_address varchar(255);
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS language varchar(255);
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS two_factor_required boolean NOT NULL DEFAULT false;
+ALTER TABLE tbl_user ADD COLUMN IF NOT EXISTS profile_image text;
+COMMIT;

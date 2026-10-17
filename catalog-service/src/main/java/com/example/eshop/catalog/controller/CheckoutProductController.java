@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-/** Public active catalog presentation for cart/checkout, never a source of payable totals. */
+/** Active catalog presentation for cart/checkout, never a source of payable totals. */
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor

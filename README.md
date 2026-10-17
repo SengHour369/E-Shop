@@ -60,3 +60,15 @@ The Docker launcher includes `compose.automation.yaml` when the resolved private
 Use `BAKONG_KHQR_TYPE=INDIVIDUAL` for an individual Bakong account. This mode requires `BAKONG_ACCOUNT_ID` and a Bakong-registered `BAKONG_EMAIL` for provider verification; merchant ID and acquiring bank are not required. The QR display label comes from the configured account identifier. Optional `BAKONG_CITY` defaults to the generic `KH` label. `MERCHANT` mode retains the registered merchant name, merchant ID and acquiring-bank checks.
 
 Before first activation, apply each service's `src/main/resources/db/upgrade/20261011_commerce_automation.sql` to its own database. The current local Order and Payment Docker databases have these migrations applied. Do not use another service's database or enable workers before their required tables exist. See [Bakong verification report](docs/BAKONG_VERIFICATION.md).
+
+## Run or rebuild the Docker frontend
+
+With the backend already running, from the E-Shop directory:
+
+```bash
+bash run-docker.sh frontend
+```
+
+`compose.frontend.yaml` builds the adjacent `../Order_Shop_Frontend` checkout and serves it at http://localhost:4200 on the existing backend network. A plain `bash run-docker.sh` starts the complete configured stack, including the frontend.
+
+The updated checkout is a single page: saved address selection and inline address management, configured payment choices, actual cart summary and an explicit Place Order action. Phone navigation is replaced by the checkout's fixed action bar on this route. See `docs/SINGLE_PAGE_CHECKOUT.md` for validation and limits.

@@ -325,6 +325,7 @@ gateway:
       - /api/v1/public/verify
       - /api/v1/public/resend
       - /api/v1/public/email/username/login
+      - /api/v1/public/second-factor
       - /api/v1/public/refresh
       - /api/v1/public/forgot-password
       - /api/v1/public/reset-password

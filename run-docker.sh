@@ -21,6 +21,9 @@ else
 fi
 compose+=(-f compose.yaml -f compose.ai.yaml -f compose.local.yaml)
 # Local Docker/frontend overrides are optional and may be absent in another checkout.
+if [[ -f compose.frontend.yaml ]]; then
+  compose+=(-f compose.frontend.yaml)
+fi
 if [[ -f compose.docker-local.yaml ]]; then
   compose+=(-f compose.docker-local.yaml)
 fi

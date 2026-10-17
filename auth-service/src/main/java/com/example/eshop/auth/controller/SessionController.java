@@ -66,6 +66,7 @@ public class SessionController {
     }
 
     private ResponseEntity<AuthenticationResponse> session(AuthenticationResponse result) {
+        if ("MFA".equals(result.tokenType())) return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(result);
         return ResponseEntity.ok().headers(cookies.issue(result)).body(cookies.withoutTokens(result));
     }
 

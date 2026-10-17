@@ -40,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final LoginSecondFactor secondFactor;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
@@ -235,6 +236,8 @@ public class AuthServiceImpl implements AuthService {
                     String.valueOf(HttpStatus.UNAUTHORIZED.value()));
         }
 
+        if (user.isTwoFactorRequired()) return secondFactor.issue(user);
+
         // Reset attempts on success
         user.setAttempt(0);
         userRepository.save(user);
@@ -251,6 +254,19 @@ public class AuthServiceImpl implements AuthService {
     /** Called only after external signature verification and explicit identity lookup. */
     @Transactional
     public AuthenticationResponse authenticateExternal(User user) {
+        if (user.isTwoFactorRequired()) {
+            if (!user.isEnabled() || Boolean.TRUE.equals(user.getDeleted()) || !Constant.ACT.equals(user.getStatus())) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED,"Account is not active");
+            return secondFactor.issue(user);
+        }
+        return finishSecondFactorLogin(user);
+    }
+
+    @Transactional
+    public AuthenticationResponse verifySecondFactor(String challenge,String code) {
+        return finishSecondFactorLogin(secondFactor.verify(challenge,code));
+    }
+
+    private AuthenticationResponse finishSecondFactorLogin(User user) {
         if (!user.isEnabled() || Boolean.TRUE.equals(user.getDeleted()) || !Constant.ACT.equals(user.getStatus())) {
             throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED, "Account is not active");
         }
