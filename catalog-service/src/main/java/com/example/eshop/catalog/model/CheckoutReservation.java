@@ -14,8 +14,8 @@ public class CheckoutReservation extends BaseEntity {
     @Id
     private Long orderId;
 
-    @Column(nullable = false)
     private Long userId;
+    private java.util.UUID guestSessionId;
 
     @Column(nullable = false)
     private String status;

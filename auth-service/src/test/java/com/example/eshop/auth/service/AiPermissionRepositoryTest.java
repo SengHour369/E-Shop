@@ -51,6 +51,27 @@ class AiPermissionRepositoryTest {
     FunctionPermissionRepository functions;
 
     @Test
+    void administratorEntryRequiresAnActiveNonDeletedMembershipAndGroup() {
+        var group = new Group(); group.setGroupCode("GRANTED"); group.setIsActive(true); group.setIsDelete(false);
+        entities.persist(group);
+        var membership = new UserGroup(); membership.setUserId(43L); membership.setGroupId(group.getId());
+        membership.setIsActive(true); membership.setIsDelete(false); entities.persist(membership);
+        assertThat(functions.hasActiveStaffGroup(43L)).isFalse();
+        entities.persist(FunctionPermission.builder().funcId(99991L).funcCode("TEST_STAFF_VIEW").funcName("Staff view").build());
+        entities.persist(GroupPermission.builder().groupId(group.getId()).funcId(99991L).isActive(true).isDelete(false).build());
+        assertThat(functions.hasActiveStaffGroup(43L)).isTrue();
+        group.setGroupCode("USR");
+        assertThat(functions.hasActiveStaffGroup(43L)).isFalse();
+        group.setGroupCode("GRANTED");
+        membership.setIsActive(false);
+        assertThat(functions.hasActiveStaffGroup(43L)).isFalse();
+        membership.setIsActive(true); group.setIsDelete(true);
+        assertThat(functions.hasActiveStaffGroup(43L)).isFalse();
+        group.setIsDelete(false); membership.setIsDelete(true);
+        assertThat(functions.hasActiveStaffGroup(43L)).isFalse();
+    }
+
+    @Test
     void deletedDirectGrantsAndInactiveFunctionsAreExcluded() {
         var function = FunctionPermission.builder()
                 .funcId(100L).funcCode("ORDER_VIEW_ALL").funcName("View orders").build();

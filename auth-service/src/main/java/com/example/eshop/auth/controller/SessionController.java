@@ -43,6 +43,14 @@ public class SessionController {
         return session(auth.verifyUser(request));
     }
 
+    @PostMapping("/second-factor")
+    public ResponseEntity<AuthenticationResponse> secondFactor(
+            @RequestHeader(value = "Origin", required = false) String origin,
+            @Valid @RequestBody SecondFactorController.Code code) {
+        cookies.requireTrustedOrigin(origin);
+        return session(auth.verifySecondFactor(code.challenge(), code.code()));
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthenticationResponse> refresh(
             @RequestHeader(value = "Origin", required = false) String origin,

@@ -20,7 +20,7 @@ public class AccountAccessService {
             throw new AccessDeniedException("Account unavailable");
         boolean administrator = user.getRoles() != null && user.getRoles().stream()
                 .anyMatch(role -> Set.of("ADMIN", "SUPER_ADMIN").contains(role.getName()));
-        return new PermissionSnapshot(user.getId(), administrator,
+        return new PermissionSnapshot(user.getId(), administrator || functions.hasActiveStaffGroup(user.getId()),
                 administrator ? functions.activeCodes() : functions.effectiveCodes(user.getId()));
     }
 }

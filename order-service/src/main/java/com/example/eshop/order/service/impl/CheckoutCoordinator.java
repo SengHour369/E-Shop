@@ -23,6 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 public class CheckoutCoordinator {
+    private final com.example.eshop.order.util.OrderCodeGenerator orderCodes;
 
     private final org.springframework.beans.factory.ObjectProvider<com.example.eshop.order.automation.CheckoutAddressVerifier> addressVerifier;
     private final OrderRepository orders;
@@ -117,7 +118,7 @@ public class CheckoutCoordinator {
 
             OrderDetail order = OrderDetail.builder()
                     .userId(userId)
-                    .orderNumber("ORD-" + UUID.randomUUID())
+                    .orderNumber(orderCodes.generateOrderCode())
                     .orderDate(LocalDateTime.now())
                     .status("CHECKOUT_PENDING")
                     .totalAmount(BigDecimal.ZERO)
@@ -179,7 +180,8 @@ public class CheckoutCoordinator {
                                     i.getProductSkuId(),
                                     i.getQuantity()
                             ))
-                            .toList()
+                            .toList(),
+                    order.getGuestSessionId()
             );
             CheckoutResult reserved;
 
@@ -189,7 +191,7 @@ public class CheckoutCoordinator {
                 if (ex.status() == 400 || ex.status() == 404) {
                     order.setStatus("FAILED");
                     order.setCatalogCompleted(true);
-                    Cart cart = carts.lockByUserId(order.getUserId())
+                    Cart cart = ownerCart(order)
                             .orElseThrow();
 
                     if (Objects.equals(cart.getCheckoutOrderId(), id)) {
@@ -206,7 +208,7 @@ public class CheckoutCoordinator {
                 catalog.release(id);
                 order.setStatus("FAILED");
                 order.setCatalogCompleted(true);
-                var cart = carts.lockByUserId(order.getUserId()).orElseThrow();
+                var cart = ownerCart(order).orElseThrow();
                 if (Objects.equals(cart.getCheckoutOrderId(), id)) cart.setCheckoutOrderId(null);
                 return; // No payment event and no COD stock confirmation for a changed price.
             }
@@ -265,7 +267,7 @@ public class CheckoutCoordinator {
                 );
             }
 
-            Cart cart = carts.lockByUserId(order.getUserId()).orElseThrow();
+            Cart cart = ownerCart(order).orElseThrow();
 
             if (Objects.equals(cart.getCheckoutOrderId(), id)) {
                 cart.getCartItems().clear();
@@ -274,6 +276,10 @@ public class CheckoutCoordinator {
                 cart.setCheckoutOrderId(null);
             }
         });
+    }
+
+    private java.util.Optional<Cart> ownerCart(OrderDetail order) {
+        return order.getGuestSessionId()==null ? carts.lockByUserId(order.getUserId()) : carts.findByGuestSessionId(order.getGuestSessionId());
     }
 
     @Scheduled(fixedDelayString = "${checkout.recovery-delay-ms:10000}")

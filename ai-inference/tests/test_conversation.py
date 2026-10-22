@@ -49,3 +49,25 @@ def test_conversation_rejects_incomplete_generation():
         app.state.http = httpx.AsyncClient(transport=httpx.MockTransport(handle))
         result = client.post('/api/v1/ai/conversation', json={'message': 'Hello'})
         assert result.status_code == 502
+
+
+def test_admin_conversation_uses_store_management_context():
+    received = []
+    def handle(request):
+        received.append(json.loads(request.content))
+        return httpx.Response(200, json={'message': {'content': 'Which shop records should I check?'}, 'done': True})
+    app = create_app(make_settings(ai_provider='OLLAMA', ollama_model='test'))
+    with TestClient(app) as client:
+        app.state.http = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+        result = client.post('/api/v1/ai/conversation', json={'message': 'Help me manage my store', 'mode': 'ADMIN'})
+        assert result.status_code == 200
+        prompt = received[0]['messages'][0]['content']
+        assert 'admin assistant' in prompt
+        assert 'permission-controlled shop tools' in prompt
+        assert 'help users choose products' not in prompt
+
+
+def test_conversation_rejects_unknown_modes():
+    app = create_app(make_settings(ai_provider='OLLAMA', ollama_model='test'))
+    with TestClient(app) as client:
+        assert client.post('/api/v1/ai/conversation', json={'message': 'Hi', 'mode': 'ROOT'}).status_code == 422

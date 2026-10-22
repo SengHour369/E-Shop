@@ -8,7 +8,7 @@ import java.util.*;
 public enum ImportTool {
     CATEGORY_BULK_UPDATE("CATEGORY_UPDATE",true,true,"id:id! expectedVersion:zero! name:text! description:text status:boolean!"),
     BRANCH_BULK_UPDATE("BRANCH_UPDATE",true,true,"id:id! expectedVersion:zero! name:text! address:text"),
-    PRODUCT_BULK_UPDATE("PRODUCT_UPDATE",true,true,"id:id! expectedVersion:zero! name:text! subCategoryId:id! description:text isActive:boolean!"),
+    PRODUCT_BULK_UPDATE("PRODUCT_UPDATE",true,true,"id:id! expectedVersion:zero! name:text! subCategoryId:id! description:text isActive:boolean! skus:json imageIds:text imageChecksums:text"),
     CATEGORY_BULK_CREATE(
             "CATEGORY_CREATE",
             false,
@@ -26,7 +26,7 @@ public enum ImportTool {
             true,
             true,
             "name:text! subCategoryId:id! description:text "
-                    + "isActive:boolean! imageIds:text imageChecksums:text"
+                    + "isActive:boolean! imageIds:text imageChecksums:text skus:json"
     ),
     PRODUCT_SKU_BULK_CREATE(
             "SKU_CREATE",
@@ -132,7 +132,7 @@ public enum ImportTool {
             }
 
             try {
-                if (value.length() > 2000
+                if (value.length() > (field.type().equals("json") ? 12000 : 2000)
                         || value.chars().anyMatch(Character::isISOControl)) {
                     throw new IllegalArgumentException();
                 }
@@ -164,6 +164,10 @@ public enum ImportTool {
                             throw new IllegalArgumentException();
                         }
                     }
+                    case "json" -> {
+                        var node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(value);
+                        if (!node.isArray() || node.size() > 50) throw new IllegalArgumentException();
+                    }
                     case "date" -> LocalDateTime.parse(value);
                     default -> {
                         if (key.equals("name") && value.length() > 120
@@ -175,7 +179,7 @@ public enum ImportTool {
                         }
                     }
                 }
-            } catch (RuntimeException ex) {
+            } catch (Exception ex) {
                 errors.add("INVALID_VALUE: " + key);
             }
         });
@@ -187,7 +191,7 @@ public enum ImportTool {
             errors.add("INVALID_DATE_RANGE");
         }
 
-        if (this == PRODUCT_BULK_CREATE) {
+        if (this == PRODUCT_BULK_CREATE || this == PRODUCT_BULK_UPDATE && (!values.getOrDefault("imageIds", "").isBlank() || !values.getOrDefault("imageChecksums", "").isBlank())) {
             String ids = values.getOrDefault("imageIds", "");
             String hashes = values.getOrDefault("imageChecksums", "");
 

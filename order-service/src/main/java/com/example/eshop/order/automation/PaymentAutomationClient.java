@@ -29,6 +29,23 @@ public class PaymentAutomationClient {
                 .build();
     }
 
+    public byte[] guestImage(long id) {
+        return client.get().uri("/internal/commerce/guest-orders/{id}/qr/image",id)
+                .header("Authorization",ServiceIdentity.bearer(jwt,"order-service","SERVICE_ORDER"))
+                .retrieve().body(byte[].class);
+    }
+    public java.util.Map<?,?> guestQr(long id) {
+        return client.get().uri("/internal/commerce/guest-orders/{id}/qr",id)
+                .header("Authorization",ServiceIdentity.bearer(jwt,"order-service","SERVICE_ORDER"))
+                .retrieve().body(java.util.Map.class);
+    }
+
+    public VerifiedPaymentSnapshot forOrder(long orderId) {
+        return client.get().uri("/internal/commerce/payments?orderId={id}",orderId)
+                .header("Authorization",ServiceIdentity.bearer(jwt,"order-service","SERVICE_ORDER"))
+                .retrieve().body(VerifiedPaymentSnapshot.class);
+    }
+
     public VerifiedPaymentSnapshot get(long id) {
         return client.get()
                 .uri("/internal/commerce/payments/{id}", id)

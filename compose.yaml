@@ -172,6 +172,7 @@ services:
       gateway-redis:
         condition: service_healthy
     environment:
+      STOREFRONT_ADMIN_URL: http://admin-service:8087
       SCANNER_AI_INFERENCE_URL: ${SCANNER_AI_INFERENCE_URL:-http://ai-inference:8000}
       SCANNER_AI_TIMEOUT_SECONDS: ${SCANNER_AI_TIMEOUT_SECONDS:-60}
       AI_VISION_SERVICE_KEY: ${AI_VISION_SERVICE_KEY:-}
@@ -275,6 +276,7 @@ services:
       gateway-redis:
         condition: service_healthy
     environment:
+      AUTHORIZATION_AUTH_URL: http://auth-service:8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://admin-db:5432/admin_db
       REDIS_HOST: gateway-redis
       SPRING_DATASOURCE_USERNAME: senghour

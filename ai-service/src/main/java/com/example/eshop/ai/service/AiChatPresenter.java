@@ -2,6 +2,8 @@ package com.example.eshop.ai.service;
 
 import com.example.eshop.ai.dto.AiChatResponse;
 import com.example.eshop.ai.dto.AiResponse;
+import com.example.eshop.ai.dto.ChatPresentation;
+import com.example.eshop.ai.enums.AiIntent;
 import com.example.eshop.ai.enums.AiExecutionStatus;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +48,18 @@ public class AiChatPresenter {
                 result.intent(), result.status(), message, result.errorCode(), result.data());
         List<String> suggestions = result.status() == AiExecutionStatus.SUCCESS
                 ? List.of(khmer ? "ស្វែងរកផលិតផល" : "Search products") : List.of();
-        return new AiChatResponse(conversationId, administrator ? "SUPER_ADMIN" : "CUSTOMER", card, suggestions, displayed);
+        // Intent is the registered execution result, not an untrusted model layout.
+        // The native screen re-fetches using the caller's JWT and domain authorization.
+        ChatPresentation presentation = null;
+        if (administrator && result.status() == AiExecutionStatus.SUCCESS && result.intent() != null) {
+            presentation = switch (result.intent()) {
+                case ADMIN_ORDER_LIST -> ChatPresentation.orders();
+                case INVENTORY_GET -> ChatPresentation.inventory(false);
+                case INVENTORY_LOW_STOCK -> ChatPresentation.inventory(true);
+                default -> null;
+            };
+        }
+        return new AiChatResponse(conversationId, administrator ? "SUPER_ADMIN" : "CUSTOMER", card, suggestions, displayed, presentation);
     }
 
     private static String card(AiResponse result) {

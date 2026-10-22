@@ -30,6 +30,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        boolean firstInstallation = groupRepository.count() == 0;
         // 1. Create roles
         List<String> roles = List.of("ADMIN", "MANAGER", "STAFF", "SALES", "USER");
         roles.forEach(this::createRoleIfNotFound);
@@ -40,6 +41,8 @@ public class DataInitializer implements CommandLineRunner {
         // 3. Seed function permissions
         seedFunctionPermissions();
 
+        // Preserve configured group grants on every subsequent startup.
+        if (firstInstallation) {
         // 4. Assign all permissions to ADMIN group
         seedAdminGroupPermissions();
 
@@ -60,6 +63,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // 4.10 Seed STF/MNG group permissions for Cancelation Management
         seedCancelationGroupPermissions();
+        }
 
         // 5. Create admin user
         createAdminIfNotFound();
@@ -375,7 +379,55 @@ public class DataInitializer implements CommandLineRunner {
 
     // ---------- Modified seedApiPermissions with helper ----------
     private void seedApiPermissions() {
+        ensureAdminFunctionDefinitions();
         // Use helper to reduce duplication
+        // Current admin API paths use the same functions as menus and action controls.
+        createApiPermissionForCode("POST", "/api/v1/inventory/id/", "INVENTORY_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/inventory/all/", "INVENTORY_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/inventory/low-stock", "INVENTORY_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/inventory/sku/", "INVENTORY_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/inventory/product/", "INVENTORY_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/inventory/search", "INVENTORY_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/inventory/summary", "INVENTORY_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/inventory/history/*", "INVENTORY_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/inventory", "INVENTORY_ADJUST");
+        createApiPermissionForCode("POST", "/api/v1/inventory/exact", "INVENTORY_ADJUST");
+        createApiPermissionForCode("POST", "/api/v1/inventory/delete", "INVENTORY_ADJUST");
+        createApiPermissionForCode("PATCH", "/api/v1/inventory/restock", "INVENTORY_ADJUST");
+        createApiPermissionForCode("POST", "/api/v1/refunds/list", "REFUND_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/refunds/summary", "REFUND_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/refunds/*", "REFUND_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/refunds/*/history", "REFUND_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/refunds/*/similar-products", "REFUND_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/refunds/*/process", "REFUND_PROCESS");
+        createApiPermissionForCode("POST", "/api/v1/refunds/*/cancel", "REFUND_CANCEL");
+        createApiPermissionForCode("POST", "/api/v1/cancelations/list", "CANCELATION_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/cancelations/summary", "CANCELATION_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/cancelations/*", "CANCELATION_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/admin/promotions", "PROMOTION_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/admin/promotions/*", "PROMOTION_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/admin/promotions/*/skus", "PROMOTION_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/admin/promotions", "PROMOTION_MANAGE");
+        createApiPermissionForCode("PUT", "/api/v1/admin/promotions/*", "PROMOTION_MANAGE");
+        createApiPermissionForCode("DELETE", "/api/v1/admin/promotions/*", "PROMOTION_MANAGE");
+        createApiPermissionForCode("POST", "/api/v1/admin/promotions/*/skus", "PROMOTION_MANAGE");
+        createApiPermissionForCode("DELETE", "/api/v1/admin/promotions/*/skus/*", "PROMOTION_MANAGE");
+        createApiPermissionForCode("POST", "/api/v1/admin/promotions/*/schedule", "PROMOTION_MANAGE");
+        createApiPermissionForCode("POST", "/api/v1/admin/promotions/*/activate", "PROMOTION_MANAGE");
+        createApiPermissionForCode("POST", "/api/v1/admin/promotions/*/disable", "PROMOTION_MANAGE");
+        createApiPermissionForCode("POST", "/api/v1/products/delete/", "PRODUCT_DELETE");
+        createApiPermissionForCode("POST", "/api/v1/products/update/status/", "PRODUCT_UPDATE");
+        createApiPermissionForCode("GET", "/api/v1/orders/reports/monthly", "REPORT_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/payments/reports/monthly", "REPORT_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/orders/reports/weekly", "REPORT_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/admin/live-tests/runs", "SYSTEM_TEST_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/admin/live-tests/runs/*", "SYSTEM_TEST_VIEW");
+        createApiPermissionForCode("POST", "/api/v1/admin/live-tests/runs", "SYSTEM_TEST_RUN");
+        createApiPermissionForCode("GET", "/api/v1/admin/storefront/access-settings", "STOREFRONT_ACCESS_VIEW");
+        createApiPermissionForCode("PUT", "/api/v1/admin/storefront/access-settings", "STOREFRONT_ACCESS_UPDATE");
+        createApiPermissionForCode("GET", "/api/v1/admin/guest-reviews", "PRODUCT_REVIEW_MODERATE");
+        createApiPermissionForCode("PUT", "/api/v1/admin/guest-reviews/*", "PRODUCT_REVIEW_MODERATE");
+
         createApiPermissionIfNotExists("POST", "/api/v1/cart/user/**/items", 501L);
         createApiPermissionIfNotExists("GET", "/api/v1/cart/user/**", 502L);
         createApiPermissionIfNotExists("POST", "/api/v1/admin/users", 601L);
@@ -427,6 +479,17 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("POST", "/admin/returns/*/inspect/complete", 1107L);
 
         // ── CART (remaining endpoints) ──────────────────────────────
+        // Current order-service return paths; reuse existing grants.
+        createApiPermissionIfNotExists("GET", "/api/v1/returns/summary", 1101L);
+        createApiPermissionIfNotExists("POST", "/api/v1/returns/returns", 1101L);
+        createApiPermissionIfNotExists("GET", "/api/v1/returns/*", 1101L);
+        createApiPermissionIfNotExists("GET", "/api/v1/returns/*/history", 1101L);
+        createApiPermissionIfNotExists("POST", "/api/v1/returns/*/approve", 1102L);
+        createApiPermissionIfNotExists("POST", "/api/v1/returns/*/reject", 1103L);
+        createApiPermissionIfNotExists("POST", "/api/v1/returns/*/receive", 1106L);
+        createApiPermissionIfNotExists("POST", "/api/v1/returns/*/inspect/start", 1107L);
+        createApiPermissionIfNotExists("POST", "/api/v1/returns/*/inspect/complete", 1107L);
+
         createApiPermissionIfNotExists("POST", "/api/v1/cart/user/id", 502L);
         createApiPermissionIfNotExists("POST", "/api/v1/cart/user/id/get-or-create", 502L);
         createApiPermissionIfNotExists("POST", "/api/v1/cart/user/id/items/cartItemId", 503L);
@@ -481,6 +544,14 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("POST", "/api/v1/brand-logos/upload", 1002L);
 
         // ── USER MANAGEMENT (admin only) ─────────────────────────────
+        // User profile read/edit endpoints share the existing user-management grant.
+        createApiPermissionIfNotExists("GET", "/api/v1/user/*/details", 601L);
+        createApiPermissionIfNotExists("GET", "/api/v1/user/*/details/activity", 601L);
+        createApiPermissionIfNotExists("GET", "/api/v1/user/editor-options", 601L);
+        createApiPermissionIfNotExists("GET", "/api/v1/user/*/editor", 601L);
+        createApiPermissionIfNotExists("PUT", "/api/v1/user/*/editor", 601L);
+        createApiPermissionIfNotExists("POST", "/api/v1/user/*/editor/photo", 601L);
+
         createApiPermissionIfNotExists("POST", "/api/v1/user/create", 601L);
         createApiPermissionIfNotExists("POST", "/api/v1/user/id", 601L);
         createApiPermissionIfNotExists("POST", "/api/v1/user/id/image", 601L);
@@ -510,6 +581,35 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionIfNotExists("POST", "/api/v1/functions/create/", 401L);
         createApiPermissionIfNotExists("POST", "/api/v1/functions/update/", 402L);
         createApiPermissionIfNotExists("POST", "/api/v1/functions/delete/", 403L);
+    }
+
+    // Run after default group assignments: definitions do not imply new group grants.
+    private void ensureAdminFunctionDefinitions() {
+        var existing = functionPermissionRepository.findAll().stream()
+                .map(FunctionPermission::getFuncCode).collect(java.util.stream.Collectors.toSet());
+        Long maximum = functionPermissionRepository.findMaxFuncId();
+        long next = maximum == null ? 0 : maximum;
+        for (String[] definition : List.of(
+                new String[]{"INVENTORY_VIEW", "View inventory", "INVENTORY"},
+                new String[]{"INVENTORY_ADJUST", "Adjust inventory", "INVENTORY"},
+                new String[]{"REPORT_VIEW", "View reports", "REPORT"},
+                new String[]{"PROMOTION_VIEW", "View promotions", "PROMOTION"},
+                new String[]{"PROMOTION_MANAGE", "Manage promotions", "PROMOTION"},
+                new String[]{"SYSTEM_TEST_VIEW", "View own live test reports", "SYSTEM"},
+                new String[]{"SYSTEM_TEST_RUN", "Run fixed live HTTP checks", "SYSTEM"},
+                new String[]{"STOREFRONT_ACCESS_VIEW", "View storefront access", "STOREFRONT"},
+                new String[]{"STOREFRONT_ACCESS_UPDATE", "Update storefront access", "STOREFRONT"},
+                new String[]{"PRODUCT_REVIEW_MODERATE", "Moderate product reviews", "STOREFRONT"})) {
+            if (existing.add(definition[0])) {
+                functionPermissionRepository.save(buildFunction(++next, definition[0], definition[1], definition[1], definition[2]));
+            }
+        }
+    }
+
+    private void createApiPermissionForCode(String method, String api, String code) {
+        functionPermissionRepository.findByFuncCodeAndIsDeleteFalse(code)
+                .filter(f -> Boolean.TRUE.equals(f.getIsActive()))
+                .ifPresent(f -> createApiPermissionIfNotExists(method, api, f.getFuncId()));
     }
 
     private void createApiPermissionIfNotExists(String method, String api, Long funcId) {

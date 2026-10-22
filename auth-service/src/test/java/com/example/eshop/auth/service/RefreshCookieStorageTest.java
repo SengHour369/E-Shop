@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 class RefreshCookieStorageTest {
     @Mock RefreshTokenRepository repository;
     @Mock JwtService jwt;
+    @Mock com.example.eshop.auth.repository.FunctionPermissionRepository functionPermissionRepository;
     @InjectMocks AuthServiceImpl auth;
 
     @Test void rotationLooksUpHashAndStoresOnlyNewHashLinkedToUser() {

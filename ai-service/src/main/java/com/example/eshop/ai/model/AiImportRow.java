@@ -29,6 +29,8 @@ public class AiImportRow {
     @Column(nullable = false, columnDefinition = "text")
     private String valuesJson = "{}";
 
+    @Column(columnDefinition="text") private String currentValues;
+
     private String status = "UNVALIDATED";
 
     private boolean edited;

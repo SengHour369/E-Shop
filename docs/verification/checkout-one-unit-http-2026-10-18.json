@@ -1,0 +1,41 @@
+{
+  "base": "http://192.168.1.10:41075",
+  "checks": [
+    {
+      "test": "cart-update-to-one",
+      "status": 200
+    },
+    {
+      "test": "one-unit-checkout",
+      "status": 201,
+      "orderId": 2,
+      "orderStatus": "PENDING",
+      "total": 1.0
+    },
+    {
+      "test": "idempotent-retry",
+      "status": 201,
+      "sameOrder": true
+    },
+    {
+      "test": "order-qr",
+      "status": 200,
+      "qrPresent": true,
+      "paymentStatus": "PENDING",
+      "amount": 1.0,
+      "currency": "USD",
+      "message": null
+    },
+    {
+      "test": "qr-image",
+      "status": 200,
+      "contentType": "image/png",
+      "validPng": true
+    },
+    {
+      "test": "cart-after-checkout",
+      "status": 200,
+      "itemCount": 0
+    }
+  ]
+}

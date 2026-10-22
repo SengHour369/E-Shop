@@ -33,14 +33,14 @@ public class CatalogCheckoutService {
         if (existing.isPresent()) {
             CheckoutReservation r = existing.get();
             CheckoutResult result = read(r);
-            if (!r.getUserId().equals(request.userId()) || !quantities(result).equals(quantities(request)))
+            if ((!Objects.equals(r.getUserId(),request.userId()) || !Objects.equals(r.getGuestSessionId(),request.guestSessionId())) || !quantities(result).equals(quantities(request)))
                 throw new BusinessLogicException("Checkout key was already used for different items");
             if ("RELEASED".equals(r.getStatus())) throw new BusinessLogicException("Checkout was released");
             return result;
         }
         CheckoutResult priced = price(request, true);
         CheckoutReservation r = new CheckoutReservation();
-        r.setOrderId(request.orderId()); r.setUserId(request.userId()); r.setStatus("RESERVED");
+        r.setOrderId(request.orderId()); r.setUserId(request.userId()); r.setGuestSessionId(request.guestSessionId()); r.setStatus("RESERVED");
         r.setSnapshot(write(priced));
         reservations.saveAndFlush(r);
         var inventory = lockInventory(priced);
@@ -57,7 +57,7 @@ public class CatalogCheckoutService {
         for (var entry : discounts.entrySet()) {
             PromotionUsage usage = new PromotionUsage();
             usage.setPromotion(promotions.getReferenceById(entry.getKey()));
-            usage.setOrderId(request.orderId()); usage.setUserId(request.userId());
+            usage.setOrderId(request.orderId()); usage.setUserId(request.userId()); usage.setGuestSessionId(request.guestSessionId());
             usage.setDiscountAmount(entry.getValue()); usage.setUsedAt(LocalDateTime.now(clock));
             usages.save(usage);
         }
@@ -99,7 +99,7 @@ public class CatalogCheckoutService {
             Promotion p = link.getPromotion();
             eligible.computeIfAbsent(p.getId(), id ->
                 (p.getUsageLimit() == null || usages.countByPromotionIdAndReleasedFalse(id) < p.getUsageLimit()) &&
-                (p.getUsagePerCustomer() == null || usages.countByPromotionIdAndUserIdAndReleasedFalse(id, request.userId()) < p.getUsagePerCustomer()));
+                (p.getUsagePerCustomer() == null || request.userId() != null && usages.countByPromotionIdAndUserIdAndReleasedFalse(id, request.userId()) < p.getUsagePerCustomer()));
         }
         var candidates = links.stream().collect(Collectors.groupingBy(a -> a.getProductSku().getId(),
             Collectors.mapping(PromotionSku::getPromotion, Collectors.toList())));
@@ -194,7 +194,7 @@ public class CatalogCheckoutService {
         return r.items().stream().collect(Collectors.toMap(CheckoutResult.Line::productSkuId, CheckoutResult.Line::quantity));
     }
     private static void validate(CheckoutRequest r) {
-        if (r == null || r.orderId() == null || r.orderId() < 1 || r.userId() == null || r.userId() < 1 ||
+        if (r == null || r.orderId() == null || r.orderId() < 1 || (r.userId() == null ? r.guestSessionId() == null : r.userId() < 1 || r.guestSessionId() != null) ||
                 r.items() == null || r.items().isEmpty() || r.items().size() > 100)
             throw new BusinessLogicException("Checkout requires an order, customer, and 1..100 items");
         for (var l : r.items()) if (l == null || l.productSkuId() == null || l.productSkuId() < 1 ||

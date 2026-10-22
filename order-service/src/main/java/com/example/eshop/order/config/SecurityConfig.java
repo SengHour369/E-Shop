@@ -45,6 +45,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers("/api/v1/guest/**").permitAll()
                         .requestMatchers("/api/admin/audit-logs/**").hasAnyAuthority("ADMIN", "AUDIT_READ")
                         .requestMatchers("/api/v1/cart/**").authenticated()
                         .requestMatchers("/api/v1/orders/**").authenticated()

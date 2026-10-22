@@ -139,20 +139,40 @@ public class AiImportService {
             for(int i=0;i<headers.size();i++){header.createCell(i).setCellValue(headers.get(i));values.createCell(i).setCellValue(row.values().get(headers.get(i)));}
             workbook.write(output);bytes=output.toByteArray();
         }catch(java.io.IOException invalid){throw bad("Draft could not be prepared");}
-        var batch=upload(new ExcelImportParser.ParsedFile("assistant-draft.xlsx",bytes,List.of(
-                new ExcelImportParser.ParsedSheet("Draft",headers,List.of(new ExcelImportParser.ParsedRow(2,row.values()))))));
+        var batch=upload(new ApprovalStagingData.ParsedFile("assistant-draft.xlsx",bytes,List.of(
+                new ApprovalStagingData.ParsedSheet("Draft",headers,List.of(new ApprovalStagingData.ParsedRow(2,row.values()))))));
         var sheet=sheets.findByBatchId(batch.getId()).get(0);
         var columns=new LinkedHashMap<String,String>();headers.forEach(header->columns.put(header,header));
         batch=confirmMapping(batch.getId(),sheet.getId(),batch.getRevision(),row.tool(),columns);
+        batch.setSourceType("AI_ASSISTANT");
+        batch.setEntityType(row.tool().name().startsWith("PRODUCT_SKU")?"PRODUCT_SKU":row.tool().name().split("_BULK")[0]);
+        batch.setEntityId(row.values().get("id"));
         return Map.of("batchId",batch.getId().toString(),"revision",batch.getRevision(),"status",batch.getStatus(),"toolType",row.tool().name());
     }
 
     @Transactional
-    public AiImportBatch upload(ExcelImportParser.ParsedFile parsed) {
+    public AiImportBatch stageProduct(ImportContracts.Row row,List<org.springframework.web.multipart.MultipartFile> attachments) {
+        if(row == null || row.tool() == null || !Set.of(ImportTool.PRODUCT_BULK_CREATE,ImportTool.PRODUCT_BULK_UPDATE).contains(row.tool())) throw bad("Product create/update tool required");
+        if(row.values()==null || row.values().size()>64 || !row.tool().schema.keySet().containsAll(row.values().keySet()) || row.values().entrySet().stream().anyMatch(e->e.getValue()==null || e.getValue().length()>(e.getKey().equals("skus")?12000:2000))) throw bad("Invalid product fields");
+        if(row.values().containsKey("imageIds") || row.values().containsKey("imageChecksums")) throw bad("Attach actual image files; image references cannot be supplied");
+        if(attachments!=null && attachments.size()>4) throw bad("At most four product images are allowed");
+        var staged=stage(row);
+        var batch=batches.findById(UUID.fromString(staged.get("batchId").toString())).orElseThrow();
+        batch.setSourceType(row.tool()==ImportTool.PRODUCT_BULK_CREATE?"MANUAL_CREATE":"MANUAL_UPDATE");
+        batch.setFilename("Manual product request");
+        var first=rows.findByBatchId(batch.getId()).get(0);
+        if(attachments!=null)for(var file:attachments)batch=attachImage(batch.getId(),first.getId(),batch.getRevision(),file);
+        record(batch,"MANUAL_PRODUCT_STAGED",Map.of("tool",row.tool().name()));
+        return batch;
+    }
+
+    @Transactional
+    public AiImportBatch upload(ApprovalStagingData.ParsedFile parsed) {
         require("IMPORT_UPLOAD");
         AiImportBatch batch = new AiImportBatch();
         batch.setOwnerId(CurrentActor.userId());
         batch.setLastEditorId(CurrentActor.userId());
+        batch.setFilename(parsed.filename());
 
         try {
             batch.setChecksum(
@@ -243,6 +263,44 @@ public class AiImportService {
                 : batches.findByOwnerId(CurrentActor.userId(), pageable);
     }
 
+    @Transactional(readOnly=true)
+    public Page<AiImportBatch> list(int page,int size,boolean review,boolean assigned,boolean executedOnly) {
+        if(!executedOnly)return list(page,size,review,assigned);
+        require(assigned?"IMPORT_REVIEW":"IMPORT_UPLOAD");var actor=permissions.current();
+        org.springframework.data.jpa.domain.Specification<AiImportBatch> scope=(root,query,builder)-> {
+            var states=root.get("status").in(List.of("PROCESSING","COMPLETED","PARTIAL_SUCCESS","FAILED"));
+            if(actor.administrator())return states;
+            return builder.and(states,builder.equal(root.get(assigned?"assignedReviewerId":"ownerId"),actor.userId()));
+        };
+        return batches.findAll(scope,PageRequest.of(page,size,Sort.by(Sort.Direction.DESC,"createdAt")));
+    }
+
+    @Transactional(readOnly=true)
+    public Map<String,Object> requests(int page,int size,boolean mine,String search,String status,String source,String entity) {
+        require(mine?"IMPORT_UPLOAD":"IMPORT_REVIEW");
+        if(page<0 || size<1 || size>100 || search.length()>120)throw bad("Invalid request filters");
+        var actor=permissions.current();
+        org.springframework.data.jpa.domain.Specification<AiImportBatch> scope=(root,query,builder)-> {
+            var terms=new ArrayList<jakarta.persistence.criteria.Predicate>();
+            if(mine)terms.add(builder.equal(root.get("ownerId"),actor.userId()));
+            else if(!actor.administrator())terms.add(builder.equal(root.get("assignedReviewerId"),actor.userId()));
+            if(!source.isBlank())terms.add(builder.equal(root.get("sourceType"),source));
+            if(!entity.isBlank())terms.add(builder.equal(root.get("entityType"),entity));
+            if(!search.isBlank()) {
+                String term="%"+search.toLowerCase(Locale.ROOT).replace("%","\\%").replace("_","\\_")+"%";
+                var matchingRows=query.subquery(UUID.class);var row=matchingRows.from(AiImportRow.class);
+                matchingRows.select(row.get("batchId")).where(builder.like(builder.lower(row.get("valuesJson")),term,'\\'));
+                terms.add(builder.or(builder.like(builder.lower(root.get("filename")),term,'\\'),builder.like(root.get("id").as(String.class),term,'\\'),builder.like(root.get("entityId"),term,'\\'),root.get("id").in(matchingRows)));
+            }
+            return builder.and(terms.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
+        var counts=new LinkedHashMap<String,Long>();counts.put("ALL",batches.count(scope));
+        for(String value:List.of("DRAFT","SUBMITTED","CHANGES_REQUESTED","APPROVED","REJECTED","COMPLETED","PARTIAL_SUCCESS","FAILED","INVALID","VALIDATED","PROCESSING")) counts.put(value,batches.count(scope.and((root,query,builder)->builder.equal(root.get("status"),value))));
+        var filtered=status.isBlank()?scope:scope.and((root,query,builder)->builder.equal(root.get("status"),status));
+        var result=batches.findAll(filtered,PageRequest.of(page,size,Sort.by(Sort.Direction.DESC,"createdAt")));
+        return Map.of("items",result.getContent(),"total",result.getTotalElements(),"totalPages",result.getTotalPages(),"counts",counts);
+    }
+
     @Transactional(readOnly = true)
     public Preview preview(UUID id, int page, int size, String status) {
         AiImportBatch batch = read(id);
@@ -297,12 +355,15 @@ public class AiImportService {
             return;
         }
 
-        if (!actor.permits("IMPORT_REVIEW")) {
+        if (!actor.permits("IMPORT_REVIEW") || !actor.administrator() && !Objects.equals(batch.getAssignedReviewerId(),actor.userId())) {
             throw new AccessDeniedException("Import unavailable");
         }
     }
 
     private void editable(AiImportBatch batch) {
+        long actor=CurrentActor.userId();
+        if(actor==batch.getOwnerId() && Set.of("SUBMITTED","APPROVED").contains(batch.getStatus())) throw conflict("Pending and approved revisions are locked. Wait for Return to Maker.");
+        if(actor!=batch.getOwnerId() && (!permissions.current().permits("IMPORT_REVIEW") || !Objects.equals(batch.getAssignedReviewerId(),actor))) throw new AccessDeniedException("Only the maker or assigned reviewer may edit this request");
         if (Set.of(
                 "PROCESSING",
                 "COMPLETED",
@@ -396,7 +457,7 @@ public class AiImportService {
             throw bad("Invalid or ambiguous mapping");
         }
 
-        if (tool == ImportTool.PRODUCT_BULK_CREATE
+        if (Set.of(ImportTool.PRODUCT_BULK_CREATE,ImportTool.PRODUCT_BULK_UPDATE).contains(tool)
                 && columns.values().stream()
                 .anyMatch(f -> f.equals("imageIds") || f.equals("imageChecksums"))) {
             throw bad("Image references are managed by the attachment workflow");
@@ -414,6 +475,8 @@ public class AiImportService {
                 "columns", columns
         ));
         sheet.setTool(tool.name());
+        String entityType=tool.name().startsWith("PRODUCT_SKU")?"PRODUCT_SKU":tool.name().split("_BULK")[0];
+        batch.setEntityType(batch.getEntityType()==null || batch.getEntityType().equals(entityType)?entityType:"MULTIPLE");
         sheet.setConfirmed(true);
         mapping(id, sheetId).setConfirmedValues(json(columns));
 
@@ -535,12 +598,12 @@ public class AiImportService {
         if (values == null
                 || values.size() > 64
                 || values.values().stream().anyMatch(v ->
-                v == null || v.length() > 2000)
+                v == null || v.length() > 12000)
                 || !tool.schema.keySet().containsAll(values.keySet())) {
             throw bad("Invalid row fields");
         }
 
-        if (tool == ImportTool.PRODUCT_BULK_CREATE) {
+        if (Set.of(ImportTool.PRODUCT_BULK_CREATE,ImportTool.PRODUCT_BULK_UPDATE).contains(tool)) {
             Map<String, String> current = values(row.getValuesJson());
             Map<String, String> updated = new LinkedHashMap<>(values);
 
@@ -695,6 +758,7 @@ public class AiImportService {
 
                         messages.addAll(result.errors());
                         row.setAffectedResourceId(result.affectedResourceId());
+                        row.setCurrentValues(json(result.currentValues()==null?Map.of():result.currentValues()));
 
                         if (result.duplicateKey() != null) {
                             AiImportRow other = seen.putIfAbsent(
@@ -806,6 +870,7 @@ public class AiImportService {
 
         batch.setAssignedReviewerId(reviewerId);
         batch.setStatus("SUBMITTED");
+        batch.setSubmittedAt(Instant.now());
         record(batch, "SUBMITTED", Map.of("reviewerId", reviewerId));
         notify(batch, NotificationEvent.Type.IMPORT_SUBMITTED);
         return batch;
@@ -819,6 +884,8 @@ public class AiImportService {
             String reason
     ) {
         require("IMPORT_REVIEW");
+        if(!Set.of("APPROVED","REJECTED","CHANGES_REQUESTED").contains(decision)) throw bad("Unsupported review decision");
+        if(reason==null || reason.isBlank() || reason.length()>2000) throw bad("A review reason of 1–2000 characters is required");
         AiImportBatch batch = lock(id, version);
 
         if (!"SUBMITTED".equals(batch.getStatus())) {
@@ -827,7 +894,7 @@ public class AiImportService {
 
         long actor = CurrentActor.userId();
 
-        if (actor != batch.getAssignedReviewerId()) {
+        if (!Objects.equals(actor,batch.getAssignedReviewerId()) || actor==batch.getOwnerId() || Objects.equals(batch.getLastEditorId(),actor)) {
             throw new AccessDeniedException("Assigned reviewer required");
         }
 
@@ -849,6 +916,7 @@ public class AiImportService {
         }
 
         batch.setStatus(decision);
+        batch.setReviewedAt(Instant.now());
 
         AiImportApproval approval = new AiImportApproval();
         approval.setBatchId(id);
@@ -952,7 +1020,7 @@ public class AiImportService {
                         CurrentActor.userId(),
                         version
                 );
-                var result = tool == ImportTool.PRODUCT_BULK_CREATE
+                var result = tool == ImportTool.PRODUCT_BULK_CREATE || tool == ImportTool.PRODUCT_BULK_UPDATE && !data.values().getOrDefault("imageIds", "").isBlank()
                         ? domain.executeProduct(
                         token(),
                         key,
@@ -1017,7 +1085,6 @@ public class AiImportService {
     ) {
         AiImportBatch batch = lock(id, version);
         editable(batch);
-        require("PRODUCT_CREATE");
         AiImportRow row = rows.findById(rowId)
                 .filter(r -> r.getBatchId().equals(id))
                 .orElseThrow(AiImportService::notFound);
@@ -1025,10 +1092,11 @@ public class AiImportService {
                 .orElseThrow(AiImportService::notFound);
 
         if (!sheet.isConfirmed()
-                || tool(sheet) != ImportTool.PRODUCT_BULK_CREATE) {
+                || !Set.of(ImportTool.PRODUCT_BULK_CREATE,ImportTool.PRODUCT_BULK_UPDATE).contains(tool(sheet))) {
             throw bad("Confirm a Product mapping before attaching images");
         }
 
+        require(tool(sheet).permission);
         ImportImageFile clean = ImportImageFile.sanitize(file);
         Map<String, String> data = values(row.getValuesJson());
         List<String> ids = new ArrayList<>();
@@ -1094,10 +1162,10 @@ public class AiImportService {
     ) {
         AiImportBatch batch = lock(id, version);
         editable(batch);
-        require("PRODUCT_CREATE");
         AiImportRow row = rows.findById(rowId)
                 .filter(r -> r.getBatchId().equals(id))
                 .orElseThrow(AiImportService::notFound);
+        require(tool(sheets.findById(row.getSheetId()).orElseThrow()).permission);
         Map<String, String> data = values(row.getValuesJson());
         List<String> ids = new ArrayList<>(Arrays.asList(
                 data.getOrDefault("imageIds", "").split(",")
@@ -1137,7 +1205,7 @@ public class AiImportService {
             AiImportRow row,
             ImportTool tool
     ) {
-        if (tool != ImportTool.PRODUCT_BULK_CREATE) {
+        if (tool != ImportTool.PRODUCT_BULK_CREATE && (tool != ImportTool.PRODUCT_BULK_UPDATE || values(row.getValuesJson()).getOrDefault("imageIds", "").isBlank())) {
             return List.of();
         }
 

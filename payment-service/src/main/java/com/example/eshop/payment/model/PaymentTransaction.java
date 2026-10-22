@@ -28,7 +28,7 @@ public class PaymentTransaction extends BaseEntity {
     private Long order;
 
     // TODO: cross-service call via Feign to auth-service if customer details are needed.
-    @Column(name = "customer_id", nullable = false)
+    @Column(name = "customer_id")
     private Long customer;
 
     @Enumerated(EnumType.STRING)

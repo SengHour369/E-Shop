@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
-public interface OrderCancelationRepository extends JpaRepository<OrderCancelation, Long> {
+public interface OrderCancelationRepository extends JpaRepository<OrderCancelation, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<OrderCancelation> {
 
     Optional<OrderCancelation> findByOrderNo(String orderNo);
 
@@ -24,31 +24,25 @@ public interface OrderCancelationRepository extends JpaRepository<OrderCancelati
 
     boolean existsByCancelationId(String cancelationId);
 
-    @Query("""
-    SELECT new com.example.eshop.order.dto.response.CancelationListResponse(
-        oc.orderNo, oc.customerName, oc.cancelDate, oc.cancelReason, oc.amount
-    )
-    FROM OrderCancelation oc
-    WHERE (:orderNo IS NULL OR oc.orderNo = :orderNo)
-    AND (:customerName IS NULL OR LOWER(oc.customerName) LIKE LOWER(CONCAT('%', :customerName, '%')))
-    AND (:cancelReason IS NULL OR oc.cancelReason = :cancelReason)
-    AND (:cancelStatus IS NULL OR oc.cancelStatus = :cancelStatus)
-    AND (:fromCancelDate IS NULL OR oc.cancelDate >= :fromCancelDate)
-    AND (:toCancelDate IS NULL OR oc.cancelDate <= :toCancelDate)
-    AND (:minAmount IS NULL OR oc.amount >= :minAmount)
-    AND (:maxAmount IS NULL OR oc.amount <= :maxAmount)
-    """)
-    Page<CancelationListResponse> search(
-            @Param("orderNo") String orderNo,
-            @Param("customerName") String customerName,
-            @Param("cancelReason") String cancelReason,
-            @Param("cancelStatus") String cancelStatus,
-            @Param("fromCancelDate") LocalDateTime fromCancelDate,
-            @Param("toCancelDate") LocalDateTime toCancelDate,
-            @Param("minAmount") BigDecimal minAmount,
-            @Param("maxAmount") BigDecimal maxAmount,
-            Pageable pageable
-    );
+    default Page<CancelationListResponse> search(
+            String orderNo, String customerName, String cancelReason, String cancelStatus,
+            LocalDateTime fromCancelDate, LocalDateTime toCancelDate,
+            BigDecimal minAmount, BigDecimal maxAmount, Pageable pageable) {
+        org.springframework.data.jpa.domain.Specification<OrderCancelation> filters = (root, query, cb) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            if (orderNo != null) predicates.add(cb.equal(root.get("orderNo"), orderNo));
+            if (customerName != null) predicates.add(cb.like(cb.lower(root.get("customerName")), "%" + customerName.toLowerCase(java.util.Locale.ROOT) + "%"));
+            if (cancelReason != null) predicates.add(cb.equal(root.get("cancelReason"), cancelReason));
+            if (cancelStatus != null) predicates.add(cb.equal(root.get("cancelStatus"), cancelStatus));
+            if (fromCancelDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("cancelDate"), fromCancelDate));
+            if (toCancelDate != null) predicates.add(cb.lessThanOrEqualTo(root.get("cancelDate"), toCancelDate));
+            if (minAmount != null) predicates.add(cb.greaterThanOrEqualTo(root.get("amount"), minAmount));
+            if (maxAmount != null) predicates.add(cb.lessThanOrEqualTo(root.get("amount"), maxAmount));
+            return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
+        return findAll(filters, pageable).map(row -> new CancelationListResponse(
+                row.getOrderNo(), row.getCustomerName(), row.getCancelDate(), row.getCancelReason(), row.getAmount()));
+    }
 
     @Query("""
             SELECT new com.example.eshop.order.dto.response.CancelationDetailResponse(

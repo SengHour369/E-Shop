@@ -22,4 +22,10 @@ private Long lastEditorId;
 private String requestId;
 private String traceId;
 private Instant createdAt = Instant.now();
+@Column(nullable=false) private String sourceType = "EXCEL_IMPORT";
+private String filename;
+private String entityType;
+private String entityId;
+private Instant submittedAt;
+private Instant reviewedAt;
 }

@@ -24,8 +24,11 @@ public class OrderDetail extends BaseEntity {
     private LocalDateTime checkoutRetryAt;
 
     // Was `User user` (@ManyToOne) — auth-service owns User. Keep only the id.
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private Long userId;
+
+    @Column(unique = false)
+    private java.util.UUID guestSessionId;
 
     // Was `Payment payment` (@OneToOne) — payment-service owns Payment.
     // TODO: cross-service call via Feign to payment-service for payment details/status.
@@ -53,6 +56,10 @@ public class OrderDetail extends BaseEntity {
     // TODO: cross-service call via Feign to auth-service to resolve address details.
     @Column(name = "shipping_address_id")
     private Long shippingAddressId;
+
+    @Column(columnDefinition="text")
+    private String shippingAddressSnapshot;
+    @Column(length=254) private String verifiedContactEmail;
 
     private Boolean deleted = false;
 }

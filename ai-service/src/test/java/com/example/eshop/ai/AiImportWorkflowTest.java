@@ -38,7 +38,7 @@ class AiImportWorkflowTest {
     @MockitoBean ImportMappingClient mappings;
     @MockitoBean NotificationOutboxPublisher publisher;
     @MockitoBean AuditLogService audit;
-    final Set<String> grants = Set.of("IMPORT_UPLOAD", "IMPORT_REVIEW", "IMPORT_APPROVE", "IMPORT_EXECUTE", "CATEGORY_CREATE", "PRODUCT_CREATE", "BRANCH_CREATE", "SKU_CREATE", "INVENTORY_ADJUST", "PROMOTION_MANAGE");
+    final Set<String> grants = Set.of("IMPORT_UPLOAD", "IMPORT_REVIEW", "IMPORT_APPROVE", "IMPORT_EXECUTE", "CATEGORY_CREATE", "PRODUCT_CREATE", "PRODUCT_UPDATE", "BRANCH_CREATE", "SKU_CREATE", "INVENTORY_ADJUST", "PROMOTION_MANAGE");
     @BeforeEach void setup() {
         actor(1);
         when(permissions.current()).thenAnswer(c -> new PermissionSnapshot(CurrentActor.userId(), false, grants));
@@ -53,8 +53,8 @@ class AiImportWorkflowTest {
         var request = new MockHttpServletRequest(); request.addHeader("Authorization", "Bearer test"); RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request)); MDC.put("requestId", UUID.randomUUID().toString());
     }
     AiImportBatch upload(String... names) {
-        List<ExcelImportParser.ParsedRow> data = new ArrayList<>(); for (int i=0; i<names.length; i++) data.add(new ExcelImportParser.ParsedRow(i+2, Map.of("name",names[i],"status","true")));
-        return service.upload(new ExcelImportParser.ParsedFile("test.xlsx", UUID.randomUUID().toString().getBytes(), List.of(new ExcelImportParser.ParsedSheet("Category", List.of("name","status"),data))));
+        List<ApprovalStagingData.ParsedRow> data = new ArrayList<>(); for (int i=0; i<names.length; i++) data.add(new ApprovalStagingData.ParsedRow(i+2, Map.of("name",names[i],"status","true")));
+        return service.upload(new ApprovalStagingData.ParsedFile("test.xlsx", UUID.randomUUID().toString().getBytes(), List.of(new ApprovalStagingData.ParsedSheet("Category", List.of("name","status"),data))));
     }
     AiImportBatch mapped(String... names) {
         var batch = upload(names); var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0);
@@ -105,7 +105,7 @@ class AiImportWorkflowTest {
         verify(domain,never()).execute(anyString(),anyString(),anyString(),any());
     }
     @Test void addingRowsInvalidatesApprovalAndRejectsUnconfirmedOrInjectedFields() {
-        var batch = approved("Approved"); var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0); actor(1);
+        var batch = approved("Approved"); var sheet = service.preview(batch.getId(),0,50,null).sheets().get(0); actor(2);
         var added = service.addRow(batch.getId(),sheet.getId(),batch.getRevision(),UUID.randomUUID(),Map.of("name","Added","status","true"));
         assertThat(added.batch().getApprovedRevision()).isNull();
         assertThat(added.batch().getReviewerId()).isNull();
@@ -165,7 +165,7 @@ class AiImportWorkflowTest {
         assertThatThrownBy(() -> service.validate(batch.getId(),99)).hasMessageContaining("Batch changed");
     }
     @Test void editingApprovedDataInvalidatesApprovalAndPreservesOriginal() {
-        var batch = approved("Before"); var row = rows.findByBatchId(batch.getId()).get(0); actor(1);
+        var batch = approved("Before"); var row = rows.findByBatchId(batch.getId()).get(0); actor(2);
         var changed = service.edit(batch.getId(),row.getId(),batch.getRevision(),Map.of("name","After","status","true"));
         assertThat(changed.getApprovedRevision()).isNull(); assertThat(changed.getRevision()).isEqualTo(batch.getRevision()+1);
         assertThat(rows.findById(row.getId()).orElseThrow().getOriginalValues()).contains("Before");
@@ -206,7 +206,7 @@ class AiImportWorkflowTest {
         assertThat(rows.findById(row.getId()).orElseThrow().getStatus()).isEqualTo("SKIPPED");
     }
     @Test void rejectsIdenticalWorkbookChecksum() {
-        var parsed = new ExcelImportParser.ParsedFile("same.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ExcelImportParser.ParsedSheet("Category",List.of("name"),List.of(new ExcelImportParser.ParsedRow(2,Map.of("name","New"))))));
+        var parsed = new ApprovalStagingData.ParsedFile("same.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ApprovalStagingData.ParsedSheet("Category",List.of("name"),List.of(new ApprovalStagingData.ParsedRow(2,Map.of("name","New"))))));
         service.upload(parsed);
         assertThatThrownBy(() -> service.upload(parsed)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
     }
@@ -236,7 +236,7 @@ class AiImportWorkflowTest {
         assertThatThrownBy(() -> service.list(0, 100, false, true)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
     AiImportBatch productBatch(){
-        var batch=service.upload(new ExcelImportParser.ParsedFile("products.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ExcelImportParser.ParsedSheet("Product",List.of("name","subCategoryId","isActive"),List.of(new ExcelImportParser.ParsedRow(2,Map.of("name","Phone","subCategoryId","1","isActive","true")))))));
+        var batch=service.upload(new ApprovalStagingData.ParsedFile("products.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ApprovalStagingData.ParsedSheet("Product",List.of("name","subCategoryId","isActive"),List.of(new ApprovalStagingData.ParsedRow(2,Map.of("name","Phone","subCategoryId","1","isActive","true")))))));
         var sheet=service.preview(batch.getId(),0,50,null).sheets().get(0);
         return service.confirmMapping(batch.getId(),sheet.getId(),batch.getRevision(),ImportTool.PRODUCT_BULK_CREATE,Map.of("name","name","subCategoryId","subCategoryId","isActive","isActive"));
     }
@@ -250,7 +250,7 @@ class AiImportWorkflowTest {
         batch=service.attachImage(batch.getId(),row.getId(),batch.getRevision(),photo());
         var preview=service.preview(batch.getId(),0,50,null);assertThat(preview.images()).hasSize(1);assertThat(preview.images().get(0).getChecksum()).hasSize(64);
         service.submit(batch.getId(),batch.getRevision(),2);actor(2);batch=service.decide(batch.getId(),batch.getRevision(),"APPROVED","Reviewed image");
-        actor(1);batch=service.detachImage(batch.getId(),row.getId(),preview.images().get(0).getId(),batch.getRevision());
+        actor(2);batch=service.detachImage(batch.getId(),row.getId(),preview.images().get(0).getId(),batch.getRevision());
         assertThat(batch.getApprovedRevision()).isNull();assertThat(batch.getStatus()).isEqualTo("DRAFT");
         assertThat(service.image(batch.getId(),preview.images().get(0).getId()).getContent()).isNotEmpty();
     }
@@ -269,10 +269,55 @@ class AiImportWorkflowTest {
         assertThat(rows.findById(row.getId()).orElseThrow().getResourceId()).isEqualTo("900");verify(domain).executeProduct(anyString(),anyString(),anyString(),contains("imageChecksums"),argThat(files->files.size()==1&&files.get(0).getContentType().equals("image/png")));
     }
     @Test void spreadsheetCannotSupplyManagedImageReferences() {
-        var batch=service.upload(new ExcelImportParser.ParsedFile("unsafe-products.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ExcelImportParser.ParsedSheet("Product",List.of("name","subCategoryId","isActive","Images"),List.of(new ExcelImportParser.ParsedRow(2,Map.of("name","Phone","subCategoryId","1","isActive","true","Images","foreign-image")))))));
+        var batch=service.upload(new ApprovalStagingData.ParsedFile("unsafe-products.xlsx",UUID.randomUUID().toString().getBytes(),List.of(new ApprovalStagingData.ParsedSheet("Product",List.of("name","subCategoryId","isActive","Images"),List.of(new ApprovalStagingData.ParsedRow(2,Map.of("name","Phone","subCategoryId","1","isActive","true","Images","foreign-image")))))));
         var sheet=service.preview(batch.getId(),0,50,null).sheets().get(0);
         assertThatThrownBy(()->service.confirmMapping(batch.getId(),sheet.getId(),batch.getRevision(),ImportTool.PRODUCT_BULK_CREATE,Map.of("name","name","subCategoryId","subCategoryId","isActive","isActive","Images","imageIds")))
                 .hasMessageContaining("managed by the attachment workflow");
     }
+    @Test void makerCannotEditPendingOrApprovedButCanCorrectReturnedRequests() {
+        var batch=mapped("Original");var row=rows.findByBatchId(batch.getId()).get(0);
+        service.submit(batch.getId(),batch.getRevision(),2);
+        assertThatThrownBy(()->service.edit(batch.getId(),row.getId(),batch.getRevision(),Map.of("name","Bypass","status","true"))).hasMessageContaining("locked");
+        actor(2);service.decide(batch.getId(),batch.getRevision(),"CHANGES_REQUESTED","Correct the product name");
+        actor(1);var edited=service.edit(batch.getId(),row.getId(),batch.getRevision(),Map.of("name","Corrected","status","true"));
+        assertThat(edited.getStatus()).isEqualTo("DRAFT");assertThat(edited.getApprovedRevision()).isNull();
+        service.submit(edited.getId(),edited.getRevision(),2);actor(2);var approved=service.decide(edited.getId(),edited.getRevision(),"APPROVED","Reviewed corrected revision");actor(1);
+        assertThatThrownBy(()->service.edit(approved.getId(),row.getId(),approved.getRevision(),Map.of("name","Bypass","status","true"))).hasMessageContaining("locked");
+        verify(domain,never()).execute(anyString(),anyString(),anyString(),any());
+    }
+    @Test void decisionsRequireSupportedValueAndReasonAndDoNotExecuteRejectedData() {
+        var batch=mapped("Review");service.submit(batch.getId(),batch.getRevision(),2);actor(2);
+        assertThatThrownBy(()->service.decide(batch.getId(),batch.getRevision(),"COMPLETED","Unsafe")).hasMessageContaining("Unsupported");
+        assertThatThrownBy(()->service.decide(batch.getId(),batch.getRevision(),"REJECTED"," ")).hasMessageContaining("reason");
+        assertThat(service.decide(batch.getId(),batch.getRevision(),"REJECTED","Wrong data").getStatus()).isEqualTo("REJECTED");
+        actor(1);assertThatThrownBy(()->service.validate(batch.getId(),batch.getRevision())).hasMessageContaining("immutable");verify(domain,never()).execute(anyString(),anyString(),anyString(),any());
+    }
+    @Test void manualProductUsesExistingEngineAndPreservesTheFullBackendSkuPayload() throws Exception {
+        var data=Map.of("id","42","expectedVersion","0","name","Manual product","description","Proposed description","subCategoryId","1","isActive","true","skus","[{\"description\":\"Black\",\"price\":10,\"quantity\":0,\"is_default\":true}]");
+        var batch=service.stageProduct(new ImportContracts.Row(ImportTool.PRODUCT_BULK_UPDATE,data),List.of());
+        assertThat(batch.getSourceType()).isEqualTo("MANUAL_UPDATE");assertThat(batch.getEntityType()).isEqualTo("PRODUCT");assertThat(batch.getEntityId()).isEqualTo("42");
+        assertThat(rows.findByBatchId(batch.getId()).get(0).getValuesJson()).contains("skus").contains("Black");
+        verify(domain,never()).execute(anyString(),anyString(),anyString(),any());
+        verify(domain,never()).executeProduct(anyString(),anyString(),anyString(),anyString(),anyList());
+    }
+    @Test void myRequestsRemainOwnerScopedForAdministrators() {
+        long before=batches.findByOwnerId(1,org.springframework.data.domain.PageRequest.of(0,1)).getTotalElements();mapped("Mine");actor(2);mapped("Other");actor(1);when(permissions.current()).thenReturn(new PermissionSnapshot(1,true,grants));
+        var result=service.requests(0,20,true,"","","","");assertThat(result.get("total")).isEqualTo(before+1);
+        assertThat((List<AiImportBatch>)result.get("items")).allSatisfy(batch->assertThat(batch.getOwnerId()).isEqualTo(1L));
+    }
+
+    @Test void requestSearchMatchesProposedValuesWhileKeepingOwnerScope() {
+        String name="Needle"+UUID.randomUUID();mapped(name);actor(2);mapped(name);actor(1);
+        var result=service.requests(0,20,true,name.toLowerCase(Locale.ROOT),"","","");
+        assertThat(result.get("total")).isEqualTo(1L);
+        assertThat((List<AiImportBatch>)result.get("items")).allSatisfy(batch->assertThat(batch.getOwnerId()).isEqualTo(1L));
+    }
+    @Test void executionListExcludesUnexecutedDraftsAndApprovalRequests() {
+        var approved=approved("Awaiting execution "+UUID.randomUUID());
+        var before=service.list(0,100,false,true,true);assertThat(before.getContent()).noneMatch(batch->batch.getId().equals(approved.getId()));
+        service.execute(approved.getId(),approved.getRevision());
+        assertThat(service.list(0,100,false,true,true).getContent()).anyMatch(batch->batch.getId().equals(approved.getId()));
+    }
+
 }
 

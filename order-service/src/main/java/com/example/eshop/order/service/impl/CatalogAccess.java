@@ -49,6 +49,13 @@ public class CatalogAccess {
         return client.quote(token(), new CheckoutRequest(1L, userId, items));
     }
 
+    public java.util.Map<String,Object> guestReview(com.example.eshop.common.storefront.GuestReviewSubmission request) {
+        return client.guestReview(token(),request);
+    }
+    public CheckoutResult guestQuote(java.util.UUID sessionId, List<CheckoutRequest.Line> items) {
+        return client.quote(token(),new CheckoutRequest(1L,null,items,sessionId));
+    }
+
     public CheckoutResult reserve(CheckoutRequest request) {
         return client.reserve(token(), request);
     }

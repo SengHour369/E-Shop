@@ -16,6 +16,9 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     Optional<Cart> lockByUserId(@Param("userId") Long userId);
 
     Optional<Cart> findByUserId(Long userId);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    Optional<Cart> findByGuestSessionId(java.util.UUID guestSessionId);
+
 
     @Query("SELECT c FROM Cart c LEFT JOIN FETCH c.cartItems WHERE c.userId = :userId")
     Optional<Cart> findByUserIdWithItems(@Param("userId") Long userId);

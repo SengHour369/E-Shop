@@ -53,6 +53,12 @@ public class  UserServiceImpl implements UserService {
         if (request.password() == null || request.password().isBlank()) {
             throw new BadRequestException("Password can't be blank or null");
         }
+        if (request.phone() == null || request.phone().isBlank()) {
+            throw new BadRequestException("Phone number is required");
+        }
+        if (userRepository.existsByPhone(request.phone().trim())) {
+            throw new BadRequestException("Phone number already belongs to another account");
+        }
         if (userRepository.findFirstByUsernameOrEmail(request.username(), request.email()).isPresent()) {
             throw new BadRequestException("Username or Email already exists.");
         }
@@ -92,7 +98,7 @@ public class  UserServiceImpl implements UserService {
                 .password(passwordEncoder.encode(request.password()))
                 .fullName(request.fullName())
                 .email(request.email())
-                .phone(request.phone())
+                .phone(request.phone().trim())
                 .roles(roles)
                 .attempt(0)
                 .status(Constant.ACT)

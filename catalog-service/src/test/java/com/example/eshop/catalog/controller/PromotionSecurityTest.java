@@ -25,6 +25,10 @@ import static org.mockito.Mockito.*;
     JwtTokenValidator.class, GlobalExceptionHandler.class, com.example.eshop.common.audit.AuditSecurityHandlers.class, com.example.eshop.common.audit.AuditLogController.class,
     com.example.eshop.common.request.RequestIdFilter.class})
 class PromotionSecurityTest {
+    @org.junit.jupiter.api.BeforeEach void storefrontDefaults() {
+        when(access.current()).thenReturn(com.example.eshop.common.storefront.StorefrontAccess.defaults());
+    }
+    @MockitoBean com.example.eshop.common.storefront.StorefrontAccessClient access;
     @Autowired MockMvc mvc;
     @Autowired JwtProperties jwt;
     @MockitoBean com.example.eshop.common.audit.AuditLogService audit;

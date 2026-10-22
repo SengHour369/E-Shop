@@ -14,6 +14,14 @@ import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<OrderDetail, Long> {
+    @org.springframework.data.jpa.repository.Query("select o from OrderDetail o where o.guestSessionId is not null and (:status='' or o.status=:status)")
+    org.springframework.data.domain.Page<OrderDetail> guestOrders(@org.springframework.data.repository.query.Param("status") String status,org.springframework.data.domain.Pageable page);
+
+    @org.springframework.data.jpa.repository.Query("select (count(o)>0) from OrderDetail o join o.orderItems i where o.guestSessionId=:sessionId and i.productSkuId=:skuId and o.status='DELIVERED'")
+    boolean guestPurchased(@org.springframework.data.repository.query.Param("sessionId") java.util.UUID sessionId,@org.springframework.data.repository.query.Param("skuId") Long skuId);
+    java.util.Optional<OrderDetail> findByGuestSessionIdAndCheckoutKey(java.util.UUID sessionId,String key);
+    java.util.List<OrderDetail> findTop50ByGuestSessionIdOrderByIdDesc(java.util.UUID sessionId);
+
 
     @Query("""
             select new com.example.eshop.order.dto.response.AiOrderStatusCount(o.status, count(o))

@@ -51,6 +51,9 @@ class GatewayRouteConfigurationTest {
   @Test void mailEndpointsHavePriorityAndEnoughTimeForSmtp() {
     var routes = definitions.getRouteDefinitions().collectList().block();
     var mail = routes.stream().filter(route -> route.getId().equals("auth-email")).findFirst().orElseThrow();
+    assertThat(mail.getPredicates().get(0).getArgs().values())
+        .anyMatch(value -> value.contains("/api/v1/public/email/username/login"))
+        .anyMatch(value -> value.contains("/api/v1/public/session/login"));
     assertThat(mail.getOrder()).isLessThan(0);
     assertThat(mail.getMetadata().get("response-timeout").toString()).isEqualTo("30000");
     assertThat(mail.getPredicates()).anySatisfy(predicate -> {

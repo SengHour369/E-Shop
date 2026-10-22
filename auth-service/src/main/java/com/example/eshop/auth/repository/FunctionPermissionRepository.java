@@ -32,6 +32,19 @@ public interface FunctionPermissionRepository extends JpaRepository<FunctionPerm
             """)
     java.util.Set<String> effectiveCodes(@Param("userId") Long userId);
 
+    @Query("""
+            select (count(ug) > 0) from UserGroup ug, Group g
+            where ug.userId = :userId and ug.groupId = g.id
+              and ug.isActive = true and ug.isDelete = false
+              and g.isActive = true and g.isDelete = false
+              and g.groupCode <> 'USR'
+              and exists (select gp.groupPermissionId from GroupPermission gp, FunctionPermission f
+                          where gp.groupId = g.id and gp.funcId = f.funcId
+                            and gp.isActive = true and gp.isDelete = false
+                            and f.isActive = true and f.isDelete = false)
+            """)
+    boolean hasActiveStaffGroup(@Param("userId") Long userId);
+
     Optional<FunctionPermission> findByFuncCodeAndIsDeleteFalse(String funcCode);
 
     @Query("SELECT COALESCE(MAX(f.funcId), 0) FROM FunctionPermission f")

@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PaymentResponse {
     private Long id;
+    private String customerType;
 
     @JsonProperty("order_id")
     private Long orderId;

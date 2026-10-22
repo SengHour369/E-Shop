@@ -155,13 +155,16 @@ public class LoginController {
      * body (token + newPassword) that a plain link click can never supply.
      */
     @GetMapping("/reset-password-page")
-    public void resetPasswordPage(@RequestParam String token, HttpServletResponse response) throws IOException {
+    public void resetPasswordPage(@RequestParam(required = false) String token, HttpServletResponse response) throws IOException {
         response.setContentType("text/html;charset=UTF-8");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Referrer-Policy", "no-referrer");
         response.getWriter().write("""
                 <!DOCTYPE html>
                 <html>
                 <head>
                   <meta charset="UTF-8" />
+                  <meta name="viewport" content="width=device-width, initial-scale=1" />
                   <title>Reset Password</title>
                   <style>
                     body { font-family: Arial, sans-serif; background: #f4f6f8; display: flex; justify-content: center; padding-top: 60px; }
@@ -183,7 +186,13 @@ public class LoginController {
                       <input type="password" id="confirmPassword" placeholder="Confirm new password" minlength="6" required />
                       <button type="submit" id="submitBtn">Reset Password</button>
                     </form>
-                    <div id="message"></div>
+                    <form id="requestForm" hidden>
+                      <p>This link is incomplete. Request a new email and open the full Reset Password link.</p>
+                      <label for="email">Email address</label>
+                      <input type="email" id="email" autocomplete="email" required />
+                      <button type="submit" id="requestBtn">Send a new reset link</button>
+                    </form>
+                    <div id="message" role="status"></div>
                   </div>
                   <script>
                     var token = new URLSearchParams(window.location.search).get('token');
@@ -191,6 +200,27 @@ public class LoginController {
                     var messageEl = document.getElementById('message');
                     var submitBtn = document.getElementById('submitBtn');
 
+                    if (!token || !token.trim()) {
+                      form.hidden = true;
+                      document.getElementById('requestForm').hidden = false;
+                    }
+                    document.getElementById('requestForm').addEventListener('submit', function(e) {
+                      e.preventDefault();
+                      var requestBtn = document.getElementById('requestBtn');
+                      requestBtn.disabled = true;
+                      messageEl.textContent = 'Sending…';
+                      fetch('/api/v1/public/forgot-password', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({email: document.getElementById('email').value.trim()})
+                      }).then(function(res) {
+                        if (!res.ok) throw new Error('Unable to send email. Please try again.');
+                        messageEl.textContent = 'If this account exists, a new reset link has been sent. Check your inbox and Spam.';
+                        messageEl.className = 'success';
+                      }).catch(function() {
+                        messageEl.textContent = 'Unable to send email. Please try again.';
+                        messageEl.className = 'error';
+                      }).finally(function() {requestBtn.disabled = false;});
+                    });
                     form.addEventListener('submit', function (e) {
                       e.preventDefault();
                       var newPassword = document.getElementById('newPassword').value;

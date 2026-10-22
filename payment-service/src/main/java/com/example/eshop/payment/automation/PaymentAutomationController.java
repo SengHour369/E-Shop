@@ -49,6 +49,25 @@ public class PaymentAutomationController {
         return automation.customerQr(id);
     }
 
+    @GetMapping(value="/internal/commerce/guest-orders/{id}/qr/image",produces="image/png")
+    @PreAuthorize("hasAuthority('SERVICE_ORDER')")
+    public byte[] guestImage(@PathVariable long id) {
+        var qr=automation.guestQr(id);
+        if(!"PENDING".equals(qr.get("status")) || !(qr.get("expiresAt") instanceof java.time.Instant expires)
+                || !expires.isAfter(java.time.Instant.now())) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT);
+        return bakong.getQRImage(new com.example.eshop.payment.bakong.dto.GetQRImageRequest(qr.get("qr").toString(),""));
+    }
+
+    @GetMapping("/internal/commerce/guest-orders/{id}/qr")
+    @PreAuthorize("hasAuthority('SERVICE_ORDER')")
+    public Map<String,Object> guestQr(@PathVariable long id) { return automation.guestQr(id); }
+
+    @GetMapping("/internal/commerce/payments")
+    @PreAuthorize("hasAuthority('SERVICE_ORDER')")
+    public VerifiedPaymentSnapshot byOrder(@RequestParam long orderId) {
+        return automation.snapshotForOrder(orderId);
+    }
+
     @GetMapping("/internal/commerce/payments/{id}")
     @PreAuthorize("hasAuthority('SERVICE_ORDER')")
     public VerifiedPaymentSnapshot snapshot(@PathVariable long id) {

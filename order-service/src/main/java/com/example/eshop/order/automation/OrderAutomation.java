@@ -32,11 +32,11 @@ public class OrderAutomation implements CommerceHandler {
         var payment = payments.get(event.paymentId());
         var order = orders.lockById(event.orderId()).orElseThrow();
 
-        if (event.userId() != order.getUserId()
+        if (!java.util.Objects.equals(event.userId(),order.getUserId())
                 || payment == null
                 || payment.id() != event.paymentId()
                 || payment.orderId() != order.getId()
-                || payment.userId() != order.getUserId()
+                || !java.util.Objects.equals(payment.userId(),order.getUserId())
                 || !"USD".equals(payment.currency())
                 || payment.amount().compareTo(order.getTotalAmount()) != 0) {
             throw new IllegalStateException(

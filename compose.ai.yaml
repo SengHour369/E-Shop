@@ -96,6 +96,9 @@ services:
       EUREKA_URL: http://discovery-server:8761/eureka/
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       AI_INFERENCE_URL: http://ai-inference:8000
+      AI_VOICE_TRANSCRIPTION_URL: ${AI_VOICE_TRANSCRIPTION_URL:-}
+      AI_VOICE_API_KEY: ${AI_VOICE_API_KEY:-}
+      AI_VOICE_MODEL: ${AI_VOICE_MODEL:-}
       REDIS_HOST: gateway-redis
     depends_on:
       ai-db: {condition: service_healthy}

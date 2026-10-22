@@ -295,7 +295,7 @@ class AiOrchestrationTest {
 
     @Test
     void knowledgeWithoutApprovedDocumentsDoesNotInventPolicy() throws Exception {
-        when(conversation.reply(anyString(), any(), anyList())).thenReturn("I don't have the verified E-Shop return policy. Please contact support.");
+        when(conversation.reply(anyString(), any(), anyList(), eq(false))).thenReturn("I don't have the verified E-Shop return policy. Please contact support.");
         intent(AiIntent.KNOWLEDGE_SEARCH, "{\"query\":\"return policy\"}");
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"What is the return policy?\"}"))
@@ -370,7 +370,7 @@ class AiOrchestrationTest {
         when(chatState.dialogue(id)).thenReturn(List.of());
         when(provider.detect(anyString(), anyList())).thenReturn(
                 new AiIntentResult(AiIntent.UNKNOWN, 0.1, mapper.readTree("{}")));
-        when(conversation.reply("What is Bluetooth?", "en", List.of())).thenReturn("Bluetooth connects devices wirelessly.");
+        when(conversation.reply("What is Bluetooth?", "en", List.of(), false)).thenReturn("Bluetooth connects devices wirelessly.");
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"What is Bluetooth?\",\"language\":\"en\"}"))
                 .andExpect(status().isOk())
@@ -385,7 +385,7 @@ class AiOrchestrationTest {
         when(chatState.dialogue(id)).thenReturn(List.of());
         when(provider.detect(anyString(), anyList())).thenReturn(
                 new AiIntentResult(AiIntent.SKU_GET, 0.95, mapper.readTree("{}")));
-        when(conversation.reply("Explain Bluetooth", "en", List.of())).thenReturn("Bluetooth connects devices wirelessly.");
+        when(conversation.reply("Explain Bluetooth", "en", List.of(), false)).thenReturn("Bluetooth connects devices wirelessly.");
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"Explain Bluetooth\",\"language\":\"en\"}"))
                 .andExpect(status().isOk())

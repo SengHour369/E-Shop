@@ -36,8 +36,8 @@ public class PromotionUsage {
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
 
-    @Column(nullable = false)
     private Long userId;
+    private java.util.UUID guestSessionId;
 
     @Column(nullable = false)
     private Long orderId;

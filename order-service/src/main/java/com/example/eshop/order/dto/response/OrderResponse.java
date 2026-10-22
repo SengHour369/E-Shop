@@ -25,6 +25,9 @@ public class OrderResponse {
     // TODO: cross-service call via Feign to auth-service to enrich customer name/email.
     @JsonProperty("customer_id")
     private Long customerId;
+    private String customerType;
+    private String paymentMethod;
+    private String shippingAddressSnapshot;
 
     // Was a nested AddressResponse — auth-service owns Address.
     // TODO: cross-service call via Feign to auth-service to resolve shipping address details.

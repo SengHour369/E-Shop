@@ -41,6 +41,14 @@ class SessionControllerTest {
                 .contains("Path=/api/v1/public/session", "Max-Age=604800");
     }
 
+    @Test void completedOtpUsesTheSameHttpOnlyCookieTransport() throws Exception {
+        when(auth.verifySecondFactor("challenge", "123456")).thenReturn(tokens);
+        mvc.perform(post(BASE + "/second-factor").header("Origin", ORIGIN)
+                .contentType("application/json").content("{\"challenge\":\"challenge\",\"code\":\"123456\"}"))
+                .andExpect(status().isOk()).andExpect(header().exists("Set-Cookie"))
+                .andExpect(jsonPath("$.access_token").doesNotExist()).andExpect(jsonPath("$.refresh_token").doesNotExist());
+    }
+
     @Test void refreshUsesCookieAndRotatesBothCookies() throws Exception {
         when(auth.refreshToken(any())).thenReturn(tokens);
         mvc.perform(post(BASE + "/refresh").header("Origin", ORIGIN).cookie(new Cookie("eshop_refresh", "old")))

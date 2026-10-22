@@ -32,6 +32,12 @@ automation_enabled="$("${compose[@]}" config --environment | awk -F= '$1=="COMME
 if [[ "$automation_enabled" == "true" ]]; then
   compose+=(-f compose.automation.yaml)
 fi
+mail_mode="$("${compose[@]}" config --environment | awk -F= '$1=="ESHOP_MAIL_MODE" {print tolower($2)}')"
+case "$mail_mode" in
+  smtp) compose+=(-f compose.smtp.yaml) ;;
+  ""|mailpit) ;;
+  *) echo "ESHOP_MAIL_MODE must be smtp or mailpit" >&2; exit 1 ;;
+esac
 "${compose[@]}" up -d --build --wait --wait-timeout 300 "$@"
 # Gateway discovery caches can lag behind healthy service containers.
 for service in auth-service catalog-service order-service payment-service admin-service; do

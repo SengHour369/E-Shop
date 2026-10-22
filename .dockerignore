@@ -7,3 +7,8 @@
 # Local credentials must not enter Docker build contexts.
 .env.*
 env
+
+# Jenkins workspace dependencies and reports
+.m2/
+.venv-ci/
+reports/

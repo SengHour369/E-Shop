@@ -31,6 +31,7 @@ public class PaymentTransactionMapper {
                 .transactionNo(transaction.getTransactionNo())
                 .orderId(transaction.getOrder())
                 .customerId(transaction.getCustomer())
+                .customerType(transaction.getCustomer()==null ? "GUEST" : "CUSTOMER")
                 .paymentMethod(transaction.getPaymentMethod() != null ? transaction.getPaymentMethod().name() : null)
                 .maskedAccount(transaction.getMaskedAccount())
                 .amount(transaction.getAmount())

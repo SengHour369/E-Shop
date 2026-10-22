@@ -53,3 +53,8 @@ keycloak/local-credentials.txt
 /env
 .env
 .env.*
+
+# Jenkins workspace dependencies and reports
+.m2/
+.venv-ci/
+reports/

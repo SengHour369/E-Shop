@@ -47,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemMapper orderItemMapper;
 
     private final CheckoutCoordinator checkout;
+    private final com.example.eshop.order.automation.QrCancellationGuard qrCancellation;
     private final com.example.eshop.common.security.LivePermissionService permissions;
 
     @Override
@@ -77,6 +78,9 @@ public class OrderServiceImpl implements OrderService {
             page = orderRepository.findAll(pageable);
             successMsg = "Retrieved all orders";
 
+        } else if (type == 5 && value.startsWith("GUEST")) {
+            String guestStatus=value.equals("GUEST") ? "" : value.substring("GUEST:".length());
+            page=orderRepository.guestOrders(guestStatus,pageable);successMsg="Retrieved guest orders";
         } else if (type == 1) {
             page = orderRepository.findByUserId(Long.parseLong(value), pageable);
             successMsg = "Retrieved orders by user";
@@ -186,6 +190,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessLogicException("Only pending orders can be cancelled");
         com.example.eshop.order.automation.OrderTransitions.require(order.getStatus(),status,
                 order.getPaymentId()!=null || "CASH_ON_DELIVERY".equals(order.getPaymentMethod()));
+        if(OrderStatus.CANCELLED.equals(status))qrCancellation.requireUnpaid(order);
         order.setStatus(status);
         notifyLifecycle(order,"CANCELLED".equals(status));
         if (OrderStatus.CANCELLED.equals(status) && order.getCheckoutKey() != null) order.setCatalogCompleted(false);
@@ -216,7 +221,7 @@ public class OrderServiceImpl implements OrderService {
         OrderDetail order = orderRepository.lockById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
-        if (!order.getUserId().equals(userId)) {
+        if (!java.util.Objects.equals(order.getUserId(),userId)) {
             throw new BusinessLogicException("User does not own this order");
         }
 
@@ -224,6 +229,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessLogicException("Only pending orders can be cancelled");
         }
 
+        qrCancellation.requireUnpaid(order);
         order.setStatus(OrderStatus.CANCELLED);
         notifyLifecycle(order,true);
         if (order.getCheckoutKey() != null) order.setCatalogCompleted(false);
@@ -293,7 +299,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     @Override
     public ResponseErrorTemplate getOrderStatusSummary() {
-        permissions.require("REPORT_VIEW");
+        permissions.require("ORDER_VIEW_ALL");
         OrderStatusSummaryResponse response = orderRepository.getOrderStatusSummary();
         return ResponseErrorTemplate.success("Order status summary retrieved successfully", response);
     }

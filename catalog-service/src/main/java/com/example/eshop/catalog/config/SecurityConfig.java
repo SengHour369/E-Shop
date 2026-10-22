@@ -59,7 +59,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                             JwtTokenValidator jwtTokenValidator,
-                                            JwtProperties jwtProperties) throws Exception {
+                                            JwtProperties jwtProperties, com.example.eshop.common.storefront.StorefrontAccessClient access) throws Exception {
 
         JwtAuthFilter jwtAuthFilter = new JwtAuthFilter(jwtTokenValidator, jwtProperties);
 
@@ -70,6 +70,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/storefront/**").permitAll()
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .requestMatchers("/api/admin/audit-logs/**").hasAnyAuthority("ADMIN", "AUDIT_READ")
                         .requestMatchers("/api/v1/inventory/**").hasAuthority("ADMIN")
@@ -83,7 +84,8 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, accessDeniedException) ->
                                 auditSecurityHandlers.reject(request, response, 403))
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new GuestCatalogAccessFilter(access), JwtAuthFilter.class);
 
         return http.build();
     }

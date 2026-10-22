@@ -45,6 +45,7 @@ public class AuditSnapshots {
             "toolName",
             "executionStatus",
             "serviceName",
+            "workflowId", "draftRevision", "mode", "runId", "versionId", "requestId", "stepId", "stepKey", "tool",
             "aiExecutionId"
     );
 

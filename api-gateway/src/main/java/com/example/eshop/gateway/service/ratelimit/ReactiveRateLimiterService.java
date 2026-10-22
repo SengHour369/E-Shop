@@ -58,6 +58,13 @@ public class ReactiveRateLimiterService {
   }
 
   public Mono<Boolean> allow(String path, HttpMethod method, String identifier) {
+    if (path.startsWith("/api/v1/guest/")) {
+      String scope=path.equals("/api/v1/guest/session") && method==HttpMethod.POST ? "bootstrap" : "activity";
+      int limit=scope.equals("bootstrap")?30:240;
+      int window=scope.equals("bootstrap")?3600:60;
+      return redis.execute(SCRIPT,List.of("guest:gateway:"+scope+":"+identifier),List.of(Integer.toString(limit),Integer.toString(window)))
+          .next().timeout(Duration.ofSeconds(1)).map(n->n!=null&&n==1L).defaultIfEmpty(false).onErrorReturn(false);
+    }
     if (!dynamicRoutesEnabled) {
       return Mono.just(true);
     }

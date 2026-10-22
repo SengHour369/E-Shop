@@ -45,6 +45,9 @@ public class CatalogImportService {
     private final BranchRepository branches;
     private final SubCategoryRepository subcategories;
     private final ProductService productService;
+    private final jakarta.validation.Validator validator;
+    private final ProductAttributeRepository productAttributes;
+    private final ProductAttributeValueRepository attributeValues;
 
     private void authorize(Row row, boolean execute) {
         if (row == null
@@ -294,7 +297,19 @@ public class CatalogImportService {
             default -> errors.add("UNSUPPORTED_IMPORT");
         }
 
-        return new Validation(errors, duplicate, affected);
+        Map<String,String> current=new LinkedHashMap<>();
+        if(row.tool()==ImportTool.PRODUCT_BULK_CREATE || row.tool()==ImportTool.PRODUCT_BULK_UPDATE) {
+            validateProductSkus(row,validationActor,errors);
+            if(row.tool()==ImportTool.PRODUCT_BULK_UPDATE && affected!=null && products.findByIdNotDeleted(Long.parseLong(affected)).isPresent()) {
+                var before=products.findByIdNotDeleted(Long.parseLong(affected)).orElseThrow();
+                current.put("name",before.getName());current.put("description",Objects.toString(before.getDescription(),""));
+                current.put("subCategoryId",before.getSubCategory().getId().toString());current.put("isActive",before.getIsActive().toString());
+                if(v.containsKey("skus")) current.put("skus",skuBeforeSnapshot(row,before.getId()));
+            }
+        }
+        if(row.tool()==ImportTool.CATEGORY_BULK_UPDATE && affected!=null) categories.findByCategoryId(Long.parseLong(affected)).ifPresent(value->{current.put("name",value.getName());current.put("description",Objects.toString(value.getDescription(),""));current.put("status",Objects.toString(value.getStatus(),""));});
+        if(row.tool()==ImportTool.BRANCH_BULK_UPDATE && affected!=null) branches.findById(Long.parseLong(affected)).ifPresent(value->{current.put("name",value.getName());current.put("address",Objects.toString(value.getAddress(),""));});
+        return new Validation(errors, duplicate, affected,current);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -443,7 +458,9 @@ public class CatalogImportService {
             case PRODUCT_BULK_UPDATE -> {
                 id=v.get("id");
                 productService.updateProduct(Long.valueOf(id),ProductRequest.builder().name(v.get("name").trim()).description(v.get("description"))
-                        .subCategoryId(Long.valueOf(v.get("subCategoryId"))).isActive(Boolean.valueOf(v.get("isActive"))).build(),List.of(),List.of());
+                        .subCategoryId(Long.valueOf(v.get("subCategoryId"))).isActive(Boolean.valueOf(v.get("isActive"))).skus(approvedSkus(row)).build(),
+                        v.getOrDefault("imageIds", "").isBlank()?List.of():verifiedImages(row,files),List.of());
+                em.lock(products.findByIdNotDeleted(Long.valueOf(id)).orElseThrow(),jakarta.persistence.LockModeType.OPTIMISTIC_FORCE_INCREMENT);
             }
             case BRANCH_BULK_CREATE ->
                     id = branchService
@@ -458,6 +475,7 @@ public class CatalogImportService {
                         .description(v.get("description"))
                         .subCategoryId(Long.valueOf(v.get("subCategoryId")))
                         .isActive(Boolean.valueOf(v.get("isActive")))
+                        .skus(approvedSkus(row))
                         .build();
                 id = mapper.valueToTree(
                                 productService.createProduct(
@@ -541,6 +559,82 @@ public class CatalogImportService {
         receipt.setResourceId(id);
         em.flush();
         return new Result(id);
+    }
+
+    private String skuBeforeSnapshot(Row row,long productId) {
+        var proposed=mapper.valueToTree(parseProductSkus(row));
+        var current=mapper.valueToTree(productService.getProductWithSkus(productId).object()).path("skus");
+        var snapshot=mapper.createArrayNode();
+        for(var item:proposed) {
+            var before=mapper.createObjectNode();snapshot.add(before);
+            if(!item.hasNonNull("productSkuId"))continue;
+            for(var existing:current)if(existing.path("id").asLong()==item.path("productSkuId").asLong()) {
+                var keys=item.fieldNames();while(keys.hasNext()) {
+                    String key=keys.next();
+                    var value=switch(key){
+                        case "productSkuId" -> existing.path("id");
+                        case "product_attributes" -> existing.path("attributes");
+                        case "low_stock_threshold" -> existing.path("inventory").path("low_stock_threshold");
+                        default -> existing.path(key);
+                    };
+                    if(!value.isMissingNode())before.set(key,value);
+                }
+                break;
+            }
+        }
+        return snapshot.toString();
+    }
+
+    private List<ProductSkuRequest> parseProductSkus(Row row) {
+        String json=row.values().get("skus");if(json==null || json.isBlank())return null;
+        try {return mapper.readValue(json,mapper.getTypeFactory().constructCollectionType(List.class,ProductSkuRequest.class));}
+        catch(Exception invalid){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid registered SKU fields");}
+    }
+
+    private void validateProductSkus(Row row,com.example.eshop.common.security.PermissionSnapshot actor,List<String> errors) {
+        List<ProductSkuRequest> requested;
+        try {requested=parseProductSkus(row);}catch(Exception invalid){errors.add("INVALID_SKU_FIELDS");return;}
+        if(requested==null)return;
+        if(requested.isEmpty() || requested.size()>50){errors.add("EXPECTED_1_TO_50_SKUS");return;}
+        if(requested.stream().filter(s->s!=null && Boolean.TRUE.equals(s.getIsDefault())).count()!=1)errors.add("ONE_DEFAULT_SKU_REQUIRED");
+        if(row.tool()==ImportTool.PRODUCT_BULK_UPDATE) {
+            var existing=products.findByIdNotDeleted(Long.parseLong(row.values().get("id")));
+            if(existing.isPresent() && existing.get().getProductSkus()!=null && existing.get().getProductSkus().stream().anyMatch(sku->requested.stream().noneMatch(value->value!=null && Objects.equals(value.getProductSkuId(),sku.getId()))))errors.add("SKU_REMOVAL_NOT_SUPPORTED");
+        }
+        Set<Long> ids=new HashSet<>();Set<String> barcodes=new HashSet<>();
+        for(var sku:requested) {
+            if(sku==null){errors.add("INVALID_SKU");continue;}
+            if(!validator.validate(sku).isEmpty())errors.add("INVALID_SKU_VALUES");
+            if(sku.getProductSkuId()!=null) {
+                var existing=skus.findById(sku.getProductSkuId());
+                if(row.tool()!=ImportTool.PRODUCT_BULK_UPDATE || existing.isEmpty() || !existing.get().getProduct().getId().equals(Long.valueOf(row.values().get("id"))) || !ids.add(sku.getProductSkuId()))errors.add("SKU_DOES_NOT_BELONG_TO_PRODUCT");
+                if(!actor.permits("SKU_UPDATE"))errors.add("SKU_UPDATE_PERMISSION_REQUIRED");
+                for(var existingAttribute:productAttributes.findByProductSkuId(sku.getProductSkuId()))if(sku.getProductAttributes()==null || sku.getProductAttributes().stream().noneMatch(a->a!=null && Objects.equals(a.getId(),existingAttribute.getId())))errors.add("ATTRIBUTE_REMOVAL_NOT_SUPPORTED");
+                var stock=inventory.findByProductSkuId(sku.getProductSkuId());
+                if(stock.isEmpty() || !Objects.equals(sku.getQuantity(),stock.get().getQuantity()))errors.add("STOCK_CHANGE_REQUIRES_INVENTORY_REQUEST");
+                if(sku.getInventory()!=null && (stock.isEmpty() || !Objects.equals(sku.getInventory().getQuantity(),stock.get().getQuantity()) || !Objects.equals(sku.getInventory().getLowStockThreshold(),stock.get().getLowStockThreshold()) || !Objects.equals(Objects.toString(sku.getInventory().getWarehouseLocation(),""),Objects.toString(stock.get().getWarehouseLocation(),""))))errors.add("STOCK_CHANGE_REQUIRES_INVENTORY_REQUEST");
+            } else {
+                if(!actor.permits("SKU_CREATE"))errors.add("SKU_CREATE_PERMISSION_REQUIRED");
+                if(sku.getInventory()!=null && !actor.permits("INVENTORY_ADJUST"))errors.add("INVENTORY_PERMISSION_REQUIRED");
+            }
+            if(sku.getPrice()!=null && (sku.getPrice().precision()>15 || sku.getPrice().scale()>4))errors.add("INVALID_SKU_PRICE_PRECISION");
+            if(sku.getProductAttributes()!=null)for(var attribute:sku.getProductAttributes()) {
+                if(attribute==null || !validator.validate(attribute).isEmpty()){errors.add("INVALID_ATTRIBUTE");continue;}
+                if(attribute.getId()!=null && (sku.getProductSkuId()==null || productAttributes.findById(attribute.getId()).filter(a->Objects.equals(a.getProductSkuId(),sku.getProductSkuId())).isEmpty()))errors.add("ATTRIBUTE_DOES_NOT_BELONG_TO_SKU");
+                if(attribute.getId()!=null)for(var existingValue:attributeValues.findByAttributeId(attribute.getId()))if(attribute.getAttributes()==null || attribute.getAttributes().stream().noneMatch(v->v!=null && Objects.equals(v.getId(),existingValue.getId())))errors.add("ATTRIBUTE_VALUE_REMOVAL_NOT_SUPPORTED");
+                if(attribute.getAttributes()!=null)for(var value:attribute.getAttributes()) {
+                    if(value==null || !validator.validate(value).isEmpty()){errors.add("INVALID_ATTRIBUTE_VALUE");continue;}
+                    if(value.getId()!=null && (attribute.getId()==null || attributeValues.findById(value.getId()).filter(v->Objects.equals(v.getAttributeId(),attribute.getId())).isEmpty()))errors.add("ATTRIBUTE_VALUE_DOES_NOT_BELONG_TO_ATTRIBUTE");
+                }
+            }
+            if(sku.getBarcode()!=null && !sku.getBarcode().isBlank() && !barcodes.add(sku.getBarcode()))errors.add("DUPLICATE_SKU_BARCODE");
+        }
+    }
+
+    private List<ProductSkuRequest> approvedSkus(Row row) {
+        var requested=parseProductSkus(row);
+        if(requested!=null)for(var sku:requested)if(sku.getProductSkuId()!=null)sku.setInventory(null);
+        return requested;
     }
 
     private List<org.springframework.web.multipart.MultipartFile> verifiedImages(

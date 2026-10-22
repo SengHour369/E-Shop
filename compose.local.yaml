@@ -6,11 +6,16 @@ services:
     ports:
       - "127.0.0.1:8025:8025"
       - "127.0.0.1:1025:1025"
+  api-gateway:
+    environment:
+      GATEWAY_CORS_ORIGINS: ${GATEWAY_CORS_ORIGINS:-http://localhost:4200,http://localhost:8080,http://192.168.1.10:4200,http://192.168.1.10:8080}
   auth-service:
     depends_on:
       mailpit:
         condition: service_started
     environment:
+      JAVA_TOOL_OPTIONS: ${ESHOP_JAVA_TOOL_OPTIONS:--Xmx384m}
+      GATEWAY_CORS_ORIGINS: ${GATEWAY_CORS_ORIGINS:-http://localhost:4200,http://localhost:8080,http://192.168.1.10:4200,http://192.168.1.10:8080}
       AUTH_COOKIE_SECURE: "false"
       AUTH_COOKIE_SAME_SITE: Lax
       SPRING_MAIL_HOST: mailpit
@@ -26,4 +31,19 @@ services:
 
   catalog-service:
     environment:
+      JAVA_TOOL_OPTIONS: ${ESHOP_JAVA_TOOL_OPTIONS:--Xmx384m}
       CATALOG_SEED_ENABLED: "true"
+
+  order-service:
+    environment:
+      JAVA_TOOL_OPTIONS: ${ESHOP_JAVA_TOOL_OPTIONS:--Xmx384m}
+      GUEST_COOKIE_SECURE: "false"
+      GUEST_ALLOWED_ORIGINS: ${GATEWAY_CORS_ORIGINS:-http://localhost:4200,http://localhost:8080}
+
+  payment-service:
+    environment:
+      JAVA_TOOL_OPTIONS: ${ESHOP_JAVA_TOOL_OPTIONS:--Xmx384m}
+
+  notification-service:
+    environment:
+      JAVA_TOOL_OPTIONS: ${ESHOP_JAVA_TOOL_OPTIONS:--Xmx384m}

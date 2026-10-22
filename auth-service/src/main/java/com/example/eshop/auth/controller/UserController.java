@@ -29,7 +29,7 @@ public class UserController {
     private final UserService userService;
     @PostMapping(value = "/create")
     @Operation(summary = "Create a user with role(s) and permission group(s) assigned (admin only)")
-    public ResponseEntity<ResponseErrorTemplate> createUser(@RequestBody AdminCreateUserRequest request) {
+    public ResponseEntity<ResponseErrorTemplate> createUser(@jakarta.validation.Valid @RequestBody AdminCreateUserRequest request) {
         ResponseErrorTemplate responseErrorTemplate = this.userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseErrorTemplate);
     }

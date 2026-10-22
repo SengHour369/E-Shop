@@ -69,7 +69,8 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
         boolean sessionEndpoint = exchange.getRequest()
                 .getPath()
                 .value()
-                .startsWith("/api/v1/public/session/");
+                .startsWith("/api/v1/public/session/")
+                || exchange.getRequest().getPath().value().startsWith("/api/v1/guest/");
         String method = exchange.getRequest().getMethod().name();
         boolean unsafe = !SAFE_METHODS.contains(method);
         String origin = exchange.getRequest().getHeaders().getOrigin();
@@ -97,7 +98,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
         exchange = exchange.mutate().request(sanitized).build();
 
         String path = exchange.getRequest().getPath().value();
-        boolean optionalChatAuthentication = "/api/ai/chat".equals(path);
+        boolean optionalChatAuthentication = "/api/ai/chat".equals(path) || "/api/ai/voice/transcriptions".equals(path);
         boolean hasCredentials = authorization != null || cookieAuthentication;
 
         if (!properties.isAuthenticationEnabled()

@@ -158,7 +158,7 @@ public class AiController {
             return ResponseEntity.ok(guide);
         }
 
-        if (AiQuickReply.reply(request.message(), request.language()) != null
+        if (AiQuickReply.reply(request.message(), request.language(), administrator) != null
                 || AiConversationRouting.isConversation(request.message())) {
             return conversational(conversationId, administrator, request);
         }
@@ -217,13 +217,13 @@ public class AiController {
         String errorMessage = "The assistant could not respond. Please try again shortly.";
 
         try {
-            answer = AiQuickReply.reply(request.message(), request.language());
+            answer = AiQuickReply.reply(request.message(), request.language(), admin);
 
             if (answer == null) {
                 answer = conversation.reply(
                         request.message(),
                         request.language(),
-                        chatState.dialogue(id)
+                        chatState.dialogue(id), admin
                 );
             }
         } catch (com.example.eshop.ai.service.AiFailure failure) {

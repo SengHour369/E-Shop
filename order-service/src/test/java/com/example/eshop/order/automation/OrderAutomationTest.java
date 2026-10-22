@@ -23,4 +23,13 @@ class OrderAutomationTest {
     @Test void cancelledOrderIsNeverRevivedByLatePayment(){order.setStatus("CANCELLED");when(payments.get(3)).thenReturn(payment("SUCCESS",Instant.now(),BigDecimal.TEN));handler.handle(event(CommerceEvent.Type.PAYMENT_VERIFIED));verifyNoInteractions(catalog);verify(events).review(eq(1L),eq("PAID_ORDER_STATE_CONFLICT"),anyString());assertThat(order.getStatus()).isEqualTo("CANCELLED");}
     @Test void expiredVerifiedNegativeReleasesOnlyOnce(){when(payments.get(3)).thenReturn(payment("FAILED",null,BigDecimal.TEN));handler.handle(event(CommerceEvent.Type.PAYMENT_EXPIRED));handler.handle(event(CommerceEvent.Type.PAYMENT_EXPIRED));verify(catalog,times(1)).release(1L);assertThat(order.getStatus()).isEqualTo("CANCELLED");}
     @Test void inventoryOutageDoesNotAdvanceOrder(){when(payments.get(3)).thenReturn(payment("SUCCESS",Instant.now(),BigDecimal.TEN));doThrow(new IllegalStateException("offline")).when(catalog).confirm(1L);assertThatThrownBy(()->handler.handle(event(CommerceEvent.Type.PAYMENT_VERIFIED))).isInstanceOf(IllegalStateException.class);assertThat(order.getStatus()).isEqualTo("PENDING");verifyNoInteractions(events);}
+    @Test void verifiedGuestPaymentConfirmsStockWithoutFabricatingCustomer() {
+        order.setUserId(null);order.setGuestSessionId(java.util.UUID.randomUUID());
+        var payment=new VerifiedPaymentSnapshot(3L,1L,(Long)null,BigDecimal.TEN,"USD","SUCCESS","a".repeat(64),Instant.now(),Instant.now().plusSeconds(300));
+        when(payments.get(3)).thenReturn(payment);
+        var guest=AutomationEvents.event(CommerceEvent.Type.PAYMENT_VERIFIED,1L,(Long)null,BigDecimal.TEN,"BAKONG",3L);
+        guest.validate();handler.handle(guest);
+        verify(catalog).confirm(1L);assertThat(order.getStatus()).isEqualTo("PROCESSING");assertThat(order.getUserId()).isNull();
+    }
+
 }

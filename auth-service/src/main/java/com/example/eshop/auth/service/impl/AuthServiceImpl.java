@@ -184,7 +184,7 @@ public class AuthServiceImpl implements AuthService {
                 .tokenType("Bearer")
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .role(user.getRoles().stream().map(Role::getName).findFirst().orElse("USER"))
+                .role(loginRole(user))
                 .build();
     }
 
@@ -393,7 +393,7 @@ public class AuthServiceImpl implements AuthService {
                 .tokenType("Bearer")
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .role(user.getRoles().stream().map(Role::getName).findFirst().orElse("USER"))
+                .role(loginRole(user))
                 .build();
     }
 
@@ -440,15 +440,30 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    private String loginRole(User user) {
+        if (functionPermissionRepository.hasActiveStaffGroup(user.getId())) return "ADMIN";
+        return user.getRoles().stream().map(Role::getName)
+                .sorted(java.util.Comparator.comparingInt(name -> switch (name) {
+                    case "ADMIN", "SUPER_ADMIN" -> 0;
+                    case "MANAGER" -> 1;
+                    default -> 2;
+                })).findFirst().orElse("USER");
+    }
+
     private UserDetailsImpl buildUserDetails(User user) {
+        var authorities = user.getRoles().stream()
+                .<org.springframework.security.core.GrantedAuthority>map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+        if ("ADMIN".equals(loginRole(user)) && authorities.stream().noneMatch(a -> a.getAuthority().equals("ADMIN")))
+        {
+            authorities.add(0, new SimpleGrantedAuthority("ADMIN"));
+            authorities.add(new SimpleGrantedAuthority("GROUP_PERMISSION_SCOPED"));
+        }
         return new UserDetailsImpl(
                 user.getUsername(),
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
+                authorities
         );
     }
 
@@ -460,7 +475,7 @@ public class AuthServiceImpl implements AuthService {
                 .tokenType("Bearer")
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .role(user.getRoles().stream().map(Role::getName).findFirst().orElse("USER"))
+                .role(loginRole(user))
                 .build();
     }
 

@@ -29,6 +29,7 @@ public class Payment extends BaseEntity {
     @Column(name = "user_id")
     private Long userId;
 
+    @Column(unique = true)
     private String code;
 
     @Column(name = "payment_method", nullable = false)

@@ -10,7 +10,7 @@ public record CommerceEvent(
         UUID eventId,
         Type type,
         long orderId,
-        long userId,
+        Long userId,
         BigDecimal amount,
         String currency,
         String paymentMethod,
@@ -19,6 +19,11 @@ public record CommerceEvent(
         String traceId,
         Instant occurredAt
 ) {
+
+    public CommerceEvent(int version,UUID eventId,Type type,long orderId,int userId,BigDecimal amount,
+            String currency,String paymentMethod,Long paymentId,String requestId,String traceId,Instant occurredAt) {
+        this(version,eventId,type,orderId,Long.valueOf(userId),amount,currency,paymentMethod,paymentId,requestId,traceId,occurredAt);
+    }
 
     public static final String ORDERS = "commerce.orders.v1";
     public static final String PAYMENTS = "commerce.payments.v1";
@@ -34,11 +39,11 @@ public record CommerceEvent(
     }
 
     public void validate() {
-        if (version != 1
+        if ((version != 1 && version != 2)
                 || eventId == null
                 || type == null
                 || orderId <= 0
-                || userId <= 0
+                || (userId == null ? version != 2 : userId <= 0)
                 || amount == null
                 || amount.signum() < 0
                 || !"USD".equals(currency)

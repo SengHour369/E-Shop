@@ -1,0 +1,61 @@
+{
+  "base": "http://192.168.1.10:41075",
+  "checks": [
+    {
+      "test": "service",
+      "status": 200,
+      "expected": 200,
+      "passed": true
+    },
+    {
+      "test": "wrong-authority",
+      "status": 403,
+      "expected": 403,
+      "passed": true
+    },
+    {
+      "test": "invalid-signature",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "test": "missing-token",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "test": "real-login",
+      "status": 200
+    },
+    {
+      "test": "original-checkout",
+      "status": 201,
+      "response": {
+        "id": 1,
+        "order_number": "ORD-94a30547-ec65-40be-b9bf-a2ea8cc060fd",
+        "status": "FAILED",
+        "total_amount": 0
+      }
+    },
+    {
+      "test": "same-key-retry",
+      "status": 201,
+      "response": {
+        "id": 1,
+        "order_number": "ORD-94a30547-ec65-40be-b9bf-a2ea8cc060fd",
+        "status": "FAILED",
+        "total_amount": 0.0
+      }
+    },
+    {
+      "test": "order-qr",
+      "status": 400,
+      "qrPresent": false,
+      "paymentStatus": null
+    }
+  ],
+  "addressOwned": true,
+  "sameOrderOnRetry": true
+}

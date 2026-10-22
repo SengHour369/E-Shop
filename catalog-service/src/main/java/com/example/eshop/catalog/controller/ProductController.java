@@ -23,7 +23,9 @@ public class ProductController extends BaseController {
 
     private final ProductService productService;
     private final ObjectMapper objectMapper;
-
+    static void requireApprovalWorkflow() {
+        throw new org.springframework.web.server.ResponseStatusException(HttpStatus.CONFLICT,"APPROVAL_REQUIRED: prepare a request through /api/ai/imports/manual-product; live products change only after independent approval");
+    }
     @PostMapping("/get/all")
     public ResponseEntity<ResponseErrorTemplate> getProducts(
             @Valid @RequestBody GetProductRequest request) {
@@ -41,6 +43,7 @@ public class ProductController extends BaseController {
             @RequestParam(required = false) String skus,
             @RequestParam(value = "files") List<MultipartFile> files,
             @RequestParam(value = "sku_images", required = false) List<MultipartFile> sku_images) throws Exception {
+        requireApprovalWorkflow();
         ObjectMapper mapper = objectMapper;
         ProductRequest request = new ProductRequest();
         request.setName(name);
@@ -71,6 +74,7 @@ public class ProductController extends BaseController {
             @RequestParam(required = false) String skus,
             @RequestParam(value = "files") List<MultipartFile> files,
             @RequestParam(value = "sku_images", required = false) List<MultipartFile> sku_images) throws Exception {
+        requireApprovalWorkflow();
         ObjectMapper mapper = objectMapper;
         ProductRequest request = new ProductRequest();
         request.setName(name);
@@ -94,6 +98,7 @@ public class ProductController extends BaseController {
     public ResponseEntity<ResponseErrorTemplate> updateProductJson(
             @RequestParam Long id,
             @Valid @RequestBody ProductRequest request) throws Exception {
+        requireApprovalWorkflow();
         ResponseErrorTemplate response = productService.updateProduct(id, request, null, null);
         return ResponseEntity.ok(response);
     }
@@ -103,12 +108,14 @@ public class ProductController extends BaseController {
     public ResponseEntity<ResponseErrorTemplate> updateProductStatus(
             @RequestParam Long id,
             @RequestParam Boolean isActive) {
+        requireApprovalWorkflow();
         ResponseErrorTemplate response = productService.updateProductStatus(id, isActive);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/delete/")
     public ResponseEntity<ResponseErrorTemplate> deleteProduct(@RequestParam Long id) {
+        requireApprovalWorkflow();
         productService.deleteProduct(id);
         return ResponseEntity.ok(ResponseErrorTemplate.success("Product deleted successfully", null));
     }

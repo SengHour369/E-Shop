@@ -1,0 +1,18 @@
+# Apply the service-specific 20261019 migrations before deploying this override.
+# Does not enable guest checkout/payment: administrators must explicitly enable them.
+services:
+  order-service:
+    environment:
+      STOREFRONT_ADMIN_URL: http://admin-service:8087
+      GUEST_COOKIE_SECURE: ${GUEST_COOKIE_SECURE:-true}
+      GUEST_ALLOWED_ORIGINS: ${GATEWAY_CORS_ORIGINS:?Set exact frontend origins}
+      AUTHORIZATION_AUTH_URL: http://auth-service:8081
+  catalog-service:
+    environment:
+      STOREFRONT_ADMIN_URL: http://admin-service:8087
+  payment-service:
+    environment:
+      STOREFRONT_ADMIN_URL: http://admin-service:8087
+  admin-service:
+    environment:
+      AUTHORIZATION_AUTH_URL: http://auth-service:8081

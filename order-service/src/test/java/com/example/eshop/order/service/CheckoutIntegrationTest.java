@@ -39,6 +39,11 @@ class CheckoutIntegrationTest {
     @Import({CheckoutCoordinator.class, OrderMapper.class, OrderItemMapper.class,
         CartServiceImpl.class, CartMapper.class, CartItemMapper.class, AiShoppingService.class})
     static class Config {
+        @Bean com.example.eshop.order.util.OrderCodeGenerator orderCodes(org.springframework.jdbc.core.JdbcTemplate jdbc, PlatformTransactionManager manager) {
+            jdbc.execute("CREATE TABLE IF NOT EXISTS business_code_counters(code_type VARCHAR(30) PRIMARY KEY,last_value BIGINT NOT NULL)");
+            jdbc.update("INSERT INTO business_code_counters(code_type,last_value) SELECT 'ORDER',0 WHERE NOT EXISTS(SELECT 1 FROM business_code_counters WHERE code_type='ORDER')");
+            return new com.example.eshop.order.util.OrderCodeGenerator(jdbc,manager);
+        }
         @Bean com.fasterxml.jackson.databind.ObjectMapper mapper() { return new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules(); }
         @Bean OrderService orderService() { return mock(OrderService.class); }
         @Bean com.example.eshop.order.automation.CheckoutAddressVerifier verifier() { return mock(com.example.eshop.order.automation.CheckoutAddressVerifier.class); }
@@ -95,12 +100,14 @@ class CheckoutIntegrationTest {
 
     @Test void checkoutIgnoresCartPricePersistsSnapshotsAndRetriesOnce() {
         OrderResponse first=(OrderResponse)checkout.create(user,request()).object();
+        assertThat(first.getOrderNumber()).matches("anOrder_[0-9]{3,}");
         assertThat(first.getTotalAmount()).isEqualByComparingTo("160");
         assertThat(first.getItems().get(0).getBaseUnitPrice()).isEqualByComparingTo("100");
         assertThat(first.getItems().get(0).getFinalUnitPrice()).isEqualByComparingTo("80");
         assertThat(first.getItems().get(0).getPromotionName()).isEqualTo("Sale");
         OrderResponse repeated=(OrderResponse)checkout.create(user,request()).object();
         assertThat(repeated.getId()).isEqualTo(first.getId());
+        assertThat(repeated.getOrderNumber()).isEqualTo(first.getOrderNumber());
         verify(catalog,times(1)).reserve(any()); verify(catalog,times(1)).confirm(first.getId());
         assertThat(cartRepository.findByUserId(user).orElseThrow().getTotalItems()).isZero();
     }

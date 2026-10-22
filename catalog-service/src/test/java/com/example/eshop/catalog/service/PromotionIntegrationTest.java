@@ -168,5 +168,29 @@ class PromotionIntegrationTest {
             assertThat(events.get(4).getNewValue()).contains("DISABLED");
         } finally { org.slf4j.MDC.clear(); }
     }
+    @Test void guestReservationsUseExplicitOwnershipAndExcludeCustomerLimitedPromotions() {
+        Long sku=sku();promotion(sku,null,1L);long order=ORDER.incrementAndGet();var guest=UUID.randomUUID();
+        var request=new CheckoutRequest(order,null,List.of(new CheckoutRequest.Line(sku,1L)),guest);
+        assertThat(checkout.reserve(request).total()).isEqualByComparingTo("100");
+        assertThat(checkout.reserve(request).total()).isEqualByComparingTo("100");
+        assertThatThrownBy(()->checkout.reserve(new CheckoutRequest(order,null,request.items(),UUID.randomUUID())))
+                .isInstanceOf(BusinessLogicException.class);
+        assertThatThrownBy(()->checkout.quote(new CheckoutRequest(order,null,request.items())))
+                .isInstanceOf(BusinessLogicException.class);
+    }
+    @Test void concurrentGuestReservationsCannotOversellStock() throws Exception {
+        Long sku=sku();ExecutorService pool=Executors.newFixedThreadPool(2);CountDownLatch start=new CountDownLatch(1);
+        java.util.concurrent.Callable<Boolean> reserve=()-> {
+            start.await();
+            try {checkout.reserve(new CheckoutRequest(ORDER.incrementAndGet(),null,List.of(new CheckoutRequest.Line(sku,15L)),UUID.randomUUID()));return true;}
+            catch(BusinessLogicException insufficientStock) {return false;}
+        };
+        try {
+            var a=pool.submit(reserve);var b=pool.submit(reserve);start.countDown();
+            assertThat(List.of(a.get(20,TimeUnit.SECONDS),b.get(20,TimeUnit.SECONDS))).containsExactlyInAnyOrder(true,false);
+            assertThat(inventories.findByProductSkuId(sku).orElseThrow().getReservedQuantity()).isEqualTo(15L);
+        } finally {pool.shutdownNow();}
+    }
+
 }
 

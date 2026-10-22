@@ -26,6 +26,7 @@ import java.util.List;
 public class ApiPermissionInterceptor implements HandlerInterceptor {
 
     private final ApiPermissionRepository apiPermissionRepository;
+    private final FunctionPermissionRepository functionPermissions;
     private final UserPermissionRepository userPermissionRepository;
     private final UserRepository userRepository;
     private final UserGroupRepository userGroupRepository;          // inject
@@ -57,6 +58,7 @@ public class ApiPermissionInterceptor implements HandlerInterceptor {
 
         ApiPermission api = apiPermissionRepository.findActiveByMethod(method).stream()
                 .filter(candidate -> pathMatcher.match(candidate.getApi(), path))
+                .sorted(java.util.Comparator.comparing(ApiPermission::getApi, pathMatcher.getPatternComparator(path)))
                 .findFirst()
                 .orElseThrow(() -> new ForbiddenException(
                         "API not configured for permission check: " + method + " " + path));
@@ -67,23 +69,10 @@ public class ApiPermissionInterceptor implements HandlerInterceptor {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
         // ======== ពិនិត្យសិទ្ធិ (ទាំង User Permission និង Group Permission) ========
-        boolean hasPermission = false;
-
-        // ១. ពិនិត្យសិទ្ធិផ្ទាល់របស់អ្នកប្រើ
-        boolean hasUserPermission = userPermissionRepository.existsByUserIdAndFuncIdAndIsActive(user.getId(), funcId, true);
-        if (hasUserPermission) {
-            hasPermission = true;
-        } else {
-            // ២. ពិនិត្យសិទ្ធិពីក្រុមរបស់អ្នកប្រើ
-            List<UserGroup> userGroups = userGroupRepository.findByUserId(user.getId());
-            for (UserGroup ug : userGroups) {
-                boolean hasGroupPermission = groupPermissionRepository.existsByGroupIdAndFuncIdAndIsActive(ug.getGroupId(), funcId, true);
-                if (hasGroupPermission) {
-                    hasPermission = true;
-                    break;
-                }
-            }
-        }
+        boolean hasPermission = api.getFuncId() != null
+                && functionPermissions.findById(api.getFuncId())
+                    .map(function -> functionPermissions.effectiveCodes(user.getId()).contains(function.getFuncCode()))
+                    .orElse(false);
 
         if (!hasPermission) {
             log.warn("Access denied: user '{}' (id={}) does not have direct or group permission for funcId={} [{} {}]",
@@ -96,8 +85,10 @@ public class ApiPermissionInterceptor implements HandlerInterceptor {
     }
 
     private boolean isSuperAdmin(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-                .anyMatch(authority -> SUPER_ADMIN_AUTHORITY.equals(authority.getAuthority()));
+        return userRepository.findByUsername(authentication.getName())
+                .map(user -> user.getRoles().stream().anyMatch(role ->
+                        java.util.Set.of("ADMIN", "SUPER_ADMIN").contains(role.getName())))
+                .orElse(false);
     }
 
     private boolean isPublicPath(String path) {

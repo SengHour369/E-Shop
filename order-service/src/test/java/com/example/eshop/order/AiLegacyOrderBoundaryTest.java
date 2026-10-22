@@ -16,7 +16,7 @@ class AiLegacyOrderBoundaryTest {
     @Test void spoofedUserCannotReadOrderDetailHistoryOrLists() {
         var repo=mock(OrderRepository.class); var permissions=mock(LivePermissionService.class);
         var service=new OrderServiceImpl(mock(org.springframework.beans.factory.ObjectProvider.class),repo,
-                mock(OrderCancelationRepository.class),mock(OrderMapper.class),mock(OrderItemMapper.class),mock(CheckoutCoordinator.class),permissions);
+                mock(OrderCancelationRepository.class),mock(OrderMapper.class),mock(OrderItemMapper.class),mock(CheckoutCoordinator.class),mock(com.example.eshop.order.automation.QrCancellationGuard.class),permissions);
         var actor=new UsernamePasswordAuthenticationToken("buyer",null,List.of());actor.setDetails(Map.of("userId",7L));
         SecurityContextHolder.getContext().setAuthentication(actor);
         assertThatThrownBy(()->service.getOrderDetailByUserId(8L,30L)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);

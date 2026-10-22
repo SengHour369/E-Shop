@@ -84,6 +84,7 @@ public class ProductAttributeController extends BaseController {
     public ResponseEntity<Void> deleteAttribute(
             @Parameter(description = "Attribute ID", example = "1")
             @PathVariable Long id) {
+        ProductController.requireApprovalWorkflow();
         productAttributeService.deleteAttribute(id);
         return ResponseEntity.noContent().build();
     }

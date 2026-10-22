@@ -1,0 +1,22 @@
+{
+  "base": "http://127.0.0.1:4200",
+  "verification": "Read-only HTTP checks with a 60-second signed test access token for the existing group member; password login for this account was not attempted.",
+  "checks": [
+    {
+      "path": "/api/v1/user/access",
+      "status": 200,
+      "administrator": true,
+      "permissionCount": 64,
+      "hasOrders": true,
+      "hasInventory": false
+    },
+    {
+      "path": "/api/v1/orders/summary",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/inventory/summary",
+      "status": 403
+    }
+  ]
+}

@@ -24,6 +24,9 @@ public class Cart extends BaseEntity {
     @Column(name = "user_id", unique = true)
     private Long userId;
 
+    @Column(unique = true)
+    private java.util.UUID guestSessionId;
+
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<CartItem> cartItems = new ArrayList<>();
 

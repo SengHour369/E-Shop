@@ -34,6 +34,47 @@ spring:
                 allowedHeaders: "*"
                 allowCredentials: true
           routes:
+            - id: storefront-catalog
+              order: -20
+              uri: lb://catalog-service
+              predicates:
+                - Path=/api/v1/storefront/products/**,/api/v1/storefront/products,/api/v1/storefront/skus/**,/api/v1/storefront/categories,/api/v1/storefront/categories/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: catalogServiceCB
+                    fallbackUri: forward:/fallback/catalog
+            - id: storefront-settings
+              order: -20
+              uri: lb://admin-service
+              predicates:
+                - Path=/api/v1/storefront/access-settings,/api/v1/admin/storefront/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: adminServiceCB
+                    fallbackUri: forward:/fallback/admin
+            - id: guest-commerce
+              order: -20
+              uri: lb://order-service
+              predicates:
+                - Path=/api/v1/guest/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCB
+                    fallbackUri: forward:/fallback/order
+            - id: ai-chat-service
+              uri: lb://ai-service
+              predicates:
+                - Path=/api/ai/chat,/api/ai/admin/chat,/api/ai/voice/transcriptions
+              metadata:
+                response-timeout: 60000
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: aiChatServiceCB
+                    fallbackUri: forward:/fallback/ai
             - id: ai-service
               uri: lb://ai-service
               predicates:
@@ -118,7 +159,7 @@ spring:
               order: -10
               uri: lb://auth-service
               predicates:
-                - Path=/api/v1/public/register,/api/v1/public/resend,/api/v1/public/forgot-password
+                - Path=/api/v1/public/register,/api/v1/public/resend,/api/v1/public/forgot-password,/api/v1/public/email/username/login,/api/v1/public/session/login
                 - Method=POST
               metadata:
                 response-timeout: ${AUTH_EMAIL_RESPONSE_TIMEOUT_MS:30000}
@@ -136,6 +177,7 @@ spring:
                   args:
                     name: authServiceCB
                     fallbackUri: forward:/fallback/auth
+                - "SetResponseHeader=Content-Security-Policy, default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src https: 'sha256-yNNnZabWbnU4nlZteP+On3jOdJRt+byM94mfqidhZeI='; style-src 'self' https: 'unsafe-inline'"
             - id: scanner-upload
               uri: lb://catalog-service
               predicates:
@@ -159,7 +201,7 @@ spring:
             - id: catalog-service
               uri: lb://catalog-service
               predicates:
-                - Path=/api/v1/branches/**, /api/v1/admin/promotions/**, /api/v1/promotions/**, /api/v1/products/**, /api/v1/categories/**, /api/v1/category-icons/**, /api/v1/brand-logos/**, /api/v1/subcategories/**, /api/v1/attributes/**, /api/v1/attribute-values/**, /api/v1/inventory/**, /api/v1/product-scanner/**
+                - Path=/api/v1/admin/guest-reviews/**, /api/v1/admin/guest-reviews, /api/v1/branches/**, /api/v1/admin/promotions/**, /api/v1/promotions/**, /api/v1/products/**, /api/v1/categories/**, /api/v1/category-icons/**, /api/v1/brand-logos/**, /api/v1/subcategories/**, /api/v1/attributes/**, /api/v1/attribute-values/**, /api/v1/inventory/**, /api/v1/product-scanner/**
               filters:
                 - name: CircuitBreaker
                   args:
@@ -188,7 +230,7 @@ spring:
             - id: admin-service
               uri: lb://admin-service
               predicates:
-                - Path=/api/v1/admin/session, /api/v1/admin/monitor, /api/v1/admin/settings
+                - Path=/api/v1/admin/session, /api/v1/admin/monitor, /api/v1/admin/settings, /api/v1/admin/live-tests/**
               filters:
                 - name: CircuitBreaker
                   args:
@@ -295,6 +337,8 @@ resilience4j:
         timeout-duration: ${IMAGE_UPLOAD_GATEWAY_TIMEOUT:120s}
       authEmailCB:
         timeout-duration: ${AUTH_EMAIL_GATEWAY_TIMEOUT:30s}
+      aiChatServiceCB:
+        timeout-duration: 55s
       aiServiceCB:
         timeout-duration: ${AI_GATEWAY_TIMEOUT:30s}
     configs:
@@ -309,12 +353,21 @@ gateway:
     jwt-secret: ${JWT_SECRET:66546A5744444446E5A7234743777217A25432A462D4A614E645267556B587032733576}
     admin-key: ${GATEWAY_ADMIN_KEY:}
     public-paths:
+      - /api/v1/storefront/products
+      - /api/v1/storefront/products/**
+      - /api/v1/storefront/skus/**
+      - /api/v1/storefront/categories
+      - /api/v1/storefront/categories/**
+      - /api/v1/storefront/access-settings
+      - /api/v1/guest/**
       - /api/v1/public/keycloak/config
       - /api/v1/public/keycloak/exchange
       - /api/v1/category-icons/seed/**
       - /api/v1/brand-logos/seed/**
       - /api/ai/chat
+      - /api/ai/voice/transcriptions
       - /api/v1/promotions/**
+      - /api/v1/public/session/second-factor
       - /api/v1/public/session/login
       - /api/v1/public/session/verify
       - /api/v1/public/session/refresh

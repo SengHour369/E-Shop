@@ -26,6 +26,7 @@ public class PaymentMapper {
         return PaymentResponse.builder()
                 .id(payment.getId())
                 .orderId(payment.getOrderId())
+                .customerType(payment.getUserId()==null ? "GUEST" : "CUSTOMER")
                 .orderNumber(null)
                 .paymentMethod(payment.getPaymentMethod())
                 .paymentDate(payment.getPaymentDate())

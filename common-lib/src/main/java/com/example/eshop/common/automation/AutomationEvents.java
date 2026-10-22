@@ -54,7 +54,12 @@ public class AutomationEvents {
     @Transactional(propagation = Propagation.MANDATORY)
     public void notify(CommerceEvent event, NotificationEvent.Type type) {
         java.util.Set<Long> recipients = new java.util.LinkedHashSet<>();
-        recipients.add(event.userId());
+        if (event.userId() != null) recipients.add(event.userId());
+        else {
+            UUID id=UUID.nameUUIDFromBytes((event.eventId()+":guest:"+type).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            var guest=new com.example.eshop.common.notification.GuestNotificationEvent(id,event.orderId(),type,event.requestId(),event.traceId(),Instant.now());
+            guest.validate();insert(id,"OUTBOX",com.example.eshop.common.notification.GuestNotificationEvent.TOPIC,event.orderId(),type.name(),guest);
+        }
 
         if (adminRecipients != null) {
             recipients.addAll(adminRecipients);
@@ -108,10 +113,10 @@ public class AutomationEvents {
             String payload = json.writeValueAsString(event);
             String requestId = event instanceof CommerceEvent e
                     ? e.requestId()
-                    : ((NotificationEvent) event).requestId();
+                    : event instanceof com.example.eshop.common.notification.GuestNotificationEvent g ? g.requestId() : ((NotificationEvent) event).requestId();
             String traceId = event instanceof CommerceEvent e
                     ? e.traceId()
-                    : ((NotificationEvent) event).traceId();
+                    : event instanceof com.example.eshop.common.notification.GuestNotificationEvent g ? g.traceId() : ((NotificationEvent) event).traceId();
             jdbc.update(
                     "INSERT INTO automation_events(event_id,direction,topic,"
                             + "order_id,event_type,payload,request_id,trace_id) "
@@ -147,16 +152,20 @@ public class AutomationEvents {
         );
     }
 
+    public static CommerceEvent event(CommerceEvent.Type type,long id,int owner,java.math.BigDecimal amount,String method,Long paymentId) {
+        return event(type,id,Long.valueOf(owner),amount,method,paymentId);
+    }
+
     public static CommerceEvent event(
             CommerceEvent.Type type,
             long id,
-            long owner,
+            Long owner,
             java.math.BigDecimal amount,
             String method,
             Long paymentId
     ) {
         return new CommerceEvent(
-                1,
+                owner == null ? 2 : 1,
                 UUID.randomUUID(),
                 type,
                 id,

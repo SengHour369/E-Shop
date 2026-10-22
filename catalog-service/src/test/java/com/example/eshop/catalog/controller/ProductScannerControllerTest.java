@@ -37,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         com.example.eshop.common.audit.AuditSecurityHandlers.class,
         com.example.eshop.common.request.RequestIdFilter.class})
 class ProductScannerControllerTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.example.eshop.common.storefront.StorefrontAccessClient access;
     @Autowired MockMvc mvc;
     @Autowired JwtProperties jwt;
     @MockitoBean com.example.eshop.common.audit.AuditLogService audit;

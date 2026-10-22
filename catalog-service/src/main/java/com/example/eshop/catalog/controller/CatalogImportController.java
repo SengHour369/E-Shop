@@ -42,7 +42,7 @@ public class CatalogImportController {
         Row row = new com.fasterxml.jackson.databind.ObjectMapper()
                 .readValue(json, Row.class);
 
-        if (row.tool() != com.example.eshop.common.imports.ImportTool.PRODUCT_BULK_CREATE) {
+        if (row.tool() != com.example.eshop.common.imports.ImportTool.PRODUCT_BULK_CREATE && row.tool()!=com.example.eshop.common.imports.ImportTool.PRODUCT_BULK_UPDATE) {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.BAD_REQUEST,
                     "Product tool required"

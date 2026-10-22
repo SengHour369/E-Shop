@@ -14,6 +14,8 @@ RUN --mount=type=cache,id=eshop-maven,target=/root/.m2,sharing=locked \
 # Runtime image
 FROM eclipse-temurin:17-jre-alpine
 
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /app
 
 COPY --from=builder /build/ai-service/target/*.jar app.jar

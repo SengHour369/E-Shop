@@ -58,6 +58,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 authentication.setDetails(new java.util.HashMap<>(claims));
+                if (authorityClaims != null && authorityClaims.contains("GROUP_PERMISSION_SCOPED")
+                        && request.getRequestURI().startsWith("/api/v1/")) {
+                    if (!groupAllows(request, header)) {
+                        response.setStatus(403);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"success\":false,\"message\":\"Forbidden\",\"status\":403,\"data\":null}");
+                        return;
+                    }
+                }
             } catch (JwtException | IllegalArgumentException ex) {
                 SecurityContextHolder.clearContext();
             }
@@ -65,4 +74,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+    /** Resolve current grants for group-derived admin entry; role-only checks cannot widen them. */
+    private boolean groupAllows(HttpServletRequest request, String bearer) {
+        try {
+            var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+            factory.setConnectTimeout(2000);
+            factory.setReadTimeout(3000);
+            Boolean allowed = org.springframework.web.client.RestClient.builder()
+                    .baseUrl(properties.getAuthorizationUrl()).requestFactory(factory).build()
+                    .get().uri(uri -> uri.path("/internal/authorization/api-access")
+                            .queryParam("method", request.getMethod())
+                            .queryParam("path", request.getRequestURI()).build())
+                    .header("Authorization", bearer)
+                    .header("X-Request-ID", com.example.eshop.common.request.RequestIds.current())
+                    .retrieve().body(Boolean.class);
+            return Boolean.TRUE.equals(allowed);
+        } catch (Exception unavailable) {
+            return false;
+        }
+    }
+
 }

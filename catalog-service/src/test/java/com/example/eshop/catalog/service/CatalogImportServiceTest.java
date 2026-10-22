@@ -43,13 +43,17 @@ class CatalogImportServiceTest {
     @Mock ImportApprovalProof proof;
     @Mock PromotionRepository promotionRepository;
     @Mock BranchService branchService; @Mock BranchRepository branches; @Mock SubCategoryRepository subcategories; @Mock ProductService productService;
+    @Mock ProductAttributeRepository productAttributes;
+    @Mock ProductAttributeValueRepository attributeValues;
+    jakarta.validation.ValidatorFactory validators=jakarta.validation.Validation.buildDefaultValidatorFactory();
+    @Spy jakarta.validation.Validator validator=validators.getValidator();
     @InjectMocks CatalogImportService service;
     String key = UUID.randomUUID() + ":" + UUID.randomUUID();
     @BeforeEach void setup() {
         var actor = new UsernamePasswordAuthenticationToken("reviewer",null,List.of()); actor.setDetails(Map.of("userId",2L)); SecurityContextHolder.getContext().setAuthentication(actor);
         when(permissions.current()).thenReturn(new PermissionSnapshot(2,false,Set.of("IMPORT_REVIEW","IMPORT_APPROVE","IMPORT_EXECUTE","CATEGORY_CREATE","INVENTORY_ADJUST","SKU_CREATE")));
     }
-    @AfterEach void clear() { SecurityContextHolder.clearContext(); }
+    @AfterEach void clear() { SecurityContextHolder.clearContext(); validators.close(); }
     ImportReceipt receipt(ImportContracts.Row row) throws Exception {
         var receipt = new ImportReceipt(); receipt.setId(key); receipt.setActorId(2);
         receipt.setChecksum(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(mapper.writeValueAsBytes(List.of(row.tool().name(),new TreeMap<>(row.values()))))));
@@ -138,4 +142,27 @@ class CatalogImportServiceTest {
         var item=new Inventory();item.setId(1L);item.setBranchId(3L);item.setReservedQuantity(0L);when(inventory.findById(1L)).thenReturn(Optional.of(item));doThrow(new org.springframework.security.access.AccessDeniedException("Denied")).when(branchService).scope(eq(3L),any());
         assertThat(service.validate(new ImportContracts.Row(ImportTool.INVENTORY_STOCK_IN_BULK,Map.of("inventoryId","1","quantity","5"))).errors()).contains("BRANCH_ACCESS_DENIED");
     }
+    ImportContracts.Row productUpdate(long skuId,int quantity) {
+        return new ImportContracts.Row(ImportTool.PRODUCT_BULK_UPDATE,Map.of("id","99","expectedVersion","4","name","After","description","Updated","subCategoryId","1","isActive","true","skus","[{\"productSkuId\":"+skuId+",\"description\":\"Variant\",\"price\":12,\"quantity\":"+quantity+",\"is_default\":true}]"));
+    }
+    void existingProduct() {
+        when(permissions.current()).thenReturn(new PermissionSnapshot(2,false,Set.of("IMPORT_REVIEW","IMPORT_APPROVE","IMPORT_EXECUTE","PRODUCT_UPDATE","SKU_UPDATE")));
+        var category=new SubCategory();category.setId(1L);var product=new Product();product.setId(99L);product.setVersion(4);product.setName("Before");product.setIsActive(true);product.setSubCategory(category);
+        var sku=new ProductSku();sku.setId(7L);sku.setProduct(product);product.setProductSkus(List.of(sku));
+        when(products.findByIdNotDeleted(99L)).thenReturn(Optional.of(product));when(subcategories.findById(1L)).thenReturn(Optional.of(category));
+        lenient().when(skus.findById(7L)).thenReturn(Optional.of(sku));
+        var stock=new Inventory();stock.setQuantity(20L);stock.setLowStockThreshold(5);lenient().when(inventory.findByProductSkuId(7L)).thenReturn(Optional.of(stock));
+        when(productService.getProductWithSkus(99L)).thenReturn(ResponseErrorTemplate.success("Current",Map.of("skus",List.of(Map.of("id",7,"description","Variant","price",10,"quantity",20,"is_default",true)))));
+    }
+    @Test void productUpdateCapturesRealBeforeFieldsAndPassesApprovedSkusThroughTheDomainService() throws Exception {
+        existingProduct();var row=productUpdate(7,20);var check=service.validate(row);assertThat(check.errors()).isEmpty();assertThat(check.currentValues()).containsEntry("name","Before");assertThat(check.currentValues().get("skus")).contains("productSkuId").contains("10");
+        receipt(row);assertThat(service.execute(key,"proof",row).resourceId()).isEqualTo("99");
+        verify(productService).updateProduct(eq(99L),argThat(request->request.getSkus().size()==1 && request.getSkus().get(0).getPrice().intValue()==12 && request.getSkus().get(0).getInventory()==null),anyList(),anyList());
+        verify(em).lock(any(Product.class),eq(LockModeType.OPTIMISTIC_FORCE_INCREMENT));
+    }
+    @Test void productApprovalCannotOverwriteStockOrTargetAnotherProductsSku() throws Exception {
+        existingProduct();assertThat(service.validate(productUpdate(7,100)).errors()).contains("STOCK_CHANGE_REQUIRES_INVENTORY_REQUEST");
+        assertThat(service.validate(productUpdate(8,20)).errors()).contains("SKU_DOES_NOT_BELONG_TO_PRODUCT");verify(productService,never()).updateProduct(anyLong(),any(),anyList(),anyList());
+    }
+
 }

@@ -27,7 +27,7 @@ Start the frontend with `bash run-local.sh` in the adjacent frontend directory.
 
 ## Real verification email
 
-The launcher reads private sender settings from ignored `.env`. Set `ESHOP_MAIL_MODE=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, and `MAIL_PASSWORD`. Gmail requires a sender app password. The launcher fails early when SMTP credentials are missing and never prints them. Restart auth-service after changing these values.
+The launchers read private sender settings from ignored environment files. For Docker, `run-docker.sh` reads `.env` (or legacy `env`) plus `.env.local`, and applies `compose.smtp.yaml` after local Mailpit settings when SMTP mode is enabled. Set `ESHOP_MAIL_MODE=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, and `MAIL_PASSWORD`. Gmail requires a sender app password. The launcher fails early when SMTP credentials are missing and never prints them. Restart auth-service after changing these values.
 
 `ESHOP_MAIL_MODE=mailpit` sends only to the development inbox at http://localhost:8025; those messages are not delivered to Gmail. Verification email failures return an error instead of a success response. Password-reset links open the browser reset page. Public registration requires email verification; administrator-created accounts are enabled immediately and do not receive a verification code.
 
@@ -81,3 +81,11 @@ docker compose --env-file env --env-file .env.local -f compose.yaml -f compose.a
 ```
 
 Use the environment files configured for your installation (`env` is the legacy file; use `.env` instead when applicable). Omitting `compose.automation.yaml` disables order/payment automation. Automatic approval requires matching provider-verified payment evidence; Gemini routes requests but does not decide whether money was received. Pending, mismatched, or unavailable provider results must not approve an order.
+
+## Jenkins CI
+
+See [Jenkins setup](docs/ci/jenkins.md) for agent requirements, multibranch job configuration, test reports, artifacts, and optional Docker image builds.
+
+### Live HTTP verification module
+
+Admin → **Settings → Live Tests** (`/admin/live-tests`) and the [terminal runner](live-tests/README.md) use the same persisted, sequential real-HTTP test catalog. Failed and blocked prerequisites remain visible; the runner does not simulate bank settlement or perform business writes. See the [automation gap analysis](docs/ai-automation-gap-analysis.md) for specification coverage and missing workflow capabilities.

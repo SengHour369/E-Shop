@@ -26,6 +26,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, org.spr
     Page<Product> searchByNameAndActive(@Param("name") String name,
             @Param("active") Boolean active, Pageable pageable);
 
+    @Query("select p from Product p where p.isActive=true and (p.deleted=false or p.deleted is null) and lower(p.subCategory.category.name)=lower(:name)")
+    Page<Product> storefrontCategory(@Param("name") String name,Pageable page);
+
     @Query("select p from Product p where p.isActive = true and (p.deleted = false or p.deleted is null) and exists (select ps.id from PromotionSku ps where ps.promotion.id = :promotionId and ps.productSku.product = p)")
     org.springframework.data.domain.Page<Product> findPromotionProducts(
         @Param("promotionId") Long promotionId, org.springframework.data.domain.Pageable pageable);

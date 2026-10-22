@@ -1,0 +1,32 @@
+{
+  "base": "http://192.168.1.10:41075",
+  "checks": [
+    {
+      "test": "admin-order-summary",
+      "status": 200,
+      "response": {
+        "message": "Order status summary retrieved successfully",
+        "code": "200",
+        "data": {
+          "totalOrders": 2,
+          "pending": 1,
+          "confirmed": 0,
+          "processing": 0,
+          "shipped": 0,
+          "delivered": 0,
+          "cancelled": 0,
+          "failed": 1,
+          "refunded": 0
+        }
+      }
+    },
+    {
+      "test": "admin-order-list",
+      "status": 200
+    },
+    {
+      "test": "unauthenticated-summary",
+      "status": 401
+    }
+  ]
+}

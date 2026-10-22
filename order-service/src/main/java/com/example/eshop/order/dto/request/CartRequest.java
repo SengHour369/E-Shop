@@ -20,6 +20,7 @@ public class CartRequest {
 
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
+    @jakarta.validation.constraints.Max(999)
     private Long quantity;
 
     // Retained for request compatibility only. Catalog pricing always overrides this value.

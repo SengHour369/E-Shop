@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 
     private final UserRepository userRepository;
+    private final com.example.eshop.auth.repository.FunctionPermissionRepository functions;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -43,15 +44,21 @@ public class UserDetailsService implements org.springframework.security.core.use
         log.info(" User found: {} (ID: {}, Email: {})",
                 foundUser.getUsername(), foundUser.getId(), foundUser.getEmail());
 
+        var authorities = foundUser.getRoles().stream()
+                .<org.springframework.security.core.GrantedAuthority>map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
+        if (functions.hasActiveStaffGroup(foundUser.getId())
+                && authorities.stream().noneMatch(a -> a.getAuthority().equals("ADMIN")))
+        {
+            authorities.add(0, new SimpleGrantedAuthority("ADMIN"));
+            authorities.add(new SimpleGrantedAuthority("GROUP_PERMISSION_SCOPED"));
+        }
         return new UserDetailsImpl(
                 foundUser.getUsername(),
                 foundUser.getId(),
                 foundUser.getEmail(),
                 foundUser.getPassword(),
-                foundUser.getRoles()
-                        .stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
+                authorities
         );
     }
 

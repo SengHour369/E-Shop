@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = {"com.example.eshop.ai", "com.example.eshop.common"})
-@EntityScan({"com.example.eshop.ai.model", "com.example.eshop.common.audit"})
-@EnableJpaRepositories({"com.example.eshop.ai.repository", "com.example.eshop.common.audit"})
+@EntityScan({"com.example.eshop.ai.model", "com.example.eshop.ai.workflow", "com.example.eshop.common.audit"})
+@EnableJpaRepositories({"com.example.eshop.ai.repository", "com.example.eshop.ai.workflow", "com.example.eshop.common.audit"})
 @EnableFeignClients
 @EnableScheduling
 public class AiServiceApplication {

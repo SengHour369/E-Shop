@@ -33,7 +33,7 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/ai/chat").permitAll()
+                        .requestMatchers("/api/ai/chat", "/api/ai/voice/transcriptions").permitAll()
                         .requestMatchers("/api/admin/audit-logs/**")
                         .hasAnyAuthority("ADMIN", "AUDIT_READ")
                         .anyRequest().authenticated()

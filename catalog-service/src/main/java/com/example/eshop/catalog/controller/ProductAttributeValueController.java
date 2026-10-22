@@ -66,6 +66,7 @@ public class ProductAttributeValueController extends BaseController {
             @Parameter(description = "Attribute value ID", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody ProductAttributeValueRequest request) {
+        ProductController.requireApprovalWorkflow();
         ProductAttributeValueResponse response = productAttributeValueService.updateAttributeValue(
                 id,
                 request);
@@ -82,6 +83,7 @@ public class ProductAttributeValueController extends BaseController {
     public ResponseEntity<Void> deleteAttributeValue(
             @Parameter(description = "Attribute value ID", example = "1")
             @PathVariable Long id) {
+        ProductController.requireApprovalWorkflow();
         productAttributeValueService.deleteAttributeValue(id);
         return ResponseEntity.noContent().build();
     }

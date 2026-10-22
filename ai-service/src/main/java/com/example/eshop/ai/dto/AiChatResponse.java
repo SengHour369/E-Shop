@@ -8,5 +8,9 @@ public record AiChatResponse(
         String mode,
         String cardType,
         List<String> suggestions,
-        AiResponse result) {
+        AiResponse result,
+        ChatPresentation presentation) {
+    public AiChatResponse(UUID conversationId, String mode, String cardType, List<String> suggestions, AiResponse result) {
+        this(conversationId, mode, cardType, suggestions, result, null);
+    }
 }

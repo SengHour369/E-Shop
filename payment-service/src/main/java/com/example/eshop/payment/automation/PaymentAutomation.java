@@ -28,6 +28,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "automation.enabled", havingValue = "true")
 public class PaymentAutomation implements CommerceHandler {
+    private final com.example.eshop.payment.util.PaymentCodeGenerator paymentCodes;
 
     private final PaymentTransactionRepository transactions;
     private final PaymentTransactionStatusHistoryRepository history;
@@ -74,11 +75,21 @@ public class PaymentAutomation implements CommerceHandler {
 
         if (order == null
                 || order.orderId() != event.orderId()
-                || order.userId() != event.userId()) {
+                || !Objects.equals(order.userId(),event.userId())) {
             throw new IllegalStateException("Authoritative order mismatch");
         }
 
-        var existing = transactions.findByOrder(order.orderId())
+        var orderTransactions = transactions.findByOrder(order.orderId());
+        if(event.type()==CommerceEvent.Type.ORDER_CREATED && orderTransactions.stream().anyMatch(t->t.getStatus()==TransactionStatus.SUCCESS)) {
+            var paid=orderTransactions.stream().filter(t->t.getStatus()==TransactionStatus.SUCCESS).findFirst().orElseThrow();
+            if(paid.getVerifiedAt()==null||paid.getProviderHash()==null||!paid.getProviderHash().matches("[a-fA-F0-9]{64}")||!Objects.equals(paid.getCustomer(),order.userId())
+                    ||paid.getAmount()==null||paid.getAmount().compareTo(order.amount())!=0||!Objects.equals(paid.getCurrency(),order.currency()))
+                events.review(order.orderId(),"EXISTING_PAYMENT_REQUIRES_REVIEW","An existing successful transaction requires matching provider evidence. Do not request another payment.");
+            else events.emit(CommerceEvent.PAYMENTS,AutomationEvents.event(CommerceEvent.Type.PAYMENT_VERIFIED,
+                    order.orderId(),order.userId(),order.amount(),"BAKONG",paid.getId()));
+            return;
+        }
+        var existing = orderTransactions
                 .stream()
                 .filter(t -> t.getQrMd5() != null)
                 .findFirst();
@@ -259,6 +270,7 @@ public class PaymentAutomation implements CommerceHandler {
                 );
                 var payment = payments.findByOrderId(locked.getOrder())
                         .orElseGet(Payment::new);
+                if (payment.getCode() == null || payment.getCode().isBlank()) payment.setCode(paymentCodes.generatePaymentCode());
                 payment.setOrderId(locked.getOrder());
                 payment.setUserId(locked.getCustomer());
                 payment.setAmount(locked.getAmount());
@@ -346,29 +358,50 @@ public class PaymentAutomation implements CommerceHandler {
         var order = orders.get(orderId);
 
         if (order == null
-                || order.userId() != CurrentActor.userId()) {
+                || !Objects.equals(order.userId(),CurrentActor.userId())) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "Order unavailable"
             );
         }
 
+        return qrForOrder(orderId,order);
+    }
+
+    @Transactional(readOnly=true)
+    public Map<String,Object> guestQr(long orderId) {
+        var order=orders.get(orderId);
+        if(order==null||order.userId()!=null) throw new org.springframework.security.access.AccessDeniedException("Guest order required");
+        return qrForOrder(orderId,order);
+    }
+    private Map<String,Object> qrForOrder(long orderId,PaymentOrderSnapshot order) {
         var record = transactions.findByOrder(orderId)
                 .stream()
-                .filter(t -> t.getQrMd5() != null)
+                .filter(t -> t.getStatus()==TransactionStatus.SUCCESS || t.getQrMd5()!=null)
+                .sorted(Comparator.comparingInt((PaymentTransaction t)->t.getStatus()==TransactionStatus.SUCCESS?0:1))
                 .findFirst()
                 .orElseThrow(() -> new BusinessLogicException(
                         "QR is not ready. Check automation status or retry shortly."
                 ));
-        return Map.of(
-                "paymentId", record.getId(),
-                "orderId", orderId,
-                "amount", record.getAmount(),
-                "currency", record.getCurrency(),
-                "status", record.getStatus(),
-                "qr", record.getQrPayload(),
-                "expiresAt", record.getExpiresAt(),
-                "provider", "BAKONG_KHQR"
-        );
+        if(!Objects.equals(record.getCustomer(),order.userId())||record.getAmount()==null
+                ||record.getAmount().compareTo(order.amount())!=0||!Objects.equals(record.getCurrency(),order.currency()))
+            throw new BusinessLogicException("Payment transaction does not match this order. Contact the shop.");
+        boolean verified=record.getStatus()==TransactionStatus.SUCCESS&&record.getVerifiedAt()!=null
+                &&record.getProviderHash()!=null&&record.getProviderHash().matches("[a-fA-F0-9]{64}");
+        var result=new LinkedHashMap<String,Object>();
+        result.put("paymentId",record.getId());result.put("orderId",orderId);result.put("amount",record.getAmount());
+        result.put("currency",record.getCurrency());result.put("status",record.getStatus()==TransactionStatus.SUCCESS&&!verified?"REVIEW_REQUIRED":record.getStatus().name());
+        result.put("qr",record.getQrPayload());result.put("expiresAt",record.getExpiresAt());result.put("provider","BAKONG_KHQR");
+        result.put("paymentVerified",verified);result.put("transactionReference",record.getTransactionNo());result.put("orderStatus",order.status());
+        if(verified){result.put("verifiedAt",record.getVerifiedAt());result.put("paidAmount",record.getAmount());}
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public VerifiedPaymentSnapshot snapshotForOrder(long orderId) {
+        var records=transactions.findByOrder(orderId).stream()
+                .filter(p -> p.getStatus()==TransactionStatus.SUCCESS || p.getQrMd5()!=null).toList();
+        if(records.size()!=1)throw new BusinessLogicException("Payment requires reconciliation before cancellation");
+        return snapshot(records.get(0).getId());
     }
 
     @Transactional(readOnly = true)

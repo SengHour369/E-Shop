@@ -8,20 +8,21 @@ import subprocess
 LAUNCHER = Path(__file__).resolve().parents[1] / 'run-docker.sh'
 
 
-def launch(tmp_path, files, explicit=None, automation=False):
+def launch(tmp_path, files, explicit=None, automation=False, mail_mode="mailpit"):
     shutil.copy(LAUNCHER, tmp_path / 'run-docker.sh')
     for filename in files:
         (tmp_path / filename).write_text('AI_PROVIDER=GEMINI\n')
     bin_dir = tmp_path / 'bin'
     bin_dir.mkdir()
     docker = bin_dir / 'docker'
-    docker.write_text('#!/usr/bin/env python3\nimport json,sys,os\nif \"--environment\" in sys.argv: print(\"COMMERCE_AUTOMATION_ENABLED=\"+os.environ.get(\"LAUNCHER_TEST_AUTOMATION\",\"false\"))\nfrom pathlib import Path\nPath("docker-args.json").write_text(json.dumps(sys.argv[1:]))\n')
+    docker.write_text('#!/usr/bin/env python3\nimport json,sys,os\nif \"--environment\" in sys.argv: print(\"COMMERCE_AUTOMATION_ENABLED=\"+os.environ.get(\"LAUNCHER_TEST_AUTOMATION\",\"false\"))\nif "--environment" in sys.argv: print("ESHOP_MAIL_MODE="+os.environ.get("LAUNCHER_TEST_MAIL_MODE","mailpit"))\nfrom pathlib import Path\nPath("docker-args.json").write_text(json.dumps(sys.argv[1:]))\n')
     curl = bin_dir / 'curl'
     curl.write_text('#!/bin/sh\nexit 0\n')
     docker.chmod(0o755)
     curl.chmod(0o755)
     environment = {**os.environ, 'PATH': str(bin_dir) + os.pathsep + os.environ['PATH']}
     environment.pop('ESHOP_ENV_FILE', None)
+    environment['LAUNCHER_TEST_MAIL_MODE'] = mail_mode
     environment['LAUNCHER_TEST_AUTOMATION'] = 'true' if automation else 'false'
     if explicit is not None:
         environment['ESHOP_ENV_FILE'] = explicit
@@ -65,3 +66,15 @@ def test_commerce_flag_loads_both_payment_and_order_automation_config(tmp_path):
     result, args = launch(tmp_path, ['env'], automation=True)
     assert result.returncode == 0
     assert 'compose.automation.yaml' in args
+
+
+def test_smtp_mode_applies_credentials_overlay_after_local_mailpit(tmp_path):
+    result, args = launch(tmp_path, ['env'], mail_mode='smtp')
+    assert result.returncode == 0
+    assert args.index('compose.smtp.yaml') > args.index('compose.local.yaml')
+
+
+def test_mailpit_mode_keeps_external_smtp_disabled(tmp_path):
+    result, args = launch(tmp_path, ['env'])
+    assert result.returncode == 0
+    assert 'compose.smtp.yaml' not in args

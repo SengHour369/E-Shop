@@ -14,7 +14,7 @@ import java.time.ZoneId;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/settings")
-@PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'SUPER_ADMIN', 'MANAGER')")
 public class StoreSettingsController {
 
     private final StoreSettingsService service;
@@ -29,7 +29,7 @@ public class StoreSettingsController {
     }
 
     @PutMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<APIResponse<StoreSettingsRequest>> save(
             @Valid @RequestBody StoreSettingsRequest request
     ) {

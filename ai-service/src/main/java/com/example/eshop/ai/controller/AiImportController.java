@@ -19,7 +19,6 @@ import java.util.*;
 public class AiImportController {
 
     private final AiImportService service;
-    private final ExcelImportParser parser;
 
     public record Version(
             @Min(1) int version
@@ -67,15 +66,24 @@ public class AiImportController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "false") boolean review,
-            @RequestParam(defaultValue = "false") boolean assigned
+            @RequestParam(defaultValue = "false") boolean assigned,
+            @RequestParam(defaultValue = "false") boolean executions
     ) {
-        return service.list(page, size, review, assigned);
+        return service.list(page, size, review, assigned,executions);
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Object upload(@RequestPart("file") MultipartFile file) {
-        service.require("IMPORT_UPLOAD");
-        return service.upload(parser.parse(file));
+    @GetMapping("/requests")
+    public Object requests(@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size,
+            @RequestParam(defaultValue="false") boolean mine,@RequestParam(defaultValue="") String search,
+            @RequestParam(defaultValue="") String status,@RequestParam(defaultValue="") String source,@RequestParam(defaultValue="") String entity) {
+        return service.requests(page,size,mine,search,status,source,entity);
+    }
+
+    @PostMapping(value="/manual-product",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Object product(@RequestPart("row") String json,@RequestPart(value="files",required=false) List<MultipartFile> files) throws Exception {
+        if(json.length()>16384) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST,"Product draft is too large");
+        var row=new com.fasterxml.jackson.databind.ObjectMapper().readValue(json,com.example.eshop.common.imports.ImportContracts.Row.class);
+        return service.stageProduct(row,files);
     }
 
     @PostMapping(value = "/{id}/rows/{rowId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

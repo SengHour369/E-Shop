@@ -51,6 +51,14 @@ class StoreSettingsTest {
                 .contentType(MediaType.APPLICATION_JSON).content(BODY)).andExpect(status().isForbidden());
     }
 
+    @Test void superAdminCanReadAndSaveSettings() throws Exception {
+        mvc.perform(get("/api/v1/admin/settings").with(user("super").authorities(new SimpleGrantedAuthority("SUPER_ADMIN"))))
+                .andExpect(status().isOk());
+        mvc.perform(put("/api/v1/admin/settings").with(user("super").authorities(new SimpleGrantedAuthority("SUPER_ADMIN")))
+                .contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.storeName").value("My Shop"));
+    }
+
     @Test void invalidSettingsReturnTheExistingErrorEnvelope() throws Exception {
         mvc.perform(put("/api/v1/admin/settings").with(user("admin").authorities(new SimpleGrantedAuthority("ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON).content(BODY.replace("Asia/Bangkok", "Unknown/Zone")))

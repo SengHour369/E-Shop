@@ -13,6 +13,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     org.springframework.data.domain.Page<User> findVisibleForAssistant(
             org.springframework.data.domain.Pageable pageable);
 
+    boolean existsByPhone(String phone);
+
     Optional<User> findFirstByUsernameAndStatus(String username, String status);
 
     Optional<User> findFirstByUsernameOrEmail(String username, String email);

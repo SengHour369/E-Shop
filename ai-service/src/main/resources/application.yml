@@ -5,7 +5,7 @@ spring:
   servlet:
     multipart:
       max-file-size: ${AI_IMPORT_MAX_BYTES:5242880}
-      max-request-size: ${AI_IMPORT_MAX_REQUEST_BYTES:6291456}
+      max-request-size: ${AI_IMPORT_MAX_REQUEST_BYTES:23068672}
   application:
     name: ai-service
   datasource:
@@ -72,6 +72,11 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %-5level service=ai-service requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-} eventId=%X{eventId:-} [%thread] %logger{36} - %msg%n"
 ai:
+  voice:
+    transcription-url: ${AI_VOICE_TRANSCRIPTION_URL:}
+    api-key: ${AI_VOICE_API_KEY:}
+    model: ${AI_VOICE_MODEL:}
+    ffprobe: ${AI_VOICE_FFPROBE:ffprobe}
   import:
     signing-key: ${AI_IMPORT_SIGNING_KEY:}
     max-bytes: ${AI_IMPORT_MAX_BYTES:5242880}

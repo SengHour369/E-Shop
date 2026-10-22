@@ -24,8 +24,11 @@ public class AiConversationService {
         timeout = Duration.ofSeconds(seconds);
     }
     public String reply(String message, String language, List<Map<String, String>> history) {
+        return reply(message,language,history,false);
+    }
+    public String reply(String message, String language, List<Map<String, String>> history, boolean administrator) {
         try {
-            var body = mapper.writeValueAsString(Map.of("message", message, "language", language == null ? "en" : language, "history", history == null ? List.of() : history));
+            var body = mapper.writeValueAsString(Map.of("mode", administrator?"ADMIN":"CUSTOMER", "message", message, "language", language == null ? "en" : language, "history", history == null ? List.of() : history));
             var request = HttpRequest.newBuilder(endpoint).timeout(timeout)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body)).build();

@@ -15,6 +15,7 @@ import java.util.List;
 public class PaymentTransactionResponse {
 
     private Long id;
+    private String customerType;
 
     @JsonProperty("transaction_no")
     private String transactionNo;
