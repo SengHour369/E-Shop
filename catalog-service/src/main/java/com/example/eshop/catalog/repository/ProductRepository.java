@@ -71,4 +71,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, org.spr
             """)
     List<Product> findForScannerName(@Param("name") String name, Pageable pageable);
 
+    interface AiCategoryLabel { Long getProductId(); String getCategoryName(); }
+    @Query("select p.id as productId, c.name as categoryName from Product p left join p.subCategory sc left join sc.category c where p.id in :ids")
+    List<AiCategoryLabel> findAiCategoryLabels(@Param("ids") List<Long> ids);
 }

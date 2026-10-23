@@ -58,6 +58,12 @@ public class ProductResponseService {
         return page.stream().map(product -> mapper.toProductResponse(product, details)).toList();
     }
 
+    public Map<Long,String> aiCategoryNames(List<Long> ids) {
+        var labels=new java.util.HashMap<Long,String>();
+        if(!ids.isEmpty())for(var label:products.findAiCategoryLabels(ids))
+            if(label.getCategoryName()!=null)labels.put(label.getProductId(),label.getCategoryName());
+        return labels;
+    }
     public ProductResponse toProductResponse(Product product) {
         return toProductResponses(List.of(product)).get(0);
     }

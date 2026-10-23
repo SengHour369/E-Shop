@@ -1,0 +1,23 @@
+# Local HTTPS entry point. Generate certificates with scripts/configure-local-https.py.
+services:
+  https-proxy:
+    image: nginx:1.28-alpine
+    ports:
+      - "${ESHOP_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ../Order_Shop_Frontend/dist:/srv/frontend:ro
+      - ../Order_Shop_Frontend/deploy/nginx.https.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./.local/https/server.crt:/etc/nginx/certs/server.crt:ro
+      - ./.local/https/server.key:/etc/nginx/certs/server.key:ro
+      - ./.local/https/local-ca.crt:/etc/nginx/certs/local-ca.crt:ro
+    depends_on:
+      api-gateway:
+        condition: service_started
+    restart: unless-stopped
+  auth-service:
+    environment:
+      AUTH_COOKIE_SECURE: "true"
+      APP_BASE_URL: ${ESHOP_HTTPS_ORIGIN:-https://localhost:8443}
+  order-service:
+    environment:
+      GUEST_COOKIE_SECURE: "true"

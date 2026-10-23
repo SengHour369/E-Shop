@@ -37,8 +37,10 @@ public class AiProductSearchService {
         // Do not filter base prices in SQL: an active promotion may bring a SKU into the requested range.
         for (int page = 0; ; page++) {
             var candidates = products.findAll(matching(query), PageRequest.of(page, 100, Sort.by("id")));
-            for (var product : responses.toProductResponses(candidates.getContent())) {
-                var card = ProductCard.from(product);
+            var pageProducts=responses.toProductResponses(candidates.getContent());
+            var categories=responses.aiCategoryNames(pageProducts.stream().map(com.example.eshop.catalog.dto.response.ProductResponse::getId).toList());
+            for (var product : pageProducts) {
+                var card = ProductCard.from(product,categories.get(product.getId()));
                 var matchingSkus = card.skus().stream().filter(sku -> {
                     var price = sku.effectivePrice() == null ? sku.basePrice() : sku.effectivePrice();
                     return price != null && price.signum() >= 0
@@ -47,7 +49,7 @@ public class AiProductSearchService {
                             && (!Boolean.TRUE.equals(inStock) || (sku.available() != null && sku.available() > 0));
                 }).toList();
                 if (!matchingSkus.isEmpty()) {
-                    found.add(new ProductCard(card.id(), card.name(), card.description(), card.images(), matchingSkus));
+                    found.add(card.withSkus(matchingSkus));
                     if (found.size() == 20) return List.copyOf(found);
                 }
             }
@@ -72,7 +74,13 @@ public class AiProductSearchService {
                 for (String keyword : keywords(term)) {
                     String escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
                     String pattern = "%" + escaped + "%";
-                    alternatives.add(cb.or(cb.like(cb.lower(root.get("name")), pattern, '\\'),
+                    var attributes=criteria.subquery(Long.class);
+                    var attribute=attributes.from(com.example.eshop.catalog.model.ProductAttribute.class);
+                    var value=attributes.from(com.example.eshop.catalog.model.ProductAttributeValue.class);
+                    var sku=attributes.from(com.example.eshop.catalog.model.ProductSku.class);
+                    attributes.select(cb.literal(1L)).where(cb.equal(sku.get("product"),root),cb.equal(attribute.get("productSkuId"),sku.get("id")),
+                        cb.equal(value.get("attributeId"),attribute.get("id")),cb.like(cb.lower(value.get("value")),pattern,'\\'));
+                    alternatives.add(cb.or(cb.exists(attributes),cb.like(cb.lower(root.get("name")), pattern, '\\'),
                         cb.like(cb.lower(root.get("description")), pattern, '\\'),
                         cb.like(cb.lower(category.get("name")), pattern, '\\'),
                         cb.like(cb.lower(parent.get("name")), pattern, '\\')));

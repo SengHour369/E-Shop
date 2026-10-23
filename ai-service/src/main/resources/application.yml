@@ -94,3 +94,18 @@ ai:
       enabled: ${AI_TRAINING_SEED_ENABLED:false}
 
 
+
+gemini:
+  transcription:
+    enabled: ${GEMINI_TRANSCRIPTION_ENABLED:false}
+    model: ${GEMINI_TRANSCRIPTION_MODEL:gemini-3.1-flash-lite}
+  api-key: ${GEMINI_API_KEY:}
+  live:
+    enabled: ${GEMINI_LIVE_ENABLED:false}
+    model: ${GEMINI_LIVE_MODEL:gemini-3.1-flash-live-preview}
+    free-only: true
+    paid-fallback-enabled: false
+    free-project-verified: ${GEMINI_FREE_PROJECT_VERIFIED:false}
+    max-calls-per-day: ${AI_VOICE_MAX_CALLS_PER_DAY:5}
+    max-call-duration-seconds: ${AI_VOICE_MAX_DURATION_SECONDS:300}
+    max-concurrent-calls: 1

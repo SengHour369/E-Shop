@@ -27,6 +27,13 @@ fi
 if [[ -f compose.docker-local.yaml ]]; then
   compose+=(-f compose.docker-local.yaml)
 fi
+https_enabled="$("${compose[@]}" config --environment | awk -F= '$1=="ESHOP_HTTPS_ENABLED" {print tolower($2)}')"
+if [[ "$https_enabled" == "true" ]]; then
+  if [[ ! -f .local/https/server.crt || ! -f .local/https/server.key ]]; then
+    echo "Generate local HTTPS certificates with scripts/configure-local-https.py --ip YOUR_LAN_IP" >&2
+    exit 1
+  fi
+fi
 # Read only the opt-in flag from Compose's resolved environment; never print credentials.
 automation_enabled="$("${compose[@]}" config --environment | awk -F= '$1=="COMMERCE_AUTOMATION_ENABLED" {print tolower($2)}')"
 if [[ "$automation_enabled" == "true" ]]; then
@@ -38,6 +45,7 @@ case "$mail_mode" in
   ""|mailpit) ;;
   *) echo "ESHOP_MAIL_MODE must be smtp or mailpit" >&2; exit 1 ;;
 esac
+if [[ "$https_enabled" == "true" ]]; then compose+=(-f compose.https.yaml); fi
 "${compose[@]}" up -d --build --wait --wait-timeout 300 "$@"
 # Gateway discovery caches can lag behind healthy service containers.
 for service in auth-service catalog-service order-service payment-service admin-service; do
@@ -54,4 +62,9 @@ for service in auth-service catalog-service order-service payment-service admin-
     exit 1
   fi
 done
-echo "Docker shop ready: http://localhost:4200 (gateway: http://localhost:8080)"
+if [[ "$https_enabled" == "true" ]]; then
+  https_port="$("${compose[@]}" config --environment | awk -F= '$1=="ESHOP_HTTPS_PORT" {print $2}')"
+  echo "Docker shop ready: https://localhost:${https_port:-8443} (trust the local CA first)"
+else
+  echo "Docker shop ready: http://localhost:4200 (gateway: http://localhost:8080)"
+fi

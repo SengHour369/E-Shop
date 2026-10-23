@@ -30,7 +30,7 @@ public class AiChatStateService {
         if (!AiToolRegistry.authenticated()) {
             return message;
         }
-        String context = redis.opsForValue().get(conversationKey(conversationId));
+        String context = references(conversationId).toString();
         if (context == null || context.equals("{}")) {
             return message;
         }
@@ -44,8 +44,8 @@ public class AiChatStateService {
             return;
         }
         var context = mapper.createObjectNode();
-        try { var previous=mapper.readTree(redis.opsForValue().get(conversationKey(conversationId)));if(previous!=null&&previous.isObject())context.setAll((com.fasterxml.jackson.databind.node.ObjectNode)previous); } catch(Exception ignored) { }
-        if(response.intent().name().startsWith("CART_")){context.remove("reviewId");context.remove("reviewedAddressId");context.remove("reviewedPaymentMethod");}
+        var removals=new java.util.ArrayList<String>();
+        if(response.intent().name().startsWith("CART_"))removals.addAll(List.of("reviewId","reviewedAddressId","reviewedPaymentMethod"));
 
         var data = response.data();
         if (response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_SEARCH && data.isArray()) {
@@ -55,9 +55,10 @@ public class AiChatStateService {
                     ids.add(product.path("id").asLong());
                 }
             });
+            context.set("searchProductIds",ids.deepCopy());
         } else if ((response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_GET || response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_DETAIL || response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_VARIANTS)) {
             context.set("selectedProductId", data.path("id"));
-        } else if (response.intent() == com.example.eshop.ai.enums.AiIntent.SKU_GET) {
+        } else if (response.intent() == com.example.eshop.ai.enums.AiIntent.SKU_GET || response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_STOCK_CHECK) {
             context.set("selectedSkuId", data.path("id"));
         } else if (response.intent() == com.example.eshop.ai.enums.AiIntent.MY_ORDER_STATUS
                 || response.intent() == com.example.eshop.ai.enums.AiIntent.ORDER_GET) {
@@ -72,14 +73,60 @@ public class AiChatStateService {
         if(response.intent()==com.example.eshop.ai.enums.AiIntent.ORDER_CREATE){
             if(data.path("id").isIntegralNumber())context.set("selectedOrderId",data.path("id"));
             if(data.path("order_number").isTextual())context.set("selectedOrderNumber",data.path("order_number"));
-            context.remove("reviewId");
+            removals.add("reviewId");
         }
         if(response.intent()==com.example.eshop.ai.enums.AiIntent.PAYMENT_GET_STATUS||response.intent()==com.example.eshop.ai.enums.AiIntent.PAYMENT_INITIATE_KHQR){
             if(data.path("orderId").isIntegralNumber())context.set("selectedOrderId",data.path("orderId"));
         }
-        if (!context.isEmpty()) {
-            redis.opsForValue().set(conversationKey(conversationId), context.toString(), Duration.ofMinutes(30));
-        }
+        if (!context.isEmpty()||!removals.isEmpty())mergeReferences(conversationId,context,removals);
+    }
+
+    private static final DefaultRedisScript<Long> MERGE_CONTEXT=new DefaultRedisScript<>("""
+        local old=cjson.decode(redis.call('GET',KEYS[1]) or '{}')
+        local changes=cjson.decode(ARGV[1])
+        if changes.productIdsInDisplayOrder and not changes.searchProductIds then
+            local allowed={}
+            for _,value in ipairs(old.searchProductIds or {}) do allowed[value]=true end
+            local seen={}
+            for _,value in ipairs(changes.productIdsInDisplayOrder) do
+                if not allowed[value] or seen[value] then return 0 end
+                seen[value]=true
+            end
+        end
+        if changes.selectedProductId and old.selectedProductId~=changes.selectedProductId then old.selectedSkuId=nil end
+        for _,key in ipairs(cjson.decode(ARGV[2])) do old[key]=nil end
+        for key,value in pairs(changes) do old[key]=value end
+        local encoded=cjson.encode(old)
+        for _,key in ipairs({'productIdsInDisplayOrder','searchProductIds'}) do
+            encoded=string.gsub(encoded,'"'..key..'":{}','"'..key..'":[]')
+        end
+        redis.call('SET',KEYS[1],encoded,'EX',1800)
+        return 1
+        """,Long.class);
+    private void mergeReferences(UUID id,com.fasterxml.jackson.databind.node.ObjectNode changes,List<String> removals){
+        try{Long saved=redis.execute(MERGE_CONTEXT,List.of(conversationKey(id)),changes.toString(),mapper.writeValueAsString(removals));
+            if(saved==null)throw new IllegalStateException();
+            if(saved==0)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Display order must contain verified search results.");
+        }catch(ResponseStatusException e){throw e;}catch(Exception e){throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Conversation context is unavailable.");}
+    }
+    public com.fasterxml.jackson.databind.JsonNode references(UUID id){
+        try{
+            String json=redis.opsForValue().get(conversationKey(id));
+            var context=json==null?mapper.createObjectNode():mapper.readTree(json);
+            if(context.isObject()&&context.has("voiceExpiresAt")&&java.time.Instant.parse(context.path("voiceExpiresAt").asText()).isBefore(java.time.Instant.now()))
+                ((com.fasterxml.jackson.databind.node.ObjectNode)context).put("voiceCallActive",false);
+            return context;
+        }catch(Exception e){throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Conversation context is unavailable.");}
+    }
+    public void voice(UUID id,UUID session,String language,java.time.Instant expires,boolean active){
+        var context=mapper.createObjectNode().put("voiceSessionId",session.toString()).put("preferredLanguage",language)
+                .put("voiceCallActive",active).put("voiceExpiresAt",expires.toString());
+        mergeReferences(id,context,List.of());
+    }
+    public void displayedProducts(UUID id,List<Long> ids){
+        var allowed=references(id).path("searchProductIds");var set=new java.util.HashSet<Long>();allowed.forEach(value->set.add(value.asLong()));
+        if(!set.containsAll(ids)||new java.util.HashSet<>(ids).size()!=ids.size())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Display order must contain verified search results.");
+        var delta=mapper.createObjectNode();delta.set("productIdsInDisplayOrder",mapper.valueToTree(ids));mergeReferences(id,delta,List.of());
     }
 
     private static String conversationKey(UUID id) {

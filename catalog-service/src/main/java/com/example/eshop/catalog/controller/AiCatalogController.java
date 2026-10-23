@@ -75,7 +75,7 @@ public class AiCatalogController {
                 .filter(value -> Boolean.TRUE.equals(value.getIsActive()))
                 .filter(value -> !Boolean.TRUE.equals(value.getDeleted()))
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-        return ProductCard.from(responses.toProductResponse(product));
+        return ProductCard.from(responses.toProductResponse(product),responses.aiCategoryNames(List.of(product.getId())).get(product.getId()));
     }
 
     @GetMapping("/skus/{id}")
@@ -86,7 +86,7 @@ public class AiCatalogController {
         if (!Boolean.TRUE.equals(product.getIsActive()) || Boolean.TRUE.equals(product.getDeleted())) {
             throw new ResourceNotFoundException("SKU not found");
         }
-        return ProductCard.from(responses.toProductResponse(product)).skus().stream()
+        return ProductCard.from(responses.toProductResponse(product),responses.aiCategoryNames(List.of(product.getId())).get(product.getId())).skus().stream()
                 .filter(value -> value.id().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("SKU not found"));
@@ -114,24 +114,40 @@ public class AiCatalogController {
         return result;
     }
 
-    public record ProductCard(Long id, String name, String description, List<String> images, List<SkuCard> skus) {
-
-        public static ProductCard from(com.example.eshop.catalog.dto.response.ProductResponse product) {
-            return new ProductCard(product.getId(), product.getName(), product.getDescription(), product.getImage(),
-                    product.getSkus().stream().map(SkuCard::from).toList());
+    public record ProductCard(Long id, String name, String description, List<String> images, List<SkuCard> skus,
+                              String productCode, String brand, String category, String currency) {
+        public ProductCard(Long id,String name,String description,List<String> images,List<SkuCard> skus){this(id,name,description,images,skus,null,null,null,"USD");}
+        public static ProductCard from(com.example.eshop.catalog.dto.response.ProductResponse product){return from(product,null);}
+        public static ProductCard from(com.example.eshop.catalog.dto.response.ProductResponse product,String category) {
+            var cards=product.getSkus().stream().map(SkuCard::from).toList();
+            var brands=new java.util.LinkedHashSet<String>();
+            for(var sku:cards)if(sku.attributes()!=null)for(var attribute:sku.attributes())
+                if(attribute.getName()!=null&&java.util.Set.of("brand","ម៉ាក").contains(attribute.getName().toLowerCase(java.util.Locale.ROOT))&&attribute.getAttributes()!=null)
+                    for(var value:attribute.getAttributes())if(value.getValue()!=null)brands.add(value.getValue());
+            // Catalog has no product-level code or brand relation. Never derive either from product names.
+            // USD is the existing AiShoppingService checkout currency, not a model-selected currency.
+            return new ProductCard(product.getId(),product.getName(),product.getDescription(),product.getImage(),cards,
+                    null,brands.size()==1?brands.iterator().next():null,category,"USD");
         }
+        public ProductCard withSkus(List<SkuCard> matching){return new ProductCard(id,name,description,images,matching,productCode,brand,category,currency);}
     }
 
     public record SkuCard(Long id, String sku, BigDecimal basePrice, BigDecimal effectivePrice, Long available,
             Boolean isDefault, boolean hasPromotion, BigDecimal discountAmount, BigDecimal discountPercentage,
-            String promotionName, List<com.example.eshop.catalog.dto.response.ProductAttributeResponse> attributes) {
-
+            String promotionName, List<com.example.eshop.catalog.dto.response.ProductAttributeResponse> attributes,
+            String description,String imageUrl,LocalDateTime promotionStartAt,LocalDateTime promotionEndAt) {
+        public SkuCard(Long id,String sku,BigDecimal basePrice,BigDecimal effectivePrice,Long available,Boolean isDefault,
+                boolean hasPromotion,BigDecimal discountAmount,BigDecimal discountPercentage,String promotionName,
+                List<com.example.eshop.catalog.dto.response.ProductAttributeResponse> attributes){
+            this(id,sku,basePrice,effectivePrice,available,isDefault,hasPromotion,discountAmount,discountPercentage,promotionName,attributes,null,null,null,null);
+        }
         static SkuCard from(com.example.eshop.catalog.dto.response.ProductSkuResponse sku) {
-            Long available = sku.getInventory() == null ? null : sku.getInventory().getAvailableQuantity();
-            return new SkuCard(sku.getId(), sku.getSku(), sku.getPrice(), sku.getFinalPrice(), available,
-                    sku.getIsDefault(), sku.isHasPromotion(), sku.getDiscountAmount(), sku.getDiscountPercentage(),
-                    sku.getPromotion() == null ? null : sku.getPromotion().promotionName(), sku.getProductAttributeResponse());
+            Long available=sku.getInventory()==null?null:sku.getInventory().getAvailableQuantity();
+            var promotion=sku.getPromotion();
+            return new SkuCard(sku.getId(),sku.getSku(),sku.getPrice(),sku.getFinalPrice(),available,
+                    sku.getIsDefault(),sku.isHasPromotion(),sku.getDiscountAmount(),sku.getDiscountPercentage(),
+                    promotion==null?null:promotion.promotionName(),sku.getProductAttributeResponse(),sku.getDescription(),sku.getImageUrl(),
+                    promotion==null?null:promotion.promotionStartAt(),promotion==null?null:promotion.promotionEndAt());
         }
     }
 }
-

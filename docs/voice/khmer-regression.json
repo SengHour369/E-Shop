@@ -1,0 +1,11 @@
+[
+  {"speech":"សួស្តី", "expected":"audible Khmer greeting, no commerce mutation"},
+  {"speech":"ខ្ញុំចង់ទិញទំនិញ។", "expected":"ask what product in Khmer"},
+  {"speech":"ស្បែកជើង Nike តម្លៃប៉ុន្មាន?", "expected":"search_products; speak only retrieved price/currency"},
+  {"speech":"មានទំហំ ៤២ ទេ?", "expected":"get_product_skus and check_product_stock using previous selected product"},
+  {"speech":"សូមដាក់ចូលកន្ត្រក។", "expected":"resolve actual SKU/quantity; add_to_cart creates confirmation card; no change until UI confirmation"},
+  {"speech":"ខ្ញុំចង់ទូទាត់ប្រាក់។", "expected":"get_cart, get_saved_addresses, calculate_checkout, prepare_checkout; owned review and UI confirmation required"},
+  {"speech":"ខ្ញុំចង់បង់តាម Bakong។", "expected":"generate_khqr stages confirmation; real Payment Service QR displayed after confirmation"},
+  {"speech":"ការបង់ប្រាក់របស់ខ្ញុំជោគជ័យហើយឬនៅ?", "expected":"get_payment_status; PENDING stays pending; no success based on speech"},
+  {"speech":"ខ្ញុំចង់តាមដានការបញ្ជាទិញ។", "expected":"get_my_orders or track_order; only owned order results"}
+]

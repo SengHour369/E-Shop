@@ -14,13 +14,14 @@ class AiVoiceControllerTest {
     final AiChatStateService state=mock(AiChatStateService.class);
     final AiVoiceAudit audit=mock(AiVoiceAudit.class);
     final MockHttpServletRequest request=new MockHttpServletRequest();
-    AiVoiceController controller(String url,String probe) {return new AiVoiceController(state,audit,url,"secret",probe);}
+    AiVoiceController controller(String url,String probe) {return new AiVoiceController(state,audit,url,"secret",probe,mock(com.example.eshop.ai.voice.GeminiAudioTranscriptionService.class));}
     @Test void unavailableProviderAndInvalidUploadsFailSafely() {
         var file=new MockMultipartFile("audio","recording.webm","audio/webm",new byte[]{1});
         assertStatus(503,()->controller("","ffprobe").transcribe(file,"km",request));
         assertStatus(400,()->controller("http://localhost","ffprobe").transcribe(file,"fr",request));
         assertStatus(415,()->controller("http://localhost","ffprobe").transcribe(new MockMultipartFile("audio","x","text/plain",new byte[]{1}),"en",request));
         assertStatus(413,()->controller("http://localhost","ffprobe").transcribe(new MockMultipartFile("audio",new byte[0]),"en",request));
+        assertStatus(413,()->controller("http://localhost","ffprobe").transcribe(new MockMultipartFile("audio","large.webm","audio/webm",new byte[5*1024*1024+1]),"en",request));
         verifyNoInteractions(audit);
     }
     @Test void rateLimitRunsBeforeAnyProviderWork() {
@@ -38,6 +39,16 @@ class AiVoiceControllerTest {
             byte[] result="{\"text\":\"សួស្តី\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type","application/json");exchange.sendResponseHeaders(200,result.length);
             exchange.getResponseBody().write(result);exchange.close();
+        });
+        server.createContext("/empty",exchange->{
+            exchange.getRequestBody().readAllBytes();
+            byte[] result="{\"text\":\" \"}".getBytes();
+            exchange.getResponseHeaders().set("Content-Type","application/json");
+            exchange.sendResponseHeaders(200,result.length);exchange.getResponseBody().write(result);exchange.close();
+        });
+        server.createContext("/failure",exchange->{
+            exchange.getRequestBody().readAllBytes();
+            exchange.sendResponseHeaders(500,-1);exchange.close();
         });server.start();
         try {
             probe.toFile().setExecutable(true);
@@ -48,6 +59,9 @@ class AiVoiceControllerTest {
             assertThat(response.getBody().text()).isEqualTo("សួស្តី");
             assertThat(response.getHeaders().getCacheControl()).isEqualTo("no-store");
             verify(audit).accepted("km",2);
+            String base="http://127.0.0.1:"+server.getAddress().getPort();
+            assertStatus(422,()->controller(base+"/empty",probe.toString()).transcribe(file,"en",request));
+            assertStatus(502,()->controller(base+"/failure",probe.toString()).transcribe(file,"en",request));
             Files.writeString(probe,"#!/bin/sh\nprintf '%s' '{\"streams\":[{\"codec_type\":\"audio\"}],\"format\":{\"duration\":\"62\"}}'\n");
             assertStatus(400,()->controller.transcribe(file,"km",request));
         } finally {server.stop(0);Files.deleteIfExists(probe);}

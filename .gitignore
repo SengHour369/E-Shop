@@ -58,3 +58,9 @@ keycloak/local-credentials.txt
 .m2/
 .venv-ci/
 reports/
+
+# Safe, credential-free voice configuration template
+!/ai-service/.env.example
+
+# Local TLS private keys and certificate-authority material
+/.local/https/

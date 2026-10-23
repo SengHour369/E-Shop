@@ -76,6 +76,14 @@ class AiProductSearchTest {
         assertThat(search.search("ទូរស័ព្ទ", null, null, null)).hasSize(2);
     }
 
+    @Test void searchesRealBrandAttributesInMixedKhmerEnglishQuery(){
+        var shoe=sku("ស្បែកជើង running", "90", 3);shoe.setOperatorProductAttribute(true);
+        var brand=new ProductAttribute();brand.setName("Brand");brand.setProductSkuId(shoe.getId());em.persist(brand);
+        var value=new ProductAttributeValue();value.setAttributeId(brand.getId());value.setValue("Nike");em.persist(value);
+        em.flush();em.clear();
+        var results=search.search("Nike ស្បែកជើង",null,new BigDecimal("100"),true);
+        assertThat(results).hasSize(1);assertThat(results.get(0).brand()).isEqualTo("Nike");
+    }
     @Test void rejectsInvalidFiltersBeforeQuerying() {
         assertThatThrownBy(() -> search.search("phone", new BigDecimal("500"), new BigDecimal("300"), null))
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);

@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(name = "auth-service")
 public interface AuthToolClient {
+    @GetMapping("/api/v1/addresses/user/{id}")
+    JsonNode addresses(@RequestHeader("Authorization") String bearer, @org.springframework.web.bind.annotation.PathVariable("id") long id);
+
     @GetMapping("/internal/authorization/import-reviewers/{id}")
     boolean importReviewer(@RequestHeader("Authorization") String bearer, @org.springframework.web.bind.annotation.PathVariable("id") long id);
 

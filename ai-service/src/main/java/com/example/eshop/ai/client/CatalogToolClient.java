@@ -13,6 +13,11 @@ import java.util.Map;
 
 @FeignClient(name = "catalog-service")
 public interface CatalogToolClient {
+    @GetMapping("/api/v1/admin/promotions")
+    JsonNode promotions(@RequestHeader("Authorization") String bearer,@RequestParam(value="status",required=false) String status,@RequestParam("page") int page,@RequestParam("size") int size);
+    @GetMapping("/api/v1/admin/promotions/{id}/skus")
+    JsonNode promotionSkus(@RequestHeader("Authorization") String bearer,@PathVariable("id") long id,@RequestParam("page") int page,@RequestParam("size") int size);
+
     @PostMapping(value="/api/v1/product-scanner/recognize", consumes="multipart/form-data")
     JsonNode recognize(@RequestHeader("Authorization") String token,
         @org.springframework.web.bind.annotation.RequestPart("image") org.springframework.web.multipart.MultipartFile image);

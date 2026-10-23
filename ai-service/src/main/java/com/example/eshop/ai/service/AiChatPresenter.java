@@ -54,6 +54,8 @@ public class AiChatPresenter {
         if (administrator && result.status() == AiExecutionStatus.SUCCESS && result.intent() != null) {
             presentation = switch (result.intent()) {
                 case ADMIN_ORDER_LIST -> ChatPresentation.orders();
+                case CART_GET -> ChatPresentation.workspace("cart.checkout");
+                case ADMIN_PAYMENT_LIST -> ChatPresentation.workspace("payments.list");
                 case INVENTORY_GET -> ChatPresentation.inventory(false);
                 case INVENTORY_LOW_STOCK -> ChatPresentation.inventory(true);
                 default -> null;
@@ -81,7 +83,7 @@ public class AiChatPresenter {
             case MY_RETURNS, RETURN_GET_STATUS -> "ReturnStatusCard";
             case MY_NOTIFICATIONS, NOTIFICATION_LIST -> "NotificationList";
             case KNOWLEDGE_SEARCH -> "KnowledgeCard";
-            case ADMIN_ORDER_LIST, ADMIN_PAYMENT_LIST, ADMIN_RETURN_LIST, ADMIN_USER_LIST, ADMIN_AUDIT_LOG, INVENTORY_GET,
+            case ADMIN_PROMOTION_LIST, ADMIN_PROMOTION_SKUS, ADMIN_ORDER_LIST, ADMIN_PAYMENT_LIST, ADMIN_RETURN_LIST, ADMIN_USER_LIST, ADMIN_AUDIT_LOG, INVENTORY_GET,
                     INVENTORY_LOW_STOCK, PROMOTION_GET -> "AdminTable";
             case ADMIN_ORDER_SUMMARY, ADMIN_REVENUE_SUMMARY -> "AdminMetricCard";
             default -> "DataCard";

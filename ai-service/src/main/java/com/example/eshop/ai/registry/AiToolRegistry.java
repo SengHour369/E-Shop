@@ -53,6 +53,8 @@ public class AiToolRegistry {
 
     public AiToolRegistry(LivePermissionService permissions) {
         this.permissions = permissions;
+        read(AiIntent.ADMIN_PROMOTION_LIST,"List actual promotions by optional DRAFT/SCHEDULED/ACTIVE/EXPIRED/DISABLED status; first 20 records", "catalog-service","/api/v1/admin/promotions","PROMOTION_VIEW",Map.of("status",parameter("string",false)));
+        read(AiIntent.ADMIN_PROMOTION_SKUS,"Get real SKU IDs assigned to a promotion; intersect with search_products SKU IDs to find expired promotions for a brand", "catalog-service","/api/v1/admin/promotions/{id}/skus","PROMOTION_VIEW",Map.of("id",parameter("integer",true)));
         register(AiIntent.ADMIN_IMPORT_DRAFT, "Stage a category, branch, product, inventory or promotion draft using existing import schemas. toolType is a registered ImportTool name (CATEGORY_BULK_CREATE/UPDATE, BRANCH_BULK_CREATE/UPDATE, PRODUCT_BULK_CREATE/UPDATE, PRODUCT_SKU_BULK_CREATE, INVENTORY_STOCK_IN_BULK, INVENTORY_STOCK_ADJUST_BULK, PROMOTION_BULK_CREATE). valuesJson is a JSON object encoded as a string. No catalog write occurs until the existing validation and independent review/approval workflow completes.", "ai-service", "POST", "/api/ai/imports", "IMPORT_UPLOAD", LOW_RISK_WRITE, true, true,
                 Map.of("toolType",parameter("string",true),"valuesJson",parameter("string",true)));
         register(AiIntent.PRODUCT_VISUAL_SEARCH, "Visual search requires an authenticated image upload; text cannot supply a trusted image", "catalog-service", "POST", "/api/v1/product-scanner/recognize", AUTHENTICATED, READ_ONLY, false, true, Map.of("uploadId", parameter("string", true)));
@@ -442,6 +444,7 @@ public class AiToolRegistry {
         rejectUnknownKeys(tool, params);
         tool.requestSchema().forEach((key, spec) -> checkParameter(key, spec, params.get(key)));
 
+        if(tool.toolName()==AiIntent.ADMIN_PROMOTION_LIST && params.hasNonNull("status") && !java.util.Set.of("DRAFT","SCHEDULED","ACTIVE","EXPIRED","DISABLED").contains(params.path("status").asText()))throw invalid("Invalid promotion status.");
         if (params.hasNonNull("date")
                 && !"TODAY".equals(params.path("date").asText())) {
             try {

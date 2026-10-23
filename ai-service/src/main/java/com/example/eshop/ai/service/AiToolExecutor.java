@@ -79,6 +79,8 @@ public class AiToolExecutor {
     private JsonNode dispatch(AiToolDefinition tool, JsonNode parameters, String bearer, String key) {
         return switch (tool.toolName()) {
             case ADMIN_IMPORT_DRAFT -> mapper.valueToTree(imports.stage(com.example.eshop.ai.registry.AiDraftArguments.parse(parameters)));
+            case ADMIN_PROMOTION_LIST -> requirePromotionData(catalog.promotions(bearer,parameters.path("status").asText(null),1,20));
+            case ADMIN_PROMOTION_SKUS -> requirePromotionData(catalog.promotionSkus(bearer,parameters.path("id").asLong(),1,100));
             case PRODUCT_VISUAL_SEARCH -> visualSearch(bearer, parameters);
             case KNOWLEDGE_SEARCH -> knowledge.retrieve(parameters.path("query").textValue());
             case PRODUCT_GET, PRODUCT_DETAIL, PRODUCT_VARIANTS -> catalog.product(bearer, parameters.path("id").longValue());
@@ -121,6 +123,10 @@ public class AiToolExecutor {
         };
     }
 
+    private JsonNode requirePromotionData(JsonNode response){
+        if(response==null||!"200".equals(response.path("code").asText())||!response.hasNonNull("data"))throw new AiFailure("PROMOTION_LOOKUP_FAILED",AiExecutionStatus.FAILURE,"Promotion lookup failed.");
+        return response.path("data");
+    }
     private JsonNode visualSearch(String bearer, JsonNode parameters) {
         var response = catalog.recognize(bearer, imageAttachment.require(parameters.path("uploadId").asText()));
         if (response == null || !response.path("data").isObject() || !"200".equals(response.path("code").asText()))

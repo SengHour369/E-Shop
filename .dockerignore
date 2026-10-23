@@ -12,3 +12,6 @@ env
 .m2/
 .venv-ci/
 reports/
+
+# Never send the local certificate authority private key to image builds.
+.local/https/

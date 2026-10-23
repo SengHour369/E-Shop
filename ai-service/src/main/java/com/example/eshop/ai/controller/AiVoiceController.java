@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/api/ai/voice")
 public class AiVoiceController {
+    private final com.example.eshop.ai.voice.GeminiAudioTranscriptionService gemini;
     private final AiChatStateService state;
     private final com.example.eshop.ai.service.AiVoiceAudit audit;
     private final RestClient client;
@@ -28,8 +29,9 @@ public class AiVoiceController {
     public AiVoiceController(AiChatStateService state, com.example.eshop.ai.service.AiVoiceAudit audit,
             @Value("${ai.voice.transcription-url:}") String url,
             @Value("${ai.voice.api-key:}") String key,
-            @Value("${ai.voice.ffprobe:ffprobe}") String probe) {
-        this.audit=audit; this.state=state; this.url=url; this.key=key; this.probe=probe;
+            @Value("${ai.voice.ffprobe:ffprobe}") String probe,
+            com.example.eshop.ai.voice.GeminiAudioTranscriptionService gemini) {
+        this.gemini=gemini; this.audit=audit; this.state=state; this.url=url; this.key=key; this.probe=probe;
         var factory=new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(5000); factory.setReadTimeout(30000);
         client=RestClient.builder().requestFactory(factory).build();
@@ -40,7 +42,11 @@ public class AiVoiceController {
             @RequestParam(defaultValue="en") String language, HttpServletRequest request) {
         state.rateLimit(request.getRemoteAddr());
         if (!Set.of("en","km").contains(language)) throw failure(400,"Choose English or Khmer.");
-        if (url.isBlank()) throw failure(503,"Voice transcription is not configured.");
+        if (url.isBlank()) {
+            if(!gemini.available())throw failure(503,"Voice transcription is not configured.");
+            // The legacy custom provider may support guests; Google access requires an authenticated account.
+            com.example.eshop.common.security.CurrentActor.userId();
+        }
         if (audio.isEmpty() || audio.getSize()>5*1024*1024) throw failure(413,"Audio must be between 1 byte and 5 MB.");
         String type=Optional.ofNullable(audio.getContentType()).orElse("").split(";")[0];
         String extension=Map.of("audio/webm","webm","audio/mp4","mp4","audio/ogg","ogg","audio/wav","wav").get(type);
@@ -67,6 +73,11 @@ public class AiVoiceController {
                     || !Double.isFinite(duration) || duration<=0 || duration>61) throw failure(400,"Recording must contain audio and be at most 60 seconds.");
             audit.accepted(language,audio.getSize());
             byte[] bytes=Files.readAllBytes(file);
+            if(url.isBlank()) {
+                // MP4 recordings use the M4A audio container MIME understood by Gemini.
+                String mime=type.equals("audio/mp4")?"audio/m4a":type;
+                return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(new Transcript(gemini.transcribe(bytes,mime,language)));
+            }
             var body=new LinkedMultiValueMap<String,Object>();
             var headers=new HttpHeaders(); headers.setContentType(MediaType.parseMediaType(type));
             body.add("file",new HttpEntity<>(new ByteArrayResource(bytes){@Override public String getFilename(){return "recording."+extension;}},headers));
@@ -87,6 +98,11 @@ public class AiVoiceController {
             if(file!=null) try { Files.deleteIfExists(file); } catch(Exception ignored) { }
             if(metadataFile!=null) try { Files.deleteIfExists(metadataFile); } catch(Exception ignored) { }
         }
+    }
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<?> transcriptionFailure(ResponseStatusException error){
+        return ResponseEntity.status(error.getStatusCode()).cacheControl(CacheControl.noStore())
+                .body(Map.of("status",error.getStatusCode().value(),"message",Optional.ofNullable(error.getReason()).orElse("Voice transcription unavailable.")));
     }
     private static ResponseStatusException failure(int code,String message){return new ResponseStatusException(HttpStatusCode.valueOf(code),message);}
 }
