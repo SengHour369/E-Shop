@@ -22,6 +22,7 @@ from app.schemas.ai_response import (
 )
 from app.services.prompt_service import build_instructions
 from app.services.product_search import extract_product_search
+from app.services.admin_requests import extract_admin_read
 from app.services.provider_service import AiProviderService
 from app.tools.allowed_tools import requires_confirmation, value_matches
 from app.tools.registry import index_tools
@@ -88,6 +89,11 @@ class IntentService:
                     parameters={},
                 ),
             )
+
+        admin_read = extract_admin_read(request.message, request.tools)
+        if admin_read is not None:
+            name, parameters = admin_read
+            return self.accept(request, ModelDecision(intent=name, tool=name, confidence=1.0, parameters=parameters))
 
         search_tool = next((tool for tool in request.tools if tool.name == "PRODUCT_SEARCH"), None)
         # Older clients supplying query-only schemas keep their existing provider path.

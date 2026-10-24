@@ -203,6 +203,7 @@ services:
       gateway-redis:
         condition: service_healthy
     environment:
+      STOREFRONT_ADMIN_URL: http://admin-service:8087
       AUTHORIZATION_AUTH_URL: http://auth-service:8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://order-db:5432/order_db
       REDIS_HOST: gateway-redis
@@ -228,6 +229,7 @@ services:
       gateway-redis:
         condition: service_healthy
     environment:
+      STOREFRONT_ADMIN_URL: http://admin-service:8087
       BAKONG_KHQR_TYPE: ${BAKONG_KHQR_TYPE:-MERCHANT}
       BAKONG_CITY: ${BAKONG_CITY:-KH}
       BAKONG_ACCOUNT_ID: ${BAKONG_ACCOUNT_ID:-}

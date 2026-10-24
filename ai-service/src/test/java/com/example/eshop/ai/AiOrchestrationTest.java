@@ -360,7 +360,7 @@ class AiOrchestrationTest {
                 .andExpect(jsonPath("$.cardType").value("ConversationCard"))
                 .andExpect(jsonPath("$.result.message").value("Hello! How can I help? You can ask about products, orders or payments."));
         verifyNoInteractions(conversation, provider, catalog, orders);
-        verify(chatState).rememberDialogue(id, "Hello", "Hello! How can I help? You can ask about products, orders or payments.");
+        verify(chatState).rememberDialogue(id, "Hello", "Hello! How can I help? You can ask about products, orders or payments.",false);
     }
 
     @Test

@@ -31,6 +31,10 @@ class VoiceContextRedisTest {
   remember(AiIntent.PRODUCT_DETAIL,"{\"id\":11}");assertThat(state.references(conversation).has("selectedSkuId")).isFalse();
   assertThatThrownBy(()->state.displayedProducts(conversation,List.of(99L))).hasMessageContaining("verified search");
  }
+ @Test void adminReadContextRemembersTopicWithoutCopyingPrivateRecords()throws Exception{
+  remember(AiIntent.ADMIN_ORDER_LIST,"[{\"id\":11,\"phone\":\"private\"}]");
+  var refs=state.references(conversation);assertThat(refs.path("lastReadTool").asText()).isEqualTo("ADMIN_ORDER_LIST");assertThat(refs.toString()).doesNotContain("private","phone");
+ }
  @Test void emptySearchRetainsArrayTypeAndExpiredVoiceIsInactive()throws Exception{
   remember(AiIntent.PRODUCT_SEARCH,"[]");state.voice(conversation,UUID.randomUUID(),"en",Instant.now().minusSeconds(1),true);
   assertThat(state.references(conversation).path("productIdsInDisplayOrder").isArray()).isTrue();assertThat(state.references(conversation).path("voiceCallActive").asBoolean()).isFalse();

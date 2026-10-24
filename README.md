@@ -10,6 +10,8 @@ bash run-local.sh
 
 Use `bash run-local.sh --no-build` when the jars are already built. The launcher uses IPv4 for Maven downloads, starts local PostgreSQL databases, Redis, Mailpit and Kafka, waits for dependency health, and runs the Java services with the correct local database ports. Logs and PID files are in `/tmp/eshop-local`. Local HTTP cookies and catalog seeding are enabled for development.
 
+If the Docker backend is already healthy, the local launcher reports its URLs and exits successfully. To run services from the terminal or IDE instead, stop the Docker application services using the command printed by the launcher; keep the database containers running. For IDE runs, select Java 17 and a service's `*Application` main class. The root Maven project is an aggregator and has no application main class.
+
 For optional AI inference, also run:
 
 ```sh

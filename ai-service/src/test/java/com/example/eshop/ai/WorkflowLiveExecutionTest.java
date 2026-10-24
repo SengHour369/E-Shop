@@ -41,7 +41,7 @@ class WorkflowLiveExecutionTest {
     .options(new feign.Request.Options(2000,5000))
     .decoder((response,type)->mapper.readTree(response.body().asInputStream()))
     .target(CatalogToolClient.class,System.getenv("WORKFLOW_LIVE_CATALOG_URL"));
-   return new AiToolExecutor(catalog,null,null,null,registry,null,null,null,null,null,null,mapper);
+   return new AiToolExecutor(catalog,null,null,null,registry,null,null,null,null,null,null,mapper,null);
   }
  }
  @Autowired WorkflowController drafts;

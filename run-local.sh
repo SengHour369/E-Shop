@@ -5,6 +5,35 @@ export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}"
 export MAVEN_OPTS="${MAVEN_OPTS:-} -Djava.net.preferIPv4Stack=true"
 runtime_dir="${ESHOP_RUNTIME_DIR:-/tmp/eshop-local}"
 mkdir -p "$runtime_dir"
+# Do not build or launch duplicate JVMs when the Docker backend owns these ports.
+docker_services=(discovery-server api-gateway auth-service catalog-service order-service payment-service admin-service ai-service notification-service)
+if command -v docker >/dev/null 2>&1; then
+  running_services="$(docker compose -f compose.yaml -f compose.ai.yaml ps --services --status running 2>/dev/null || true)"
+  conflicts=()
+  for service in "${docker_services[@]}"; do
+    if [[ $'\n'"$running_services"$'\n' == *$'\n'"$service"$'\n'* ]]; then
+      conflicts+=("$service")
+    fi
+  done
+  if (( ${#conflicts[@]} == ${#docker_services[@]} )); then
+    if curl -fsS --max-time 5 http://localhost:8080/actuator/health >/dev/null 2>&1; then
+      echo "Backend already running in Docker: http://localhost:8080"
+      echo "Shop: http://localhost:4200 (HTTPS, if enabled: https://localhost:8443)"
+      echo "To run host JVMs instead, stop the Docker application services first:"
+      printf '  docker compose -f compose.yaml -f compose.ai.yaml stop'
+      printf ' %s' "${conflicts[@]}"
+      printf '\nThen rerun bash run-local.sh. Databases and other dependencies stay running.\n'
+      exit 0
+    fi
+  fi
+  if (( ${#conflicts[@]} > 0 )); then
+    echo "Docker application services are running; stop them before launching host JVMs:" >&2
+    printf '  docker compose -f compose.yaml -f compose.ai.yaml stop' >&2
+    printf ' %s' "${conflicts[@]}" >&2
+    printf '\n' >&2
+    exit 1
+  fi
+fi
 # Local SMTP settings are private and may contain quoted app passwords.
 if [[ -f .env ]]; then
   set -a

@@ -23,7 +23,7 @@ public class UserEditorController {
         @NotBlank @Size(max=30) String phone, String birthdate, @Size(max=100) String jobTitle,
         @Size(max=100) String department, Long managerId, String gender, @Size(max=255) String address,
         @NotBlank String language, @NotNull Boolean active, @NotEmpty List<Long> roleIds,
-        @NotEmpty List<Long> groupIds, @NotNull Boolean twoFactorRequired) {}
+        @NotEmpty List<Long> groupIds, @NotNull Boolean twoFactorRequired, @Positive Long approvalReviewerId, List<@Positive Long> permissionIds) {}
     @GetMapping("/editor-options") public Map<String,Object> options() { return editor.options(); }
     @GetMapping("/{id}/editor") public Map<String,Object> get(@PathVariable Long id) { return editor.get(id); }
     @PutMapping("/{id}/editor") public Map<String,Object> update(@PathVariable Long id, @Valid @RequestBody Update body) { return editor.update(id,body); }

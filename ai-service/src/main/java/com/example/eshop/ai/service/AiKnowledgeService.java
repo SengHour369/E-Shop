@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @Service
 public class AiKnowledgeService {
 
+    private final AiTrainingExampleService examples;
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
     private final LivePermissionService permissions;
@@ -34,7 +35,8 @@ public class AiKnowledgeService {
             com.example.eshop.common.audit.AuditLogService audit,
             @Value("${ai.knowledge.enabled:false}") boolean enabled,
             @Value("${ai.knowledge.embedding-url:http://localhost:11434}") String url,
-            @Value("${ai.knowledge.embedding-model:}") String model) {
+            @Value("${ai.knowledge.embedding-model:}") String model,AiTrainingExampleService examples) {
+        this.examples=examples;
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.permissions = permissions;
@@ -56,7 +58,7 @@ public class AiKnowledgeService {
 
     public JsonNode retrieve(String query) {
         if (!enabled) {
-            return mapper.valueToTree(Map.of("answer", "No approved knowledge is available.", "sources", List.of()));
+            return seedGuidance(query);
         }
         try {
             String vector = embed(query);
@@ -72,6 +74,7 @@ public class AiKnowledgeService {
                     "language", row.getString("language"),
                     "excerpt", row.getString("content"),
                     "updatedAt", row.getTimestamp("updated_at").toInstant().toString()), model, vector, vector);
+            if(sources.isEmpty())return seedGuidance(query);
             String answer = sources.isEmpty()
                     ? "I could not find reliable approved information for that question."
                     : sources.stream().map(source -> source.get("excerpt")).collect(Collectors.joining("\n\n"));
@@ -80,6 +83,14 @@ public class AiKnowledgeService {
             throw new AiFailure("KNOWLEDGE_UNAVAILABLE", AiExecutionStatus.FAILURE,
                     "Approved knowledge is temporarily unavailable.");
         }
+    }
+
+    private JsonNode seedGuidance(String query){
+        String language=query!=null&&query.codePoints().anyMatch(point->point>=0x1780&&point<=0x17ff)?"km":"en";
+        var found=examples.retrieve(query,language);
+        if(found.isEmpty())return mapper.valueToTree(Map.of("answer","No approved knowledge is available.","sources",List.of()));
+        return mapper.valueToTree(Map.of("answer",found.get(0).get("response"),"referenceOnly",true,
+                "sources",found.stream().map(example->Map.of("type","reviewed_training_example","title",example.get("prompt"))).toList()));
     }
 
     @Transactional

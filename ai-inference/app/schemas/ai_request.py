@@ -7,7 +7,7 @@ class AiRouteRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     message: str = Field(min_length=1, max_length=4000)
-    tools: list[ToolDefinition] = Field(default_factory=list, max_length=40)
+    tools: list[ToolDefinition] = Field(default_factory=list, max_length=64)
 
     @model_validator(mode="after")
     def unique_tool_names(self) -> "AiRouteRequest":

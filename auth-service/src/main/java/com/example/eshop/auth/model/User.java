@@ -41,6 +41,7 @@ public class User extends BaseEntity implements Serializable {
     private String jobTitle;
     private String department;
     private Long managerId;
+    private Long approvalReviewerId;
     private String gender;
     @Column(length = 255)
     private String profileAddress;

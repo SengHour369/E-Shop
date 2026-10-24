@@ -26,6 +26,9 @@ public class AiChatStateService {
     private final StringRedisTemplate redis;
     private final com.fasterxml.jackson.databind.ObjectMapper mapper;
 
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private AiConversationMemory memory;
+
     public String withContext(UUID conversationId, String message) {
         if (!AiToolRegistry.authenticated()) {
             return message;
@@ -48,6 +51,10 @@ public class AiChatStateService {
         if(response.intent().name().startsWith("CART_"))removals.addAll(List.of("reviewId","reviewedAddressId","reviewedPaymentMethod"));
 
         var data = response.data();
+        if(java.util.Set.of(com.example.eshop.ai.enums.AiIntent.ADMIN_ORDER_LIST,com.example.eshop.ai.enums.AiIntent.ADMIN_PAYMENT_LIST,
+                com.example.eshop.ai.enums.AiIntent.ADMIN_RETURN_LIST,com.example.eshop.ai.enums.AiIntent.ADMIN_USER_LIST,
+                com.example.eshop.ai.enums.AiIntent.INVENTORY_LOW_STOCK,com.example.eshop.ai.enums.AiIntent.ADMIN_ORDER_SUMMARY,
+                com.example.eshop.ai.enums.AiIntent.ADMIN_REVENUE_SUMMARY).contains(response.intent()))context.put("lastReadTool",response.intent().name());
         if (response.intent() == com.example.eshop.ai.enums.AiIntent.PRODUCT_SEARCH && data.isArray()) {
             var ids = context.putArray("productIdsInDisplayOrder");
             data.forEach(product -> {
@@ -155,7 +162,9 @@ public class AiChatStateService {
         return "ai:dialogue:" + actor + ":" + id;
     }
 
-    public java.util.List<java.util.Map<String, String>> dialogue(UUID id) {
+    public java.util.List<java.util.Map<String, String>> dialogue(UUID id) { return dialogue(id,false); }
+    public java.util.List<java.util.Map<String, String>> dialogue(UUID id,boolean admin) {
+        if(memory!=null)return memory.recent(id,admin);
         if (!AiToolRegistry.authenticated()) return java.util.List.of();
         String json = redis.opsForValue().get(dialogueKey(id));
         if (json == null) return java.util.List.of();
@@ -166,7 +175,12 @@ public class AiChatStateService {
         }
     }
 
-    public void rememberDialogue(UUID id, String question, String answer) {
+    public void rememberDialogue(UUID id, String question, String answer) { rememberDialogue(id,question,answer,false); }
+    public void rememberDialogue(UUID id, String question, String answer,boolean admin) {
+        if(memory!=null){
+            memory.exchange(id,admin,question,answer);
+            return;
+        }
         if (!AiToolRegistry.authenticated()) return;
         var turns = new java.util.ArrayList<>(dialogue(id));
         turns.add(java.util.Map.of("role", "user", "content", question));
@@ -186,7 +200,8 @@ public class AiChatStateService {
         String key = conversationKey(id);
         try {
             if (requested != null && !Boolean.TRUE.equals(redis.hasKey(key))) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found or expired.");
+                if(memory==null||!memory.owns(id))throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found or expired.");
+                redis.opsForValue().set(key,"{}",Duration.ofMinutes(30));
             }
             if (requested == null) {
                 redis.opsForValue().set(key, "{}", Duration.ofMinutes(30));

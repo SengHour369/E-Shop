@@ -1,3 +1,5 @@
+For the current runtime retrieval setup and verification, see [seed-retrieval.md](voice/seed-retrieval.md). Seed storage is separate from model-weight training.
+
 # Runtime AI training seed: 100,000 examples
 
 ## Java classes

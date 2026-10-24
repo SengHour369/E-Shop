@@ -23,7 +23,7 @@ public class VoiceSessions {
         if used+reserved>=tonumber(ARGV[2]) then return -2 end
         redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[3])
         redis.call('INCR', KEYS[3]); redis.call('EXPIREAT', KEYS[3], ARGV[4])
-        redis.call('SET', KEYS[4], ARGV[5], 'EX', ARGV[3])
+        redis.call('SET', KEYS[4], ARGV[5], 'EX', tonumber(ARGV[3])+60)
         return 1
         """,Long.class);
     static final DefaultRedisScript<Long> ACTIVATE=new DefaultRedisScript<>("""
@@ -90,12 +90,14 @@ public class VoiceSessions {
             return s;
         } catch(ResponseStatusException e){throw e;}catch(Exception e){throw unavailable();}
     }
-    public Session owned(UUID id){
+    public Session owned(UUID id){return owned(id,0);}
+    public Session transcriptOwner(UUID id){return owned(id,60);}
+    private Session owned(UUID id,int grace){
         try {
             String json=redis.opsForValue().get(root()+"session:"+id);
             if(json==null)throw new ResponseStatusException(HttpStatus.GONE,"Voice session expired or unavailable.");
             Session s=mapper.readValue(json,Session.class);
-            if(!s.expiresAt().isAfter(Instant.now()))throw new ResponseStatusException(HttpStatus.GONE,"Voice session expired.");
+            if(!s.expiresAt().plusSeconds(grace).isAfter(Instant.now()))throw new ResponseStatusException(HttpStatus.GONE,"Voice session expired.");
             return s;
         }catch(ResponseStatusException e){throw e;}catch(Exception e){throw unavailable();}
     }
@@ -113,7 +115,7 @@ public class VoiceSessions {
     public Session end(Session s){
         // Do not release the provider lease: a copied direct credential cannot be revoked by this endpoint.
         var ended=new Session(s.sessionId(),s.conversationId(),s.language(),"ENDED",s.expiresAt(),s.day(),s.maxDurationSeconds(),s.mode());
-        try {redis.opsForValue().set(root()+"session:"+s.sessionId(),mapper.writeValueAsString(ended),Duration.between(Instant.now(),s.expiresAt()).plusSeconds(1));return ended;}
+        try {redis.opsForValue().set(root()+"session:"+s.sessionId(),mapper.writeValueAsString(ended),Duration.between(Instant.now(),s.expiresAt()).plusSeconds(60));return ended;}
         catch(Exception e){throw unavailable();}
     }
     public Session active(UUID id){Session s=owned(id);if("ENDED".equals(s.status()))throw new ResponseStatusException(HttpStatus.GONE,"Voice call ended.");return s;}

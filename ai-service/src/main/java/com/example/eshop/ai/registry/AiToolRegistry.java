@@ -53,6 +53,9 @@ public class AiToolRegistry {
 
     public AiToolRegistry(LivePermissionService permissions) {
         this.permissions = permissions;
+        read(AiIntent.ADMIN_TOOL_LIST,"List every enabled operation this admin is currently permitted to use, with service, fixed endpoint, arguments and confirmation requirement. Does not grant access to unregistered endpoints or SQL.","ai-service","registered-tools","ADMINISTRATOR",Map.of());
+        read(AiIntent.ADMIN_SERVICE_STATUS,"Read current admin-service monitor status; no system changes", "admin-service","/api/v1/admin/monitor","ADMINISTRATOR",Map.of());
+        read(AiIntent.ADMIN_STOREFRONT_ACCESS,"Read actual storefront guest browsing, review, cart, checkout, payment and tracking feature flags", "admin-service","/api/v1/admin/storefront/access-settings","STOREFRONT_ACCESS_VIEW",Map.of());
         read(AiIntent.ADMIN_PROMOTION_LIST,"List actual promotions by optional DRAFT/SCHEDULED/ACTIVE/EXPIRED/DISABLED status; first 20 records", "catalog-service","/api/v1/admin/promotions","PROMOTION_VIEW",Map.of("status",parameter("string",false)));
         read(AiIntent.ADMIN_PROMOTION_SKUS,"Get real SKU IDs assigned to a promotion; intersect with search_products SKU IDs to find expired promotions for a brand", "catalog-service","/api/v1/admin/promotions/{id}/skus","PROMOTION_VIEW",Map.of("id",parameter("integer",true)));
         register(AiIntent.ADMIN_IMPORT_DRAFT, "Stage a category, branch, product, inventory or promotion draft using existing import schemas. toolType is a registered ImportTool name (CATEGORY_BULK_CREATE/UPDATE, BRANCH_BULK_CREATE/UPDATE, PRODUCT_BULK_CREATE/UPDATE, PRODUCT_SKU_BULK_CREATE, INVENTORY_STOCK_IN_BULK, INVENTORY_STOCK_ADJUST_BULK, PROMOTION_BULK_CREATE). valuesJson is a JSON object encoded as a string. No catalog write occurs until the existing validation and independent review/approval workflow completes.", "ai-service", "POST", "/api/ai/imports", "IMPORT_UPLOAD", LOW_RISK_WRITE, true, true,
@@ -381,7 +384,7 @@ public class AiToolRegistry {
                 && (PUBLIC.equals(tool.requiredPermission())
                 || snapshot != null
                 && (AUTHENTICATED.equals(tool.requiredPermission())
-                || snapshot.administrator() && snapshot.permits(tool.requiredPermission())));
+                || snapshot.administrator() && ("ADMINISTRATOR".equals(tool.requiredPermission()) || snapshot.permits(tool.requiredPermission()))));
     }
 
     public List<AiToolDefinition> available() {

@@ -92,6 +92,9 @@ ai:
   training:
     seed:
       enabled: ${AI_TRAINING_SEED_ENABLED:false}
+      target: ${AI_TRAINING_SEED_TARGET:100000}
+    retrieval:
+      enabled: ${AI_TRAINING_RETRIEVAL_ENABLED:false}
 
 
 

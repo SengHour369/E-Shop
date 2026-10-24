@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserPermissionRepository extends JpaRepository<UserPermission, Long> {
 
+    java.util.List<UserPermission> findAllByUserId(Long userId);
+
     // Check existence only among non‑deleted records
     @Query("SELECT COUNT(p) > 0 FROM UserPermission p WHERE p.userId = :userId AND p.funcId = :funcId AND p.isDelete = false")
     boolean existsByUserIdAndFuncId(@Param("userId") Long userId, @Param("funcId") Long funcId);

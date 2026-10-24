@@ -194,11 +194,8 @@ public class AiController {
                 result
         );
 
-        if (administrator) {
-            workspace.remember(request.message(), response);
-        } else {
-            chatState.rememberDialogue(conversationId, request.message(), response.result().message());
-        }
+        chatState.rememberDialogue(conversationId, request.message(), response.result().message(),administrator);
+        if (administrator) workspace.remember(request.message(), response);
 
         return ResponseEntity.status(
                 "AI_PROVIDER_BUSY".equals(result.errorCode())
@@ -223,7 +220,7 @@ public class AiController {
                 answer = conversation.reply(
                         request.message(),
                         request.language(),
-                        chatState.dialogue(id), admin
+                        chatState.dialogue(id,admin), admin
                 );
             }
         } catch (com.example.eshop.ai.service.AiFailure failure) {
@@ -235,7 +232,7 @@ public class AiController {
         boolean success = answer != null;
 
         if (success) {
-            chatState.rememberDialogue(id, request.message(), answer);
+            chatState.rememberDialogue(id, request.message(), answer,admin);
         }
 
         var result = new AiResponse(

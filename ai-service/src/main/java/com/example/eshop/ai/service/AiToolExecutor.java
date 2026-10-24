@@ -33,6 +33,7 @@ public class AiToolExecutor {
     private final AiImageAttachment imageAttachment;
     private final AiImportService imports;
     private final com.fasterxml.jackson.databind.ObjectMapper mapper;
+    private final com.example.eshop.ai.client.AdminToolClient admin;
 
     public JsonNode execute(AiToolDefinition tool, JsonNode parameters, String bearer) {
         // Resolve the canonical definition again; callers cannot forge tool metadata.
@@ -78,6 +79,12 @@ public class AiToolExecutor {
 
     private JsonNode dispatch(AiToolDefinition tool, JsonNode parameters, String bearer, String key) {
         return switch (tool.toolName()) {
+            case ADMIN_TOOL_LIST -> mapper.valueToTree(registry.available().stream().map(available -> java.util.Map.of(
+                    "toolName",available.toolName().name(),"description",available.description(),"service",available.service(),
+                    "method",available.method(),"path",available.path(),"parameters",available.requestSchema().entrySet().stream().map(entry->java.util.Map.of("name",entry.getKey(),"type",entry.getValue().type(),"required",entry.getValue().required())).toList(),
+                    "requiredPermission",available.requiredPermission(),"confirmationRequired",available.risk()!=com.example.eshop.ai.enums.AiToolRisk.READ_ONLY)).toList());
+            case ADMIN_SERVICE_STATUS -> adminData(admin.monitor(bearer));
+            case ADMIN_STOREFRONT_ACCESS -> admin.storefrontAccess(bearer);
             case ADMIN_IMPORT_DRAFT -> mapper.valueToTree(imports.stage(com.example.eshop.ai.registry.AiDraftArguments.parse(parameters)));
             case ADMIN_PROMOTION_LIST -> requirePromotionData(catalog.promotions(bearer,parameters.path("status").asText(null),1,20));
             case ADMIN_PROMOTION_SKUS -> requirePromotionData(catalog.promotionSkus(bearer,parameters.path("id").asLong(),1,100));
@@ -123,6 +130,10 @@ public class AiToolExecutor {
         };
     }
 
+    private JsonNode adminData(JsonNode response){
+        if(response==null||!response.hasNonNull("data"))throw new AiFailure("ADMIN_LOOKUP_FAILED",AiExecutionStatus.FAILURE,"Admin service is unavailable.");
+        return response.path("data");
+    }
     private JsonNode requirePromotionData(JsonNode response){
         if(response==null||!"200".equals(response.path("code").asText())||!response.hasNonNull("data"))throw new AiFailure("PROMOTION_LOOKUP_FAILED",AiExecutionStatus.FAILURE,"Promotion lookup failed.");
         return response.path("data");

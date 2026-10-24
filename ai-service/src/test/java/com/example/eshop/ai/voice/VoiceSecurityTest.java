@@ -34,7 +34,7 @@ class VoiceSecurityTest {
         var permissions=mock(com.example.eshop.common.security.LivePermissionService.class);
         when(permissions.current()).thenReturn(new com.example.eshop.common.security.PermissionSnapshot(17,false,Set.of()));
         var declarations=new VoiceTools(new AiToolRegistry(permissions),mapper).declarations();
-        assertThat(declarations).hasSize(16);
+        assertThat(declarations).hasSize(18);
         assertThat(declarations.stream().map(d->d.get("name"))).contains("get_cart","search_products","prepare_checkout").doesNotContain("confirm_checkout");
         String path=System.getProperty("voice.fixture.path");
         if(path!=null)java.nio.file.Files.writeString(java.nio.file.Path.of(path),mapper.writeValueAsString(declarations));
