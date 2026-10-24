@@ -17,53 +17,97 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ProductResponseService {
+
     private final ProductRepository products;
     private final ProductSkuRepository skus;
     private final ProductAttributeRepository attributes;
     private final ProductMapper mapper;
     private final PromotionPricingService pricing;
 
-
     public List<ProductResponse> toProductResponses(List<Product> page) {
-        if (page.isEmpty()) return List.of();
+        if (page.isEmpty()) {
+            return List.of();
+        }
+
         List<Long> productIds = page.stream().map(Product::getId).toList();
         Map<Long, List<String>> images = new java.util.HashMap<>();
+
         for (var image : products.findImageUrls(productIds)) {
-            images.computeIfAbsent(image.getProductId(), key -> new java.util.ArrayList<>()).add(image.getUrl());
+            images.computeIfAbsent(
+                    image.getProductId(),
+                    key -> new java.util.ArrayList<>()
+            ).add(image.getUrl());
         }
+
         var skuRows = skus.findWithInventoryForProducts(productIds);
-        List<ProductSku> skuList = skuRows.stream().map(ProductSkuRepository.SkuInventory::getSku).toList();
-        List<Long> skuIds = skuList.stream().map(ProductSku::getId).toList();
+        List<ProductSku> skuList = skuRows.stream()
+                .map(ProductSkuRepository.SkuInventory::getSku)
+                .toList();
+        List<Long> skuIds = skuList.stream()
+                .map(ProductSku::getId)
+                .toList();
         Map<Long, Inventory> inventoryBySku = new java.util.HashMap<>();
+
         for (var row : skuRows) {
-            if (row.getInventory() != null) inventoryBySku.put(row.getSku().getId(), row.getInventory());
+            if (row.getInventory() != null) {
+                inventoryBySku.put(row.getSku().getId(), row.getInventory());
+            }
         }
+
         // Left joins retain SKUs without inventory and attributes without values.
-        Map<Long, ProductAttribute> attributeById = new java.util.LinkedHashMap<>();
-        Map<Long, List<ProductAttributeValue>> valuesByAttribute = new java.util.HashMap<>();
+        Map<Long, ProductAttribute> attributeById =
+                new java.util.LinkedHashMap<>();
+        Map<Long, List<ProductAttributeValue>> valuesByAttribute =
+                new java.util.HashMap<>();
+
         if (!skuIds.isEmpty()) {
             for (var row : attributes.findWithValuesForSkus(skuIds)) {
                 var attribute = row.getAttribute();
                 attributeById.putIfAbsent(attribute.getId(), attribute);
+
                 if (row.getAttributeValue() != null) {
-                    valuesByAttribute.computeIfAbsent(attribute.getId(), key -> new java.util.ArrayList<>())
-                            .add(row.getAttributeValue());
+                    valuesByAttribute.computeIfAbsent(
+                            attribute.getId(),
+                            key -> new java.util.ArrayList<>()
+                    ).add(row.getAttributeValue());
                 }
             }
         }
+
         ProductDetails details = new ProductDetails(
-                skuList.stream().collect(Collectors.groupingBy(sku -> sku.getProduct().getId())),
-                attributeById.values().stream().collect(Collectors.groupingBy(ProductAttribute::getProductSkuId)),
-                valuesByAttribute, inventoryBySku, pricing.calculatePrices(skuList), images);
-        return page.stream().map(product -> mapper.toProductResponse(product, details)).toList();
+                skuList.stream().collect(Collectors.groupingBy(
+                        sku -> sku.getProduct().getId()
+                )),
+                attributeById.values().stream().collect(Collectors.groupingBy(
+                        ProductAttribute::getProductSkuId
+                )),
+                valuesByAttribute,
+                inventoryBySku,
+                pricing.calculatePrices(skuList),
+                images
+        );
+        return page.stream()
+                .map(product -> mapper.toProductResponse(product, details))
+                .toList();
     }
 
-    public Map<Long,String> aiCategoryNames(List<Long> ids) {
-        var labels=new java.util.HashMap<Long,String>();
-        if(!ids.isEmpty())for(var label:products.findAiCategoryLabels(ids))
-            if(label.getCategoryName()!=null)labels.put(label.getProductId(),label.getCategoryName());
+    public Map<Long, String> aiCategoryNames(List<Long> ids) {
+        var labels = new java.util.HashMap<Long, String>();
+
+        if (!ids.isEmpty()) {
+            for (var label : products.findAiCategoryLabels(ids)) {
+                if (label.getCategoryName() != null) {
+                    labels.put(
+                            label.getProductId(),
+                            label.getCategoryName()
+                    );
+                }
+            }
+        }
+
         return labels;
     }
+
     public ProductResponse toProductResponse(Product product) {
         return toProductResponses(List.of(product)).get(0);
     }
@@ -78,6 +122,10 @@ public class ProductResponseService {
     }
 
     private ResponseErrorTemplate wrap(ProductResponse product) {
-        return new ResponseErrorTemplate(Constant.SUC_MSG, Constant.SUC_CODE, product);
+        return new ResponseErrorTemplate(
+                Constant.SUC_MSG,
+                Constant.SUC_CODE,
+                product
+        );
     }
 }

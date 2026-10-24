@@ -20,7 +20,8 @@ public class LivePermissionService {
     private volatile RestClient client;
 
     public LivePermissionService(
-            @Value("${authorization.auth-url:http://localhost:8081}") String authUrl) {
+            @Value("${authorization.auth-url:http://localhost:8081}") String authUrl
+    ) {
         this.authUrl = authUrl;
     }
 
@@ -28,11 +29,13 @@ public class LivePermissionService {
         if (client != null) {
             return client;
         }
+
         HttpClient http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(2))
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
-        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(http);
+        JdkClientHttpRequestFactory factory =
+                new JdkClientHttpRequestFactory(http);
         factory.setReadTimeout(Duration.ofSeconds(3));
         client = RestClient.builder()
                 .baseUrl(authUrl)
@@ -43,27 +46,43 @@ public class LivePermissionService {
 
     public PermissionSnapshot current() {
         long actorId = CurrentActor.userId();
+
         if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
-            throw new AccessDeniedException("Current account unavailable");
+            throw new AccessDeniedException(
+                    "Current account unavailable"
+            );
         }
-        String bearer = attributes.getRequest().getHeader("Authorization");
+
+        String bearer = attributes.getRequest()
+                .getHeader("Authorization");
+
         if (bearer == null || !bearer.startsWith("Bearer ")) {
             throw new AccessDeniedException("Authentication required");
         }
+
         try {
             var request = client().get()
                     .uri("/internal/authorization/me")
                     .header("Authorization", bearer)
                     .header(RequestIds.HEADER, RequestIds.current());
-            String parent = attributes.getRequest().getHeader("traceparent");
-            if (com.example.eshop.common.request.TraceContextFilter.valid(parent)) {
+            String parent = attributes.getRequest()
+                    .getHeader("traceparent");
+
+            if (com.example.eshop.common.request.TraceContextFilter.valid(
+                    parent
+            )) {
                 request.header("traceparent", parent);
             }
+
             PermissionSnapshot snapshot = request.retrieve()
                     .body(PermissionSnapshot.class);
+
             if (snapshot == null || snapshot.userId() != actorId) {
-                throw new AccessDeniedException("Current account unavailable");
+                throw new AccessDeniedException(
+                        "Current account unavailable"
+                );
             }
+
             return snapshot;
         } catch (Exception exception) {
             throw new AccessDeniedException("Current account unavailable");
@@ -72,8 +91,11 @@ public class LivePermissionService {
 
     public void require(String permission) {
         PermissionSnapshot snapshot = current();
+
         if (!snapshot.administrator() || !snapshot.permits(permission)) {
-            throw new AccessDeniedException("Required permission missing");
+            throw new AccessDeniedException(
+                    "Required permission missing"
+            );
         }
     }
 }

@@ -20,8 +20,11 @@ public class SubCategoryController extends BaseController {
 
     @PostMapping("/get/all")
     public ResponseEntity<ResponseErrorTemplate> getSubCategories(
-            @RequestBody GetSubCategoryRequest request) {
-        ResponseErrorTemplate response = subCategoryService.getSubCategories(request);
+            @RequestBody GetSubCategoryRequest request
+    ) {
+        ResponseErrorTemplate response = subCategoryService.getSubCategories(
+                request
+        );
         return ResponseEntity.ok(response);
     }
 
@@ -31,13 +34,17 @@ public class SubCategoryController extends BaseController {
             @RequestParam Long categoryId,
             @RequestParam String description,
             @RequestParam(required = false) Long logoId,
-            @RequestParam(required = false) MultipartFile image) throws Exception {
+            @RequestParam(required = false) MultipartFile image
+    ) throws Exception {
         SubCategoryRequest request = new SubCategoryRequest();
         request.setName(name);
         request.setCategoryId(categoryId);
         request.setDescription(description);
         request.setLogoId(logoId);
-        ResponseErrorTemplate response = subCategoryService.createSubCategory(request, image);
+        ResponseErrorTemplate response = subCategoryService.createSubCategory(
+                request,
+                image
+        );
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -48,19 +55,31 @@ public class SubCategoryController extends BaseController {
             @RequestParam Long categoryId,
             @RequestParam String description,
             @RequestParam(required = false) Long logoId,
-            @RequestParam(required = false) MultipartFile file) {
+            @RequestParam(required = false) MultipartFile file
+    ) {
         SubCategoryRequest request = new SubCategoryRequest();
         request.setCategoryId(categoryId);
         request.setName(name);
         request.setDescription(description);
         request.setLogoId(logoId);
-        ResponseErrorTemplate response = subCategoryService.updateSubCategory(id, request, file);
+        ResponseErrorTemplate response = subCategoryService.updateSubCategory(
+                id,
+                request,
+                file
+        );
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/delete/")
-    public ResponseEntity<ResponseErrorTemplate> deleteSubCategory(@RequestParam Long id) {
+    public ResponseEntity<ResponseErrorTemplate> deleteSubCategory(
+            @RequestParam Long id
+    ) {
         subCategoryService.deleteSubCategory(id);
-        return ResponseEntity.ok(ResponseErrorTemplate.success("SubCategory deleted successfully", null));
+        return ResponseEntity.ok(
+                ResponseErrorTemplate.success(
+                        "SubCategory deleted successfully",
+                        null
+                )
+        );
     }
 }

@@ -8,11 +8,23 @@ import org.springframework.context.annotation.ComponentScan;
 
 @EnableDiscoveryClient
 @EnableFeignClients
-@org.springframework.boot.autoconfigure.domain.EntityScan({"com.example.eshop.order.model", "com.example.eshop.order.guest", "com.example.eshop.common.audit"})
-@org.springframework.data.jpa.repository.config.EnableJpaRepositories({"com.example.eshop.order.repository", "com.example.eshop.order.guest", "com.example.eshop.common.audit"})
+@org.springframework.boot.autoconfigure.domain.EntityScan({
+        "com.example.eshop.order.model",
+        "com.example.eshop.order.guest",
+        "com.example.eshop.common.audit"
+})
+@org.springframework.data.jpa.repository.config.EnableJpaRepositories({
+        "com.example.eshop.order.repository",
+        "com.example.eshop.order.guest",
+        "com.example.eshop.common.audit"
+})
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.example.eshop.order", "com.example.eshop.common"})
+@ComponentScan(basePackages = {
+        "com.example.eshop.order",
+        "com.example.eshop.common"
+})
 public class OrderServiceApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(OrderServiceApplication.class, args);
     }

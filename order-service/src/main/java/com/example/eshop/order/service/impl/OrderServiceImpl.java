@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+
     private final org.springframework.beans.factory.ObjectProvider<com.example.eshop.common.automation.AutomationEvents> automation;
 
     private final OrderRepository orderRepository;
@@ -51,7 +52,10 @@ public class OrderServiceImpl implements OrderService {
     private final com.example.eshop.common.security.LivePermissionService permissions;
 
     @Override
-    public ResponseErrorTemplate createOrderFromCart(Long userId, OrderRequest request) {
+    public ResponseErrorTemplate createOrderFromCart(
+            Long userId,
+            OrderRequest request
+    ) {
         return checkout.create(userId, request);
     }
 
@@ -59,14 +63,21 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrders(GetOrderRequest request) {
         permissions.require("ORDER_VIEW_ALL");
-        log.info("getOrders: criteriaType={}, criteriaValue={}, page={}, size={}",
-                request.getCriteriaType(), request.getCriteriaValue(), request.getPage(), request.getSize());
-
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
-                request.getPage() - 1,
-                request.getSize(),
-                org.springframework.data.domain.Sort.by("orderDate").descending()
+        log.info(
+                "getOrders: criteriaType={}, criteriaValue={}, page={}, size={}",
+                request.getCriteriaType(),
+                request.getCriteriaValue(),
+                request.getPage(),
+                request.getSize()
         );
+
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(
+                        request.getPage() - 1,
+                        request.getSize(),
+                        org.springframework.data.domain.Sort.by("orderDate")
+                                .descending()
+                );
 
         Integer type = request.getCriteriaType();
         String value = request.getCriteriaValue();
@@ -77,36 +88,49 @@ public class OrderServiceImpl implements OrderService {
         if (type == null || type == 0 || value == null || value.isBlank()) {
             page = orderRepository.findAll(pageable);
             successMsg = "Retrieved all orders";
-
         } else if (type == 5 && value.startsWith("GUEST")) {
-            String guestStatus=value.equals("GUEST") ? "" : value.substring("GUEST:".length());
-            page=orderRepository.guestOrders(guestStatus,pageable);successMsg="Retrieved guest orders";
+            String guestStatus = value.equals("GUEST")
+                    ? ""
+                    : value.substring("GUEST:".length());
+            page = orderRepository.guestOrders(guestStatus, pageable);
+            successMsg = "Retrieved guest orders";
         } else if (type == 1) {
-            page = orderRepository.findByUserId(Long.parseLong(value), pageable);
+            page = orderRepository.findByUserId(
+                    Long.parseLong(value),
+                    pageable
+            );
             successMsg = "Retrieved orders by user";
-
         } else if (type == 2) {
             page = orderRepository.findByStatus(value, pageable);
             successMsg = "Retrieved orders by status";
-
         } else if (type == 3) {
             String[] parts = value.split(":");
+
             if (parts.length != 2) {
-                throw new BusinessLogicException("criteriaValue for type 3 must be 'userId:status'");
+                throw new BusinessLogicException(
+                        "criteriaValue for type 3 must be 'userId:status'"
+                );
             }
+
             page = orderRepository.findOrderDetailHistory(
                     Long.parseLong(parts[0].trim()),
                     parts[1].trim(),
-                    null, null,
+                    null,
+                    null,
                     pageable
             );
             successMsg = "Retrieved orders by user and status";
-
         } else if (type == 4) {
             String[] parts = value.split(":");
+
             if (parts.length != 3) {
-                throw new BusinessLogicException("criteriaValue for type 4 must be 'userId:startDate:endDate' (yyyy-MM-ddTHH:mm:ss)");
+                throw new BusinessLogicException(
+                        "criteriaValue for type 4 must be "
+                                + "'userId:startDate:endDate' "
+                                + "(yyyy-MM-ddTHH:mm:ss)"
+                );
             }
+
             page = orderRepository.findOrderDetailHistory(
                     Long.parseLong(parts[0].trim()),
                     null,
@@ -115,7 +139,6 @@ public class OrderServiceImpl implements OrderService {
                     pageable
             );
             successMsg = "Retrieved orders by user and date range";
-
         } else {
             page = orderRepository.findAll(pageable);
             successMsg = "Retrieved all orders";
@@ -143,7 +166,9 @@ public class OrderServiceImpl implements OrderService {
     public ResponseErrorTemplate getOrderById(Long id) {
         permissions.require("ORDER_VIEW_ALL");
         OrderDetail order = orderRepository.findByIdWithFullDetail(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with id: " + id
+                ));
         return orderMapper.toResponse(order);
     }
 
@@ -151,14 +176,21 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public ResponseErrorTemplate getOrderByNumber(String orderNumber) {
         permissions.require("ORDER_VIEW_ALL");
-        OrderDetail order = orderRepository.findByOrderNumberWithFullDetail(orderNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with number: " + orderNumber));
+        OrderDetail order = orderRepository.findByOrderNumberWithFullDetail(
+                        orderNumber
+                )
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with number: " + orderNumber
+                ));
         return orderMapper.toResponse(order);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ResponseErrorTemplate> getUserOrders(Long userId, Pageable pageable) {
+    public Page<ResponseErrorTemplate> getUserOrders(
+            Long userId,
+            Pageable pageable
+    ) {
         com.example.eshop.common.security.CurrentCustomer.require(userId);
         permissions.current();
         return orderRepository.findByUserId(userId, pageable)
@@ -177,27 +209,71 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public ResponseErrorTemplate updateOrderStatus(Long id, String status) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN")))
-            throw new org.springframework.security.access.AccessDeniedException("ADMIN required");
-        OrderDetail order = orderRepository.lockById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
-        if ("CHECKOUT_PENDING".equals(order.getStatus()) || "FAILED".equals(order.getStatus()) || "CANCELLED".equals(order.getStatus()))
-            throw new BusinessLogicException("Order is not eligible for a status change");
-        if (!java.util.Set.of("PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED").contains(status))
+        if (auth == null
+                || auth.getAuthorities().stream().noneMatch(a ->
+                a.getAuthority().equals("ADMIN"))) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "ADMIN required"
+            );
+        }
+
+        OrderDetail order = orderRepository.lockById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with id: " + id
+                ));
+
+        if ("CHECKOUT_PENDING".equals(order.getStatus())
+                || "FAILED".equals(order.getStatus())
+                || "CANCELLED".equals(order.getStatus())) {
+            throw new BusinessLogicException(
+                    "Order is not eligible for a status change"
+            );
+        }
+
+        if (!java.util.Set.of(
+                "PENDING",
+                "CONFIRMED",
+                "PROCESSING",
+                "SHIPPED",
+                "DELIVERED",
+                "CANCELLED"
+        ).contains(status)) {
             throw new BusinessLogicException("Unsupported order status");
-        if (OrderStatus.CANCELLED.equals(status) && !OrderStatus.PENDING.equals(order.getStatus()))
-            throw new BusinessLogicException("Only pending orders can be cancelled");
-        com.example.eshop.order.automation.OrderTransitions.require(order.getStatus(),status,
-                order.getPaymentId()!=null || "CASH_ON_DELIVERY".equals(order.getPaymentMethod()));
-        if(OrderStatus.CANCELLED.equals(status))qrCancellation.requireUnpaid(order);
+        }
+
+        if (OrderStatus.CANCELLED.equals(status)
+                && !OrderStatus.PENDING.equals(order.getStatus())) {
+            throw new BusinessLogicException(
+                    "Only pending orders can be cancelled"
+            );
+        }
+
+        com.example.eshop.order.automation.OrderTransitions.require(
+                order.getStatus(),
+                status,
+                order.getPaymentId() != null
+                        || "CASH_ON_DELIVERY".equals(order.getPaymentMethod())
+        );
+
+        if (OrderStatus.CANCELLED.equals(status)) {
+            qrCancellation.requireUnpaid(order);
+        }
+
         order.setStatus(status);
-        notifyLifecycle(order,"CANCELLED".equals(status));
-        if (OrderStatus.CANCELLED.equals(status) && order.getCheckoutKey() != null) order.setCatalogCompleted(false);
+        notifyLifecycle(order, "CANCELLED".equals(status));
+
+        if (OrderStatus.CANCELLED.equals(status)
+                && order.getCheckoutKey() != null) {
+            order.setCatalogCompleted(false);
+        }
 
         if (OrderStatus.CANCELLED.equals(status)) {
             // Checkout recovery releases the catalog reservation after this transaction commits.
-            log.info("Order {} cancelled — catalog-service should restock its items", order.getOrderNumber());
+            log.info(
+                    "Order {} cancelled — catalog-service should restock its items",
+                    order.getOrderNumber()
+            );
         }
 
         OrderDetail updatedOrder = orderRepository.save(order);
@@ -216,83 +292,154 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public ResponseErrorTemplate cancelOrder(Long id, Long userId, com.example.eshop.order.dto.request.CancelOrderRequest request) {
+    public ResponseErrorTemplate cancelOrder(
+            Long id,
+            Long userId,
+            com.example.eshop.order.dto.request.CancelOrderRequest request
+    ) {
         com.example.eshop.common.security.CurrentCustomer.require(userId);
         OrderDetail order = orderRepository.lockById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with id: " + id
+                ));
 
-        if (!java.util.Objects.equals(order.getUserId(),userId)) {
-            throw new BusinessLogicException("User does not own this order");
+        if (!java.util.Objects.equals(order.getUserId(), userId)) {
+            throw new BusinessLogicException(
+                    "User does not own this order"
+            );
         }
 
         if (!OrderStatus.PENDING.equals(order.getStatus())) {
-            throw new BusinessLogicException("Only pending orders can be cancelled");
+            throw new BusinessLogicException(
+                    "Only pending orders can be cancelled"
+            );
         }
 
         qrCancellation.requireUnpaid(order);
         order.setStatus(OrderStatus.CANCELLED);
-        notifyLifecycle(order,true);
-        if (order.getCheckoutKey() != null) order.setCatalogCompleted(false);
+        notifyLifecycle(order, true);
+
+        if (order.getCheckoutKey() != null) {
+            order.setCatalogCompleted(false);
+        }
+
         // Checkout recovery releases stock and promotion usage idempotently.
         OrderDetail cancelled = orderRepository.save(order);
 
         String actor = currentUsername();
-        orderCancelationRepository.save(OrderCancelation.builder()
-                .cancelationId(generateCancelationId())
-                .orderId(cancelled.getId())
-                .orderNo(cancelled.getOrderNumber())
-                .customerId(cancelled.getUserId())
-                // TODO: cross-service call via Feign to auth-service to resolve the customer's display name.
-                .customerName(null)
-                .cancelReason(CancelReason.CUSTOMER_REQUESTED)
-                .cancelStatus(CancelStatus.CANCELED)
-                .cancelSource("CUSTOMER")
-                .cancelDate(LocalDateTime.now())
-                .amount(cancelled.getTotalAmount())
-                .currency("USD")
-                .remark(request == null ? "Cancelled by customer" : request.auditRemark())
-                .createdBy(actor)
-                .build());
+        orderCancelationRepository.save(
+                OrderCancelation.builder()
+                        .cancelationId(generateCancelationId())
+                        .orderId(cancelled.getId())
+                        .orderNo(cancelled.getOrderNumber())
+                        .customerId(cancelled.getUserId())
+                        // TODO: cross-service call via Feign to auth-service to resolve the customer's display name.
+                        .customerName(null)
+                        .cancelReason(CancelReason.CUSTOMER_REQUESTED)
+                        .cancelStatus(CancelStatus.CANCELED)
+                        .cancelSource("CUSTOMER")
+                        .cancelDate(LocalDateTime.now())
+                        .amount(cancelled.getTotalAmount())
+                        .currency("USD")
+                        .remark(request == null
+                                ? "Cancelled by customer"
+                                : request.auditRemark())
+                        .createdBy(actor)
+                        .build()
+        );
 
         return orderMapper.toResponse(cancelled);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseErrorTemplate getOrderDetailByUserId(Long userId, Long orderId) {
+    public ResponseErrorTemplate getOrderDetailByUserId(
+            Long userId,
+            Long orderId
+    ) {
         com.example.eshop.common.security.CurrentCustomer.require(userId);
         permissions.current();
-        OrderDetail order = orderRepository.findByIdAndUserIdWithFullDetail(orderId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId + " for user: " + userId));
+        OrderDetail order = orderRepository.findByIdAndUserIdWithFullDetail(
+                        orderId,
+                        userId
+                )
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with id: " + orderId
+                                + " for user: " + userId
+                ));
         return orderMapper.toResponse(order);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ResponseErrorTemplate> getOrderDetailHistory(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<ResponseErrorTemplate> getOrderDetailHistory(
+            Long userId,
+            String status,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Pageable pageable
+    ) {
         com.example.eshop.common.security.CurrentCustomer.require(userId);
         permissions.current();
-        return orderRepository.findOrderDetailHistory(userId, status, startDate, endDate, pageable)
+        return orderRepository.findOrderDetailHistory(
+                        userId,
+                        status,
+                        startDate,
+                        endDate,
+                        pageable
+                )
                 .map(orderMapper::toResponse);
     }
 
     private void notifyLifecycle(OrderDetail order, boolean cancelled) {
-        var bus=automation.getIfAvailable(); if(bus==null) return;
-        var type=cancelled?com.example.eshop.common.automation.CommerceEvent.Type.ORDER_CANCELLED:com.example.eshop.common.automation.CommerceEvent.Type.ORDER_STATUS_CHANGED;
-        var event=com.example.eshop.common.automation.AutomationEvents.event(type,order.getId(),order.getUserId(),order.getTotalAmount(),order.getPaymentMethod()==null?"LEGACY":order.getPaymentMethod(),order.getPaymentId());
-        bus.emit(com.example.eshop.common.automation.CommerceEvent.ORDERS,event);
-        bus.notify(event,cancelled?com.example.eshop.common.notification.NotificationEvent.Type.ORDER_CANCELLED:com.example.eshop.common.notification.NotificationEvent.Type.ORDER_UPDATED);
+        var bus = automation.getIfAvailable();
+
+        if (bus == null) {
+            return;
+        }
+
+        var type = cancelled
+                ? com.example.eshop.common.automation.CommerceEvent.Type.ORDER_CANCELLED
+                : com.example.eshop.common.automation.CommerceEvent.Type.ORDER_STATUS_CHANGED;
+        var event = com.example.eshop.common.automation.AutomationEvents.event(
+                type,
+                order.getId(),
+                order.getUserId(),
+                order.getTotalAmount(),
+                order.getPaymentMethod() == null
+                        ? "LEGACY"
+                        : order.getPaymentMethod(),
+                order.getPaymentId()
+        );
+        bus.emit(
+                com.example.eshop.common.automation.CommerceEvent.ORDERS,
+                event
+        );
+        bus.notify(
+                event,
+                cancelled
+                        ? com.example.eshop.common.notification.NotificationEvent.Type.ORDER_CANCELLED
+                        : com.example.eshop.common.notification.NotificationEvent.Type.ORDER_UPDATED
+        );
     }
+
     private String generateCancelationId() {
         String cancelationId;
+
         do {
-            cancelationId = "CNL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        } while (orderCancelationRepository.existsByCancelationId(cancelationId));
+            cancelationId = "CNL-"
+                    + UUID.randomUUID().toString().substring(0, 8)
+                    .toUpperCase();
+        } while (orderCancelationRepository.existsByCancelationId(
+                cancelationId
+        ));
+
         return cancelationId;
     }
 
     private String currentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext()
+                .getAuthentication();
         return authentication != null ? authentication.getName() : "system";
     }
 
@@ -300,8 +447,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public ResponseErrorTemplate getOrderStatusSummary() {
         permissions.require("ORDER_VIEW_ALL");
-        OrderStatusSummaryResponse response = orderRepository.getOrderStatusSummary();
-        return ResponseErrorTemplate.success("Order status summary retrieved successfully", response);
+        OrderStatusSummaryResponse response =
+                orderRepository.getOrderStatusSummary();
+        return ResponseErrorTemplate.success(
+                "Order status summary retrieved successfully",
+                response
+        );
     }
 
     @Override
@@ -309,13 +460,18 @@ public class OrderServiceImpl implements OrderService {
     public ResponseErrorTemplate getOrderItemsByOrderId(Long orderId) {
         permissions.require("ORDER_VIEW_ALL");
         OrderDetail order = orderRepository.findByIdWithFullDetail(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with id: " + orderId
+                ));
 
         List<OrderItemResponse> items = order.getOrderItems()
                 .stream()
                 .map(orderItemMapper::toResponse)
                 .toList();
 
-        return ResponseErrorTemplate.success("Order items retrieved successfully", items);
+        return ResponseErrorTemplate.success(
+                "Order items retrieved successfully",
+                items
+        );
     }
 }

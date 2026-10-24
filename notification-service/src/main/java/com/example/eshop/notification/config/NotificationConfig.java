@@ -11,8 +11,27 @@ import org.apache.kafka.clients.admin.NewTopic;
 @Configuration
 public class NotificationConfig {
 
-    @Bean NewTopic guestNotificationsTopic() {return TopicBuilder.name(com.example.eshop.common.notification.GuestNotificationEvent.TOPIC).partitions(3).replicas(1).build();}
-    @Bean NewTopic guestNotificationsDeadLetterTopic() {return TopicBuilder.name(com.example.eshop.common.notification.GuestNotificationEvent.TOPIC+".DLT").partitions(3).replicas(1).build();}
+    @Bean
+    NewTopic guestNotificationsTopic() {
+        return TopicBuilder.name(
+                        com.example.eshop.common.notification.GuestNotificationEvent.TOPIC
+                )
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    NewTopic guestNotificationsDeadLetterTopic() {
+        return TopicBuilder.name(
+                        com.example.eshop.common.notification.GuestNotificationEvent.TOPIC
+                                + ".DLT"
+                )
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
     @Bean
     NewTopic notificationsTopic() {
         return TopicBuilder.name(NotificationEvent.TOPIC)

@@ -53,35 +53,249 @@ public class AiToolRegistry {
 
     public AiToolRegistry(LivePermissionService permissions) {
         this.permissions = permissions;
-        read(AiIntent.ADMIN_TOOL_LIST,"List every enabled operation this admin is currently permitted to use, with service, fixed endpoint, arguments and confirmation requirement. Does not grant access to unregistered endpoints or SQL.","ai-service","registered-tools","ADMINISTRATOR",Map.of());
-        read(AiIntent.ADMIN_SERVICE_STATUS,"Read current admin-service monitor status; no system changes", "admin-service","/api/v1/admin/monitor","ADMINISTRATOR",Map.of());
-        read(AiIntent.ADMIN_STOREFRONT_ACCESS,"Read actual storefront guest browsing, review, cart, checkout, payment and tracking feature flags", "admin-service","/api/v1/admin/storefront/access-settings","STOREFRONT_ACCESS_VIEW",Map.of());
-        read(AiIntent.ADMIN_PROMOTION_LIST,"List actual promotions by optional DRAFT/SCHEDULED/ACTIVE/EXPIRED/DISABLED status; first 20 records", "catalog-service","/api/v1/admin/promotions","PROMOTION_VIEW",Map.of("status",parameter("string",false)));
-        read(AiIntent.ADMIN_PROMOTION_SKUS,"Get real SKU IDs assigned to a promotion; intersect with search_products SKU IDs to find expired promotions for a brand", "catalog-service","/api/v1/admin/promotions/{id}/skus","PROMOTION_VIEW",Map.of("id",parameter("integer",true)));
-        register(AiIntent.ADMIN_IMPORT_DRAFT, "Stage a category, branch, product, inventory or promotion draft using existing import schemas. toolType is a registered ImportTool name (CATEGORY_BULK_CREATE/UPDATE, BRANCH_BULK_CREATE/UPDATE, PRODUCT_BULK_CREATE/UPDATE, PRODUCT_SKU_BULK_CREATE, INVENTORY_STOCK_IN_BULK, INVENTORY_STOCK_ADJUST_BULK, PROMOTION_BULK_CREATE). valuesJson is a JSON object encoded as a string. No catalog write occurs until the existing validation and independent review/approval workflow completes.", "ai-service", "POST", "/api/ai/imports", "IMPORT_UPLOAD", LOW_RISK_WRITE, true, true,
-                Map.of("toolType",parameter("string",true),"valuesJson",parameter("string",true)));
-        register(AiIntent.PRODUCT_VISUAL_SEARCH, "Visual search requires an authenticated image upload; text cannot supply a trusted image", "catalog-service", "POST", "/api/v1/product-scanner/recognize", AUTHENTICATED, READ_ONLY, false, true, Map.of("uploadId", parameter("string", true)));
-        register(AiIntent.RETURN_CREATE, "Return creation is disabled until its eligibility policy is configured", "order-service", "POST", "/internal/ai/returns", AUTHENTICATED, HIGH_RISK_WRITE, true, false, Map.of("orderId", parameter("integer", true), "skuId", parameter("integer", true), "reason", parameter("string", true)));
-        for (var name : List.of(AiIntent.PRODUCT_DETAIL, AiIntent.PRODUCT_VARIANTS))
-            read(name, "Get real product details and selectable SKU variants", "catalog-service", "/internal/ai/products/{id}", PUBLIC, Map.of("id", parameter("integer", true)));
-        read(AiIntent.PRODUCT_STOCK_CHECK, "Get public SKU price and available stock", "catalog-service", "/internal/ai/skus/{skuId}", PUBLIC, Map.of("skuId", parameter("integer", true)));
-        read(AiIntent.CART_GET, "Get the authenticated customer's cart. Use this when the customer wants to order or checkout but has not selected a real delivery address and payment method; the checkout card collects those choices. Never invent address IDs.", "order-service", "/internal/ai/shopping/cart", AUTHENTICATED, Map.of());
-        read(AiIntent.CHECKOUT_PREVIEW, "Refresh cart prices and review a real delivery address and payment method before ordering. Requires a known owned address ID; otherwise use CART_GET to open checkout choices.", "order-service", "/internal/ai/shopping/checkout-preview", AUTHENTICATED,
-                Map.of("addressId", parameter("integer", true), "paymentMethod", parameter("string", true)));
-        read(AiIntent.ORDER_LIST, "List the authenticated customer's orders", "order-service", "/internal/ai/orders", AUTHENTICATED, Map.of());
-        read(AiIntent.PAYMENT_GET_STATUS, "Get authoritative payment status for an owned order; never infer payment from a screenshot", "payment-service", "/api/v1/payments/orders/{orderId}/qr", AUTHENTICATED, Map.of("orderId", parameter("integer", true)));
-        read(AiIntent.RETURN_GET_STATUS, "Read the authenticated customer's return status", "order-service", "/internal/ai/returns", AUTHENTICATED, Map.of());
-        read(AiIntent.NOTIFICATION_LIST, "List current customer notifications", "notification-service", "/api/notifications", AUTHENTICATED, Map.of());
-        register(AiIntent.CART_ADD, "Add a SKU to the owned cart after confirmation", "order-service", "POST", "/internal/ai/shopping/cart/add", AUTHENTICATED, LOW_RISK_WRITE, true, true,
-                Map.of("skuId", parameter("integer", true), "quantity", parameter("integer", true)));
-        register(AiIntent.CART_UPDATE, "Set an owned cart item's quantity after confirmation", "order-service", "POST", "/internal/ai/shopping/cart/update", AUTHENTICATED, LOW_RISK_WRITE, true, true,
-                Map.of("cartItemId", parameter("integer", true), "skuId", parameter("integer", true), "quantity", parameter("integer", true)));
-        register(AiIntent.CART_REMOVE, "Remove an owned cart item after confirmation", "order-service", "POST", "/internal/ai/shopping/cart/remove", AUTHENTICATED, LOW_RISK_WRITE, true, true,
-                Map.of("cartItemId", parameter("integer", true)));
-        register(AiIntent.ORDER_CREATE, "Create an order only from an unexpired owned checkout review; requires explicit confirmation", "order-service", "POST", "/internal/ai/shopping/orders", AUTHENTICATED, HIGH_RISK_WRITE, true, true,
-                Map.of("reviewId", parameter("string", true)));
-        register(AiIntent.PAYMENT_INITIATE_KHQR, "Request the Payment Service's KHQR for an owned order after confirmation; never generate QR from model text", "payment-service", "GET", "/api/v1/payments/orders/{orderId}/qr", AUTHENTICATED, HIGH_RISK_WRITE, true, true,
-                Map.of("orderId", parameter("integer", true)));
+        read(
+                AiIntent.ADMIN_TOOL_LIST,
+                "List every enabled operation this admin is currently permitted to use, "
+                        + "with service, fixed endpoint, arguments and confirmation requirement. "
+                        + "Does not grant access to unregistered endpoints or SQL.",
+                "ai-service",
+                "registered-tools",
+                "ADMINISTRATOR",
+                Map.of()
+        );
+        read(
+                AiIntent.ADMIN_SERVICE_STATUS,
+                "Read current admin-service monitor status; no system changes",
+                "admin-service",
+                "/api/v1/admin/monitor",
+                "ADMINISTRATOR",
+                Map.of()
+        );
+        read(
+                AiIntent.ADMIN_STOREFRONT_ACCESS,
+                "Read actual storefront guest browsing, review, cart, checkout, "
+                        + "payment and tracking feature flags",
+                "admin-service",
+                "/api/v1/admin/storefront/access-settings",
+                "STOREFRONT_ACCESS_VIEW",
+                Map.of()
+        );
+        read(
+                AiIntent.ADMIN_PROMOTION_LIST,
+                "List actual promotions by optional DRAFT/SCHEDULED/ACTIVE/EXPIRED/DISABLED "
+                        + "status; first 20 records",
+                "catalog-service",
+                "/api/v1/admin/promotions",
+                "PROMOTION_VIEW",
+                Map.of("status", parameter("string", false))
+        );
+        read(
+                AiIntent.ADMIN_PROMOTION_SKUS,
+                "Get real SKU IDs assigned to a promotion; intersect with search_products "
+                        + "SKU IDs to find expired promotions for a brand",
+                "catalog-service",
+                "/api/v1/admin/promotions/{id}/skus",
+                "PROMOTION_VIEW",
+                Map.of("id", parameter("integer", true))
+        );
+        register(
+                AiIntent.ADMIN_IMPORT_DRAFT,
+                "Stage a category, branch, product, inventory or promotion draft using existing "
+                        + "import schemas. toolType is a registered ImportTool name "
+                        + "(CATEGORY_BULK_CREATE/UPDATE, BRANCH_BULK_CREATE/UPDATE, "
+                        + "PRODUCT_BULK_CREATE/UPDATE, PRODUCT_SKU_BULK_CREATE, "
+                        + "INVENTORY_STOCK_IN_BULK, INVENTORY_STOCK_ADJUST_BULK, "
+                        + "PROMOTION_BULK_CREATE). valuesJson is a JSON object encoded as a string. "
+                        + "No catalog write occurs until the existing validation and independent "
+                        + "review/approval workflow completes.",
+                "ai-service",
+                "POST",
+                "/api/ai/imports",
+                "IMPORT_UPLOAD",
+                LOW_RISK_WRITE,
+                true,
+                true,
+                Map.of(
+                        "toolType", parameter("string", true),
+                        "valuesJson", parameter("string", true)
+                )
+        );
+        register(
+                AiIntent.PRODUCT_VISUAL_SEARCH,
+                "Visual search requires an authenticated image upload; "
+                        + "text cannot supply a trusted image",
+                "catalog-service",
+                "POST",
+                "/api/v1/product-scanner/recognize",
+                AUTHENTICATED,
+                READ_ONLY,
+                false,
+                true,
+                Map.of("uploadId", parameter("string", true))
+        );
+        register(
+                AiIntent.RETURN_CREATE,
+                "Return creation is disabled until its eligibility policy is configured",
+                "order-service",
+                "POST",
+                "/internal/ai/returns",
+                AUTHENTICATED,
+                HIGH_RISK_WRITE,
+                true,
+                false,
+                Map.of(
+                        "orderId", parameter("integer", true),
+                        "skuId", parameter("integer", true),
+                        "reason", parameter("string", true)
+                )
+        );
+        for (var name : List.of(
+                AiIntent.PRODUCT_DETAIL,
+                AiIntent.PRODUCT_VARIANTS
+        )) {
+            read(
+                    name,
+                    "Get real product details and selectable SKU variants",
+                    "catalog-service",
+                    "/internal/ai/products/{id}",
+                    PUBLIC,
+                    Map.of("id", parameter("integer", true))
+            );
+        }
+        read(
+                AiIntent.PRODUCT_STOCK_CHECK,
+                "Get public SKU price and available stock",
+                "catalog-service",
+                "/internal/ai/skus/{skuId}",
+                PUBLIC,
+                Map.of("skuId", parameter("integer", true))
+        );
+        read(
+                AiIntent.CART_GET,
+                "Get the authenticated customer's cart. Use this when the customer "
+                        + "wants to order or checkout but has not selected a real delivery "
+                        + "address and payment method; the checkout card collects those "
+                        + "choices. Never invent address IDs.",
+                "order-service",
+                "/internal/ai/shopping/cart",
+                AUTHENTICATED,
+                Map.of()
+        );
+        read(
+                AiIntent.CHECKOUT_PREVIEW,
+                "Refresh cart prices and review a real delivery address and payment "
+                        + "method before ordering. Requires a known owned address ID; "
+                        + "otherwise use CART_GET to open checkout choices.",
+                "order-service",
+                "/internal/ai/shopping/checkout-preview",
+                AUTHENTICATED,
+                Map.of(
+                        "addressId", parameter("integer", true),
+                        "paymentMethod", parameter("string", true)
+                )
+        );
+        read(
+                AiIntent.ORDER_LIST,
+                "List the authenticated customer's orders",
+                "order-service",
+                "/internal/ai/orders",
+                AUTHENTICATED,
+                Map.of()
+        );
+        read(
+                AiIntent.PAYMENT_GET_STATUS,
+                "Get authoritative payment status for an owned order; "
+                        + "never infer payment from a screenshot",
+                "payment-service",
+                "/api/v1/payments/orders/{orderId}/qr",
+                AUTHENTICATED,
+                Map.of("orderId", parameter("integer", true))
+        );
+        read(
+                AiIntent.RETURN_GET_STATUS,
+                "Read the authenticated customer's return status",
+                "order-service",
+                "/internal/ai/returns",
+                AUTHENTICATED,
+                Map.of()
+        );
+        read(
+                AiIntent.NOTIFICATION_LIST,
+                "List current customer notifications",
+                "notification-service",
+                "/api/notifications",
+                AUTHENTICATED,
+                Map.of()
+        );
+        register(
+                AiIntent.CART_ADD,
+                "Add a SKU to the owned cart after confirmation",
+                "order-service",
+                "POST",
+                "/internal/ai/shopping/cart/add",
+                AUTHENTICATED,
+                LOW_RISK_WRITE,
+                true,
+                true,
+                Map.of(
+                        "skuId", parameter("integer", true),
+                        "quantity", parameter("integer", true)
+                )
+        );
+        register(
+                AiIntent.CART_UPDATE,
+                "Set an owned cart item's quantity after confirmation",
+                "order-service",
+                "POST",
+                "/internal/ai/shopping/cart/update",
+                AUTHENTICATED,
+                LOW_RISK_WRITE,
+                true,
+                true,
+                Map.of(
+                        "cartItemId", parameter("integer", true),
+                        "skuId", parameter("integer", true),
+                        "quantity", parameter("integer", true)
+                )
+        );
+        register(
+                AiIntent.CART_REMOVE,
+                "Remove an owned cart item after confirmation",
+                "order-service",
+                "POST",
+                "/internal/ai/shopping/cart/remove",
+                AUTHENTICATED,
+                LOW_RISK_WRITE,
+                true,
+                true,
+                Map.of("cartItemId", parameter("integer", true))
+        );
+        register(
+                AiIntent.ORDER_CREATE,
+                "Create an order only from an unexpired owned checkout review; "
+                        + "requires explicit confirmation",
+                "order-service",
+                "POST",
+                "/internal/ai/shopping/orders",
+                AUTHENTICATED,
+                HIGH_RISK_WRITE,
+                true,
+                true,
+                Map.of("reviewId", parameter("string", true))
+        );
+        register(
+                AiIntent.PAYMENT_INITIATE_KHQR,
+                "Request the Payment Service's KHQR for an owned order after "
+                        + "confirmation; never generate QR from model text",
+                "payment-service",
+                "GET",
+                "/api/v1/payments/orders/{orderId}/qr",
+                AUTHENTICATED,
+                HIGH_RISK_WRITE,
+                true,
+                true,
+                Map.of("orderId", parameter("integer", true))
+        );
         read(
                 AiIntent.KNOWLEDGE_SEARCH,
                 "Retrieve approved policy, FAQ or help text. "
@@ -105,7 +319,8 @@ public class AiToolRegistry {
         );
         register(
                 PRODUCT_SEARCH,
-                "Search active products by name, brand or category words with optional USD price and stock filters; at most 20 results",
+                "Search active products by name, brand or category words with optional "
+                        + "USD price and stock filters; at most 20 results",
                 "catalog-service",
                 "GET",
                 "/internal/ai/products",
@@ -113,8 +328,12 @@ public class AiToolRegistry {
                 READ_ONLY,
                 false,
                 true,
-                Map.of("query", parameter("string", true), "minPrice", parameter("number", false),
-                        "maxPrice", parameter("number", false), "inStock", parameter("boolean", false))
+                Map.of(
+                        "query", parameter("string", true),
+                        "minPrice", parameter("number", false),
+                        "maxPrice", parameter("number", false),
+                        "inStock", parameter("boolean", false)
+                )
         );
         register(
                 SKU_GET,
@@ -276,7 +495,8 @@ public class AiToolRegistry {
         );
         read(
                 AiIntent.ADMIN_ORDER_LIST,
-                "List latest 20 orders by optional exact status and date (YYYY-MM-DD or TODAY)",
+                "List latest 20 orders by optional exact status and date "
+                        + "(YYYY-MM-DD or TODAY)",
                 "order-service",
                 "/internal/ai/orders/admin",
                 "ORDER_VIEW_ALL",
@@ -287,7 +507,8 @@ public class AiToolRegistry {
         );
         read(
                 AiIntent.ADMIN_PAYMENT_LIST,
-                "List latest 20 payments by optional exact status and date (YYYY-MM-DD or TODAY)",
+                "List latest 20 payments by optional exact status and date "
+                        + "(YYYY-MM-DD or TODAY)",
                 "payment-service",
                 "/internal/ai/payments/admin",
                 "PAYMENT_VIEW_ALL",
@@ -384,7 +605,9 @@ public class AiToolRegistry {
                 && (PUBLIC.equals(tool.requiredPermission())
                 || snapshot != null
                 && (AUTHENTICATED.equals(tool.requiredPermission())
-                || snapshot.administrator() && ("ADMINISTRATOR".equals(tool.requiredPermission()) || snapshot.permits(tool.requiredPermission()))));
+                || snapshot.administrator()
+                && ("ADMINISTRATOR".equals(tool.requiredPermission())
+                || snapshot.permits(tool.requiredPermission()))));
     }
 
     public List<AiToolDefinition> available() {
@@ -437,17 +660,36 @@ public class AiToolRegistry {
     public void validate(AiToolDefinition tool, JsonNode params) {
         // Schemas supplied by callers or provider output are never authoritative.
         tool = tool == null ? null : find(tool.toolName());
+
         if (tool == null || !tool.enabled()) {
-            throw new AiFailure("TOOL_DISABLED", AiExecutionStatus.DENIED, "This operation is unavailable through AI.");
+            throw new AiFailure(
+                    "TOOL_DISABLED",
+                    AiExecutionStatus.DENIED,
+                    "This operation is unavailable through AI."
+            );
         }
+
         if (params == null || !params.isObject()) {
             throw invalid("Invalid parameters.");
         }
 
         rejectUnknownKeys(tool, params);
-        tool.requestSchema().forEach((key, spec) -> checkParameter(key, spec, params.get(key)));
+        tool.requestSchema().forEach((key, spec) ->
+                checkParameter(key, spec, params.get(key))
+        );
 
-        if(tool.toolName()==AiIntent.ADMIN_PROMOTION_LIST && params.hasNonNull("status") && !java.util.Set.of("DRAFT","SCHEDULED","ACTIVE","EXPIRED","DISABLED").contains(params.path("status").asText()))throw invalid("Invalid promotion status.");
+        if (tool.toolName() == AiIntent.ADMIN_PROMOTION_LIST
+                && params.hasNonNull("status")
+                && !java.util.Set.of(
+                "DRAFT",
+                "SCHEDULED",
+                "ACTIVE",
+                "EXPIRED",
+                "DISABLED"
+        ).contains(params.path("status").asText())) {
+            throw invalid("Invalid promotion status.");
+        }
+
         if (params.hasNonNull("date")
                 && !"TODAY".equals(params.path("date").asText())) {
             try {
@@ -457,23 +699,45 @@ public class AiToolRegistry {
             }
         }
 
-        if (tool.toolName() == ORDER_GET || tool.toolName() == ORDER_CANCEL) {
+        if (tool.toolName() == ORDER_GET
+                || tool.toolName() == ORDER_CANCEL) {
             requireOrderNumber(params.path("orderNumber").asText());
         }
 
-        if (params.hasNonNull("paymentMethod") && !java.util.Set.of("BAKONG", "KHQR", "ABA", "CASH_ON_DELIVERY").contains(params.path("paymentMethod").asText())) throw invalid("Unsupported payment method.");
-        if (params.hasNonNull("reviewId")) {
-            try { java.util.UUID.fromString(params.path("reviewId").asText()); }
-            catch (IllegalArgumentException invalid) { throw invalid("Invalid review ID."); }
+        if (params.hasNonNull("paymentMethod")
+                && !java.util.Set.of(
+                "BAKONG",
+                "KHQR",
+                "ABA",
+                "CASH_ON_DELIVERY"
+        ).contains(params.path("paymentMethod").asText())) {
+            throw invalid("Unsupported payment method.");
         }
+
+        if (params.hasNonNull("reviewId")) {
+            try {
+                java.util.UUID.fromString(params.path("reviewId").asText());
+            } catch (IllegalArgumentException invalid) {
+                throw invalid("Invalid review ID.");
+            }
+        }
+
         if (tool.toolName() == AiIntent.ADMIN_IMPORT_DRAFT) {
-            var draft=AiDraftArguments.parse(params);
+            var draft = AiDraftArguments.parse(params);
             permissions.require(draft.tool().permission);
         }
+
         if (tool.toolName() == PRODUCT_SEARCH) {
-            if (params.hasNonNull("minPrice") && params.hasNonNull("maxPrice")
-                    && params.get("minPrice").decimalValue().compareTo(params.get("maxPrice").decimalValue()) > 0) {
-                throw invalid("Minimum price must not exceed maximum price.");
+            if (params.hasNonNull("minPrice")
+                    && params.hasNonNull("maxPrice")
+                    && params.get("minPrice")
+                    .decimalValue()
+                    .compareTo(
+                            params.get("maxPrice").decimalValue()
+                    ) > 0) {
+                throw invalid(
+                        "Minimum price must not exceed maximum price."
+                );
             }
         }
 
@@ -526,7 +790,11 @@ public class AiToolRegistry {
         }
     }
 
-    private static void checkParameter(String key, Parameter spec, JsonNode value) {
+    private static void checkParameter(
+            String key,
+            Parameter spec,
+            JsonNode value
+    ) {
         if (value == null || value.isNull()) {
             if (spec.required()) {
                 throw new AiFailure(
@@ -542,13 +810,26 @@ public class AiToolRegistry {
             case "integer" -> requireInteger(key, value);
             case "number" -> {
                 if ("minPrice".equals(key) || "maxPrice".equals(key)) {
-                    if (!value.isNumber() || !Double.isFinite(value.doubleValue())
+                    if (!value.isNumber()
+                            || !Double.isFinite(value.doubleValue())
                             || value.decimalValue().signum() < 0
-                            || value.decimalValue().compareTo(new BigDecimal("1000000")) > 0
-                            || value.decimalValue().stripTrailingZeros().scale() > 2) throw invalid("Invalid USD price.");
-                } else requirePercentage(value);
+                            || value.decimalValue().compareTo(
+                            new BigDecimal("1000000")
+                    ) > 0
+                            || value.decimalValue()
+                            .stripTrailingZeros()
+                            .scale() > 2) {
+                        throw invalid("Invalid USD price.");
+                    }
+                } else {
+                    requirePercentage(value);
+                }
             }
-            case "boolean" -> { if (!value.isBoolean()) throw invalid("Invalid " + key + "."); }
+            case "boolean" -> {
+                if (!value.isBoolean()) {
+                    throw invalid("Invalid " + key + ".");
+                }
+            }
             default -> requireText(key, value);
         }
     }
@@ -560,7 +841,9 @@ public class AiToolRegistry {
 
         long number = value.longValue();
         long minimum = "threshold".equals(key) ? 0 : 1;
-        boolean aboveMaximum = ("threshold".equals(key) && number > MAX_THRESHOLD) || ("quantity".equals(key) && number > 999);
+        boolean aboveMaximum =
+                ("threshold".equals(key) && number > MAX_THRESHOLD)
+                        || ("quantity".equals(key) && number > 999);
 
         if (number < minimum || aboveMaximum) {
             throw invalid("Invalid " + key + ".");
@@ -569,7 +852,9 @@ public class AiToolRegistry {
 
     private static void requirePercentage(JsonNode value) {
         if (!value.isNumber() || !Double.isFinite(value.doubleValue())) {
-            throw invalid("Discount must be greater than zero and at most 100.");
+            throw invalid(
+                    "Discount must be greater than zero and at most 100."
+            );
         }
 
         BigDecimal amount = value.decimalValue();
@@ -577,7 +862,9 @@ public class AiToolRegistry {
         if (amount.signum() <= 0
                 || amount.compareTo(MAX_PERCENT) > 0
                 || amount.scale() > 4) {
-            throw invalid("Discount must be greater than zero and at most 100.");
+            throw invalid(
+                    "Discount must be greater than zero and at most 100."
+            );
         }
     }
 
@@ -589,7 +876,11 @@ public class AiToolRegistry {
         String text = value.textValue();
 
         if (text.isBlank()
-                || text.length() > ("valuesJson".equals(key) ? 4000 : MAX_TEXT_LENGTH)
+                || text.length() > (
+                "valuesJson".equals(key)
+                        ? 4000
+                        : MAX_TEXT_LENGTH
+        )
                 || text.chars().anyMatch(Character::isISOControl)) {
             throw invalid("Invalid " + key + ".");
         }
@@ -603,8 +894,12 @@ public class AiToolRegistry {
 
     private static void requirePromotionWindow(JsonNode params) {
         try {
-            LocalDateTime start = LocalDateTime.parse(params.path("startAt").asText());
-            LocalDateTime end = LocalDateTime.parse(params.path("endAt").asText());
+            LocalDateTime start = LocalDateTime.parse(
+                    params.path("startAt").asText()
+            );
+            LocalDateTime end = LocalDateTime.parse(
+                    params.path("endAt").asText()
+            );
 
             if (!start.isBefore(end)) {
                 throw invalid("startAt must be before endAt.");

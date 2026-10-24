@@ -29,41 +29,75 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtTokenValidator tokenValidator;
     private final JwtProperties properties;
 
-    public JwtAuthFilter(JwtTokenValidator tokenValidator, JwtProperties properties) {
+    public JwtAuthFilter(
+            JwtTokenValidator tokenValidator,
+            JwtProperties properties
+    ) {
         this.tokenValidator = tokenValidator;
         this.properties = properties;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
         String header = request.getHeader(properties.getHeader());
         String prefix = properties.getPrefix() + " ";
 
         if (header != null && header.startsWith(prefix)) {
             String token = header.substring(prefix.length());
+
             try {
                 Claims claims = tokenValidator.parseClaims(token);
-                if ("refresh".equals(claims.get("type")) || !Boolean.TRUE.equals(claims.get("isEnable")))
-                    throw new IllegalArgumentException("An enabled access token is required");
+
+                if ("refresh".equals(claims.get("type"))
+                        || !Boolean.TRUE.equals(
+                        claims.get("isEnable")
+                )) {
+                    throw new IllegalArgumentException(
+                            "An enabled access token is required"
+                    );
+                }
+
                 String username = claims.getSubject();
                 @SuppressWarnings("unchecked")
-                List<String> authorityClaims = claims.get("authorities", List.class);
-                Collection<? extends GrantedAuthority> authorities = authorityClaims == null
-                        ? List.of()
-                        : authorityClaims.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-
+                List<String> authorityClaims = claims.get(
+                        "authorities",
+                        List.class
+                );
+                Collection<? extends GrantedAuthority> authorities =
+                        authorityClaims == null
+                                ? List.of()
+                                : authorityClaims.stream()
+                                .map(SimpleGrantedAuthority::new)
+                                .collect(Collectors.toList());
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                authentication.setDetails(new java.util.HashMap<>(claims));
-                if (authorityClaims != null && authorityClaims.contains("GROUP_PERMISSION_SCOPED")
-                        && request.getRequestURI().startsWith("/api/v1/")) {
+                        new UsernamePasswordAuthenticationToken(
+                                username,
+                                null,
+                                authorities
+                        );
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
+                authentication.setDetails(
+                        new java.util.HashMap<>(claims)
+                );
+
+                if (authorityClaims != null
+                        && authorityClaims.contains(
+                        "GROUP_PERMISSION_SCOPED"
+                )
+                        && request.getRequestURI()
+                        .startsWith("/api/v1/")) {
                     if (!groupAllows(request, header)) {
                         response.setStatus(403);
                         response.setContentType("application/json");
-                        response.getWriter().write("{\"success\":false,\"message\":\"Forbidden\",\"status\":403,\"data\":null}");
+                        response.getWriter().write(
+                                "{\"success\":false,\"message\":\"Forbidden\","
+                                        + "\"status\":403,\"data\":null}"
+                        );
                         return;
                     }
                 }
@@ -74,24 +108,40 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
     /** Resolve current grants for group-derived admin entry; role-only checks cannot widen them. */
-    private boolean groupAllows(HttpServletRequest request, String bearer) {
+    private boolean groupAllows(
+            HttpServletRequest request,
+            String bearer
+    ) {
         try {
             var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
             factory.setConnectTimeout(2000);
             factory.setReadTimeout(3000);
-            Boolean allowed = org.springframework.web.client.RestClient.builder()
-                    .baseUrl(properties.getAuthorizationUrl()).requestFactory(factory).build()
-                    .get().uri(uri -> uri.path("/internal/authorization/api-access")
+            Boolean allowed = org.springframework.web.client.RestClient
+                    .builder()
+                    .baseUrl(properties.getAuthorizationUrl())
+                    .requestFactory(factory)
+                    .build()
+                    .get()
+                    .uri(uri -> uri.path("/internal/authorization/api-access")
                             .queryParam("method", request.getMethod())
-                            .queryParam("path", request.getRequestURI()).build())
+                            .queryParam(
+                                    "path",
+                                    request.getRequestURI()
+                            )
+                            .build())
                     .header("Authorization", bearer)
-                    .header("X-Request-ID", com.example.eshop.common.request.RequestIds.current())
-                    .retrieve().body(Boolean.class);
+                    .header(
+                            "X-Request-ID",
+                            com.example.eshop.common.request.RequestIds
+                                    .current()
+                    )
+                    .retrieve()
+                    .body(Boolean.class);
             return Boolean.TRUE.equals(allowed);
         } catch (Exception unavailable) {
             return false;
         }
     }
-
 }

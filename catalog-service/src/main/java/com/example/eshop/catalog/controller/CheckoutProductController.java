@@ -12,15 +12,25 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 public class CheckoutProductController {
+
     private final ProductSkuRepository skus;
     private final ProductResponseService responses;
+
     @GetMapping("/sku/{id}")
-    @Transactional(readOnly=true)
+    @Transactional(readOnly = true)
     public Object bySku(@PathVariable long id) {
-        var sku=skus.findById(id).orElseThrow(()->new ResourceNotFoundException("Product not found"));
-        var product=sku.getProduct();
-        if(product==null||!Boolean.TRUE.equals(product.getIsActive())||Boolean.TRUE.equals(product.getDeleted()))
+        var sku = skus.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Product not found"
+                ));
+        var product = sku.getProduct();
+
+        if (product == null
+                || !Boolean.TRUE.equals(product.getIsActive())
+                || Boolean.TRUE.equals(product.getDeleted())) {
             throw new ResourceNotFoundException("Product not found");
+        }
+
         return responses.toProductResponse(product);
     }
 }

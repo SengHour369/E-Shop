@@ -58,21 +58,6 @@ public class ProductAttributeController extends BaseController {
         return ResponseEntity.ok(response);
     }
 
-//    @PutMapping("/{id}")
-//    @PreAuthorize("hasAuthority('ADMIN')")
-//    @Operation(summary = "Update attribute", description = "Update an existing attribute (Admin only)")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "Attribute updated successfully"),
-//            @ApiResponse(responseCode = "404", description = "Attribute not found"),
-//            @ApiResponse(responseCode = "409", description = "Attribute name already exists")
-//    })
-//    public ResponseEntity<ProductAttributeResponse> updateAttribute(
-//            @Parameter(description = "Attribute ID", example = "1")
-//            @PathVariable Long id,
-//            @Valid @RequestBody ProductAttributeRequest request) {
-//        ProductAttributeResponse response = productAttributeService.updateAttribute(id, request);
-//        return ResponseEntity.ok(response);
-//    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
