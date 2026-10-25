@@ -18,6 +18,7 @@ class MonthlyReportRepositoryTest {
     @org.springframework.data.jpa.repository.config.EnableJpaRepositories("com.example.eshop.order.repository")
     static class Config {}
     @Autowired OrderRepository repository;
+    @Autowired com.example.eshop.order.repository.OrderItemRepository items;
 
     @Test
     void aggregatesBeyondOnePageAndExcludesOtherYearsDeletedAndInvalidStatuses() {
@@ -34,6 +35,15 @@ class MonthlyReportRepositoryTest {
         assertThat(usd.count()).isEqualTo(105);
         assertThat(usd.amount()).isEqualByComparingTo("1050.00");
         assertThat(usd.month()).isEqualTo(1);
+    }
+
+    @Test void itemAggregatesUseTheSameYearStatusAndDeletionFilters(){
+        for(int i=0;i<6;i++){
+            save(500+i,i==4?2025:2026,i==2?"CANCELLED":i==3?"CHECKOUT_PENDING":"DELIVERED",i==5,"USD");
+            var order=repository.findByOrderNumber("REPORT-"+(500+i)).orElseThrow();
+            items.save(com.example.eshop.order.model.OrderItem.builder().orderDetail(order).productSkuId(10L).quantity(2L).unitPrice(new BigDecimal("5.00")).totalPrice(new BigDecimal("10.00")).build());
+        }
+        items.flush();var start=LocalDateTime.of(2026,1,1,0,0);var result=items.salesBySku(start,start.plusYears(1));assertThat(result).hasSize(1);assertThat(result.get(0).items()).isEqualTo(4);assertThat(result.get(0).amount()).isEqualByComparingTo("20.00");assertThat(items.monthlyItems(start,start.plusYears(1)).get(0).items()).isEqualTo(4);
     }
 
     private void save(int id, int year, String status, boolean deleted, String currency) {

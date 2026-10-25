@@ -133,7 +133,9 @@ public enum ImportTool {
 
             try {
                 if (value.length() > (field.type().equals("json") ? 12000 : 2000)
-                        || value.chars().anyMatch(Character::isISOControl)) {
+                        || value.chars().anyMatch(ch -> Character.isISOControl(ch)
+                        && !((field.type().equals("json") || Set.of("description", "address").contains(key))
+                        && (ch == '\n' || ch == '\r' || ch == '\t')))) {
                     throw new IllegalArgumentException();
                 }
 

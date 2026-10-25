@@ -38,4 +38,11 @@ class GeminiAudioTranscriptionTest {
         var service=new GeminiAudioTranscriptionService("key",true,"gemini-3.1-flash-lite",true,builder.build());
         assertThatThrownBy(()->service.transcribe(new byte[]{0},"audio/wav","en")).hasMessageContaining("422");server.verify();
     }
+    @Test void providerReadTimeoutReturnsAnActionableTimeoutWithoutLeakingDetails(){
+        var builder=RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta");
+        var server=MockRestServiceServer.bindTo(builder).build();
+        server.expect(anything()).andRespond(request->{throw new java.net.SocketTimeoutException("private details");});
+        var service=new GeminiAudioTranscriptionService("secret",true,"gemini-3.1-flash-lite",true,builder.build());
+        assertThatThrownBy(()->service.transcribe(new byte[]{1},"audio/wav","en")).hasMessageContaining("504").hasMessageContaining("shorter recording").hasMessageNotContaining("private details");server.verify();
+    }
 }

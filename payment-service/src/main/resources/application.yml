@@ -54,8 +54,13 @@ bakong:
   account-id: ${BAKONG_ACCOUNT_ID:}
   base-url: ${BAKONG_BASE_URL:https://api-bakong.nbc.gov.kh}
   email: ${BAKONG_EMAIL:}
+  app-payment:
+    enabled: ${BAKONG_APP_PAYMENT_ENABLED:false}
+    source-info-enabled: ${BAKONG_APP_SOURCE_INFO_ENABLED:true}
+    return-origin: ${BAKONG_RETURN_ORIGIN:}
+    allowed-link-hosts: ${BAKONG_ALLOWED_LINK_HOSTS:}
   app-name: E-Shop
-  app-icon-url: ${BAKONG_APP_ICON_URL:https://random-subdomain.trycloudflare.com/logo.png}
+  app-icon-url: ${BAKONG_APP_ICON_URL:}
 app:
   base-url: ${APP_BASE_URL:https://random-subdomain.trycloudflare.com}
   exchange-rate:

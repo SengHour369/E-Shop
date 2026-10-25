@@ -1,0 +1,16 @@
+{
+  "base": "https://localhost:8443",
+  "scope": "Real HTTPS, existing product reads, persistent scheduler and custom events. No commerce/payment events fabricated. Test workflows retained and paused.",
+  "checks": [
+    {
+      "name": "Actual automatic trigger capabilities",
+      "status": "PASSED"
+    },
+    {
+      "name": "Automatic workflow acceptance",
+      "status": "FAILED",
+      "error": "HTTPError",
+      "detail": "HTTP Error 500: Internal Server Error"
+    }
+  ]
+}

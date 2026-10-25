@@ -301,7 +301,7 @@ public class InventoryServiceImpl implements InventoryService {
             throw new ResourceNotFoundException("Inventory not found with id: " + inventoryId);
         }
         Page<StockMovement> page = stockMovementRepository.findByInventoryIdOrderByCreatedAtDesc(inventoryId, pageable);
-        return ResponseErrorTemplate.success("History retrieved", page);
+        return ResponseErrorTemplate.success("History retrieved", page.map(com.example.eshop.catalog.dto.response.StockMovementResponse::from));
     }
 
     // Helper: clear existing default SKU (kept from original)

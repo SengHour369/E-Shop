@@ -1204,7 +1204,7 @@ public class AiImportService {
         if (!auth.importReviewer(token(), reviewerId)
                 || reviewerId == batch.getOwnerId()
                 || Objects.equals(batch.getLastEditorId(), reviewerId)) {
-            throw bad("Choose an independent authorized reviewer");
+            throw bad("Your Reports to manager must be an independent authorized reviewer. Ask an administrator to check your manager and their approval permissions.");
         }
 
         if (!validateData(batch)) {

@@ -48,6 +48,16 @@ class GatewayRouteConfigurationTest {
         });
   }
 
+  @Test void voiceTranscriptionUsesTheLongAiRouteBeforeTheGenericAiRoute(){
+    var routes=definitions.getRouteDefinitions().collectList().block();
+    var voice=routes.stream().filter(route->route.getId().equals("ai-chat-service")).findFirst().orElseThrow();
+    var generic=routes.stream().filter(route->route.getId().equals("ai-service")).findFirst().orElseThrow();
+    assertThat(voice.getOrder()).isLessThan(generic.getOrder());
+    assertThat(voice.getPredicates().get(0).getArgs().values()).anyMatch(value->value.contains("/api/ai/voice/transcriptions"));
+    assertThat(voice.getMetadata().get("response-timeout").toString()).isEqualTo("60000");
+    assertThat(voice.getFilters().get(0).getArgs().values()).contains("aiChatServiceCB");
+  }
+
   @Test void mailEndpointsHavePriorityAndEnoughTimeForSmtp() {
     var routes = definitions.getRouteDefinitions().collectList().block();
     var mail = routes.stream().filter(route -> route.getId().equals("auth-email")).findFirst().orElseThrow();

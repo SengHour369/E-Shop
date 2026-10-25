@@ -1,0 +1,12 @@
+{
+  "base": "https://localhost:8443",
+  "scope": "Real HTTPS, existing product reads, persistent scheduler and custom events. No commerce/payment events fabricated. Test workflows retained and paused.",
+  "checks": [
+    {
+      "name": "Automatic workflow acceptance",
+      "status": "FAILED",
+      "error": "HTTPError",
+      "detail": "HTTP Error 503: Service Unavailable"
+    }
+  ]
+}

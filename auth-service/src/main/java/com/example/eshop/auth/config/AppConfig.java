@@ -26,7 +26,7 @@ public class AppConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         // Service identities are authorized by their internal security chains and method security.
         registry.addInterceptor(apiPermissionInterceptor)
-                .excludePathPatterns("/internal/commerce/**", "/internal/notifications/**", "/internal/authorization/me", "/internal/authorization/api-access", "/internal/authorization/users/*/active", "/api/v1/user/access", "/api/v1/user/me/profile",
+                .excludePathPatterns("/internal/workflow-authorization/**", "/api/v1/user/workflow-grants", "/api/v1/user/workflow-grants/**", "/internal/commerce/**", "/internal/notifications/**", "/internal/authorization/me", "/internal/authorization/api-access", "/internal/authorization/users/*/active", "/api/v1/user/access", "/api/v1/user/me/profile",
                         "/internal/ai/users", "/internal/authorization/import-reviewers/**");
     }
 

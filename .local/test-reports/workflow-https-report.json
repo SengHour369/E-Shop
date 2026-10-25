@@ -1,0 +1,87 @@
+{
+  "requestId": "workflow-smoke-3153c8f0-2dbb-4971-b06b-d6a9eca6d402",
+  "steps": [
+    {
+      "title": "Load permitted registry",
+      "httpStatus": 200,
+      "status": "PASSED"
+    },
+    {
+      "title": "Persist workflow draft",
+      "httpStatus": 200,
+      "status": "PASSED"
+    },
+    {
+      "title": "Validate without executing tools",
+      "httpStatus": 200,
+      "status": "PASSED"
+    },
+    {
+      "title": "Publish immutable read-only version",
+      "httpStatus": 200,
+      "status": "PASSED"
+    },
+    {
+      "title": "Execute real registered catalog handlers",
+      "httpStatus": 200,
+      "status": "PASSED"
+    },
+    {
+      "title": "Read persisted execution timeline",
+      "httpStatus": 200,
+      "status": "PASSED"
+    },
+    {
+      "title": "Verify idempotent duplicate request",
+      "httpStatus": 200,
+      "status": "PASSED"
+    }
+  ],
+  "status": "PASSED",
+  "workflowId": "6134d4cd-d1a9-446d-a564-86b35bd39f4f",
+  "versionId": "7d74b928-c967-4680-94f6-4291153c2c64",
+  "executionId": "7efe8200-fbc1-48a0-a4a7-f6be25697dac",
+  "execution": {
+    "run": {
+      "id": "7efe8200-fbc1-48a0-a4a7-f6be25697dac",
+      "revision": 1,
+      "publishedVersionId": "7d74b928-c967-4680-94f6-4291153c2c64",
+      "ownerId": 1,
+      "status": "SUCCEEDED",
+      "requestId": "workflow-smoke-3153c8f0-2dbb-4971-b06b-d6a9eca6d402",
+      "traceId": null,
+      "startedAt": "2026-10-24T20:10:32.993738Z",
+      "finishedAt": "2026-10-24T20:10:33.414350Z"
+    },
+    "steps": [
+      {
+        "id": "aa0f7d1e-c81e-4ad8-bdbd-756ccc569a45",
+        "runId": "7efe8200-fbc1-48a0-a4a7-f6be25697dac",
+        "position": 0,
+        "stepKey": "product",
+        "name": "Read product",
+        "tool": "PRODUCT_GET",
+        "status": "SUCCEEDED",
+        "startedAt": "2026-10-24T20:10:33.064531Z",
+        "finishedAt": "2026-10-24T20:10:33.280432Z",
+        "errorCode": null,
+        "outputSha256": "fc23bf438e040c2f0d915f7adeb30b84f44e8e55938882107740e3d796ffed77",
+        "outputBytes": 1810
+      },
+      {
+        "id": "94c140a1-42e8-4234-adef-f479fbe82d71",
+        "runId": "7efe8200-fbc1-48a0-a4a7-f6be25697dac",
+        "position": 1,
+        "stepKey": "search",
+        "name": "Search catalog",
+        "tool": "PRODUCT_SEARCH",
+        "status": "SUCCEEDED",
+        "startedAt": "2026-10-24T20:10:33.323687Z",
+        "finishedAt": "2026-10-24T20:10:33.394219Z",
+        "errorCode": null,
+        "outputSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "outputBytes": 2
+      }
+    ]
+  }
+}

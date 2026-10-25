@@ -61,6 +61,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     );
                 }
 
+                if (claims.containsKey("workflowGrantId") && !WorkflowReadScope.allows(request.getMethod(),request.getRequestURI())) {
+                    SecurityContextHolder.clearContext();response.setStatus(403);return;
+                }
+
                 String username = claims.getSubject();
                 @SuppressWarnings("unchecked")
                 List<String> authorityClaims = claims.get(

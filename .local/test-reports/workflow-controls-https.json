@@ -1,0 +1,54 @@
+{
+  "base": "https://localhost:8443",
+  "scope": "Real persisted workflows, catalog reads, control execution and cancellation",
+  "checks": [
+    {
+      "name": "Real read, condition, delay, repeat, end and skipped branch",
+      "status": "PASSED",
+      "executionId": "8d0f33c5-d42c-4cd4-8624-d6f24bb59b5c",
+      "elapsedSeconds": 1.67,
+      "steps": [
+        {
+          "tool": "PRODUCT_GET",
+          "status": "SUCCEEDED",
+          "outputSha256": "599538d496ca7061a3bd8f27327709fe668f8523ff882687ce9e0a35e8d17634"
+        },
+        {
+          "tool": "WORKFLOW_CONDITION",
+          "status": "SUCCEEDED",
+          "outputSha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+        },
+        {
+          "tool": "WORKFLOW_DELAY",
+          "status": "SUCCEEDED",
+          "outputSha256": "b240f0a100e61703dd413f46da3708d1e529312c25ccb3435a1ed181e4fb6aa0"
+        },
+        {
+          "tool": "WORKFLOW_REPEAT",
+          "status": "SUCCEEDED",
+          "outputSha256": "2d8e35d27c7ec5b6e801efecfc367d0cc5dcb4db36fc777430db324f0c0f0361"
+        },
+        {
+          "tool": "WORKFLOW_END",
+          "status": "SUCCEEDED",
+          "outputSha256": "5ab955df914a0dc6f687f23829d6fd80e1d63b780c930120b0aa0fc35c1eacde"
+        },
+        {
+          "tool": "PRODUCT_GET",
+          "status": "SKIPPED",
+          "outputSha256": null
+        }
+      ]
+    },
+    {
+      "name": "Cancel active run before following catalog call",
+      "status": "PASSED",
+      "executionId": "089177ad-1c3f-4c15-81ce-e151eed08584"
+    }
+  ],
+  "workflowIds": [
+    "0fa9e1e4-9531-4388-99f2-c4e893704a2f",
+    "0da4a8d5-cb69-4378-bb11-6a2990c296cc"
+  ],
+  "status": "PASSED"
+}

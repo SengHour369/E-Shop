@@ -27,6 +27,12 @@ public class WorkflowDraft {
     @Column(nullable = false, columnDefinition = "text")
     private String definition;
 
+    @Column(length = 120)
+    private String moduleCode;
+
+    @Column(length = 32)
+    private String triggerType;
+
     @Column(nullable = false)
     private Instant updatedAt;
 }

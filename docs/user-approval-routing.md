@@ -1,27 +1,9 @@
 # User reporting and approval assignments
 
-Add Customer and Edit User now expose two searchable user selectors:
+**Reports to** (`managerId`) controls who receives the user's requests for review and approval. The old separate assigned-reviewer field is hidden and its saved value is ignored for routing.
 
-- **Reports to** saves the existing `managerId` relationship.
-- **Assigned reviewer** saves `approvalReviewerId` as the default reviewer for requests
-  created by that account. This does not put account creation itself into approval.
+Product and import forms automatically select the manager. My Requests resolves the current manager again when submitting or resubmitting a draft or returned request. The auth service also enforces this relationship when the AI service checks the proposed reviewer, so changing a browser request cannot choose another reviewer.
 
-Names include usernames to distinguish people with the same name. Options retain actual
-user IDs; typing text alone does not select an account. Both fields can be cleared.
-The reviewer selector includes only enabled, active, non-deleted accounts that currently
-have IMPORT_REVIEW, IMPORT_APPROVE and IMPORT_EXECUTE. A user cannot be their own reviewer.
-Assigning a reviewer never grants permissions.
+The manager must be enabled, active, not deleted, independent of the maker and last editor, and hold IMPORT_REVIEW, IMPORT_APPROVE and IMPORT_EXECUTE. No manager or an ineligible manager blocks submission; assigning a manager does not grant permissions. Existing submitted requests keep their recorded reviewer and immutable revision history.
 
-Product forms and import submission forms use the account's eligible saved default and
-allow selecting another authorized reviewer by name. Existing submission and approval
-checks still enforce current permissions, maker/reviewer independence, last-editor
-independence, version checks and explicit submit/approve actions.
-
-`GET /api/v1/user/approval-options` returns eligible reviewers and the current account's
-default; it requires current IMPORT_UPLOAD permission and returns no-store responses.
-The administrator-only editor options also include eligible reviewers for assignment.
-If a default reviewer loses eligibility, it is no longer offered as the active default.
-
-Schema: apply `auth-service/src/main/resources/db/upgrade/20261024_user_approval_reviewer.sql`
-when deploying to a database without automatic schema updates. The additive column
-migration has been applied to the local auth database. Existing assignments start empty.
+`GET /api/v1/user/approval-options` returns only the eligible current manager and uses that manager as `defaultReviewerId`. It requires current IMPORT_UPLOAD permission and returns no-store responses. Administrator editor options may still list eligible reviewers for compatibility, but no separate reviewer assignment is shown in the user forms.

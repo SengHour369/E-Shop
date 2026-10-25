@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 class WorkflowDraftIntegrationTest {
  @Autowired WorkflowController controller;
  @Autowired WorkflowDraftRepository drafts;
+ @Autowired WorkflowPublishedRepository versions;
  @Autowired ObjectMapper mapper;
  @MockitoBean LivePermissionService permissions;
  @BeforeEach void setup(){when(permissions.current()).thenReturn(new PermissionSnapshot(1,true,Set.of()));SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("admin",null,List.of()));}
@@ -43,4 +44,19 @@ class WorkflowDraftIntegrationTest {
   items.removeAll();var repeated=items.addObject();repeated.put("key","repeat");repeated.put("name","Do not repeat writes");repeated.put("tool","WORKFLOW_REPEAT");var parameters=repeated.putObject("parameters");parameters.put("tool","ORDER_CANCEL").put("count",2);parameters.putObject("parameters").put("orderNumber","irrelevant");assertThat(controller.validate(new WorkflowController.Write(null,definition)).get("valid")).isEqualTo(false);
   parameters.put("tool","PRODUCT_GET").put("count",11);parameters.putObject("parameters").put("id",1);assertThat(controller.validate(new WorkflowController.Write(null,definition)).get("valid")).isEqualTo(false);parameters.put("count",2);assertThat(controller.validate(new WorkflowController.Write(null,definition)).get("valid")).isEqualTo(true);
  }
+ @Test void missingToolInputsReturnActionableValidationErrors()throws Exception{var body=write(null,"Missing product input");var definition=body.definition().deepCopy();((com.fasterxml.jackson.databind.node.ObjectNode)definition.path("steps").get(0)).putObject("parameters");var checked=controller.validate(new WorkflowController.Write(null,definition));assertThat(checked.get("valid")).isEqualTo(false);assertThat(checked.get("errors").toString()).contains("Please provide id.");}
+
+ @Test void filtersAcrossPagesAndDistinguishesPublishedRevisionsFromNewerDrafts()throws Exception{
+  for(int i=0;i<24;i++)controller.create(write(null,"Catalog filter "+i));
+  var body=write(null,"Other module");((com.fasterxml.jackson.databind.node.ObjectNode)body.definition()).put("module","order-service");var other=controller.create(body);
+  assertThat(controller.list(0,"","catalog-service","MANUAL","DRAFT").get("total")).isEqualTo(24L);
+  assertThat((java.util.List<?>)controller.list(1,"","catalog-service","MANUAL","DRAFT").get("items")).hasSize(4);
+  assertThat(controller.list(0,"","order-service","MANUAL","").get("total")).isEqualTo(1L);
+  var version=new WorkflowPublishedVersion();version.setId(UUID.randomUUID());version.setWorkflowId(other.id());version.setDraftRevision(other.revision());version.setOwnerId(1);version.setName(other.definition().path("name").asText());version.setDefinition(other.definition().toString());version.setPublishedAt(java.time.Instant.now());versions.saveAndFlush(version);
+  assertThat(controller.get(other.id()).status()).isEqualTo("PUBLISHED");
+  assertThat(controller.list(0,"","order-service","MANUAL","PUBLISHED").get("total")).isEqualTo(1L);
+  var changed=controller.update(other.id(),new WorkflowController.Write(other.revision(),other.definition()));assertThat(changed.status()).isEqualTo("DRAFT");
+  assertThat(controller.list(0,"","order-service","MANUAL","PUBLISHED").get("total")).isEqualTo(0L);
+ }
+
 }

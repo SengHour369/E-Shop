@@ -99,4 +99,30 @@ class PaymentAutomationTest {
       assertThat(service.snapshotForOrder(1).orderId()).isEqualTo(1L);
     }
 
+
+    @Test void appQrRequiresOrderAmountCurrencyReferenceAndConfiguredMerchant(){
+      ownedOrder();
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"recipient","merchant@bank");
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"merchantId","123456");
+      var sdk=new com.example.eshop.payment.bakong.service.impl.BakongServiceImpl(mock(org.springframework.web.client.RestClient.class),new ObjectMapper(),mock(com.example.eshop.payment.bakong.service.BakongTokenService.class));
+      org.springframework.test.util.ReflectionTestUtils.setField(sdk,"bakongAccountId","merchant@bank");
+      var generated=new ObjectMapper().valueToTree(sdk.generateQR(com.example.eshop.payment.bakong.dto.BakongRequest.builder()
+        .currency("USD").amount(10.0).merchantName("TEST SHOP").merchantCity("PHNOM PENH").merchantId("123456")
+        .acquiringBank("TEST BANK").billNumber("ORDER-1").expirationTimestamp(15).build())).path("data");
+      record.setQrPayload(generated.path("qr").asText());record.setQrMd5(generated.path("md5").asText());
+      assertThat(service.customerAppQr(1)).containsEntry("paymentId",3L);
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"merchantId","654321");
+      assertThatThrownBy(()->service.customerAppQr(1)).hasMessageContaining("identity");
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"merchantId","123456");
+      record.setQrMd5("a".repeat(32));assertThatThrownBy(()->service.customerAppQr(1)).hasMessageContaining("identity");
+    }
+
+    @Test void appAvailabilityRequiresEnableFlagAndReturnConfiguration(){
+      ownedOrder();assertThat(service.customerQr(1)).containsEntry("bakongAppAvailable",false);
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"appPaymentEnabled",true);
+      assertThat(service.customerQr(1)).containsEntry("bakongAppAvailable",false);
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"appReturnOrigin","https://shop.example");
+      org.springframework.test.util.ReflectionTestUtils.setField(service,"appLinkHosts","provider.example");
+      assertThat(service.customerQr(1)).containsEntry("bakongAppAvailable",true);
+    }
 }

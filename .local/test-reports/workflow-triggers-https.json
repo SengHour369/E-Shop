@@ -1,0 +1,47 @@
+{
+  "base": "https://localhost:8443",
+  "scope": "Real HTTPS, existing product reads, persistent scheduler and custom events. No commerce/payment events fabricated. Test workflows retained and paused.",
+  "checks": [
+    {
+      "name": "Actual automatic trigger capabilities",
+      "status": "PASSED"
+    },
+    {
+      "name": "Scheduled worker executed a real product read",
+      "status": "PASSED",
+      "workflowId": "01d36ad2-bf99-4f8d-b02f-fdb963b2cb1f",
+      "jobId": "8990f463-069a-3a6d-8c42-359cb7c9c519",
+      "runId": "8990f463-069a-3a6d-8c42-359cb7c9c519"
+    },
+    {
+      "name": "One-time schedule did not repeat",
+      "status": "PASSED"
+    },
+    {
+      "name": "Custom event executed a real product read",
+      "status": "PASSED",
+      "workflowId": "8bbefb6a-41da-4ddc-8f43-b01d90cd69ce",
+      "jobId": "5a6eef8f-3363-301f-baf2-23599168a939",
+      "runId": "5a6eef8f-3363-301f-baf2-23599168a939"
+    },
+    {
+      "name": "Duplicate event delivery did not repeat execution",
+      "status": "PASSED"
+    },
+    {
+      "name": "Paused event subscription did not execute",
+      "status": "PASSED"
+    },
+    {
+      "name": "Renewed trigger executed with fresh revocable authorization",
+      "status": "PASSED",
+      "runId": "1f2f5009-836a-37ba-a632-e7c33915bfe0"
+    },
+    {
+      "name": "Scheduled authorization and job survived worker restart without an open page",
+      "status": "PASSED",
+      "workflowId": "c1dfa4a9-f213-46c3-a477-9cd092dcbdfd",
+      "runId": "c23aa269-e345-322c-b9ca-dfa652214265"
+    }
+  ]
+}

@@ -21,17 +21,20 @@ import java.util.*;
 public class WorkflowController {
 
     private final WorkflowDraftRepository drafts;
+    private final WorkflowPublishedRepository versions;
     private final LivePermissionService permissions;
     private final AiToolRegistry registry;
     private final ObjectMapper mapper;
 
     public WorkflowController(
             WorkflowDraftRepository drafts,
+            WorkflowPublishedRepository versions,
             LivePermissionService permissions,
             AiToolRegistry registry,
             ObjectMapper mapper
     ) {
         this.drafts = drafts;
+        this.versions = versions;
         this.permissions = permissions;
         this.registry = registry;
         this.mapper = mapper;
@@ -62,7 +65,7 @@ public class WorkflowController {
             return new Draft(
                     draft.getId(),
                     draft.getRevision(),
-                    "DRAFT",
+                    versions.findByWorkflowIdAndDraftRevision(draft.getId(),draft.getRevision()).isPresent() ? "PUBLISHED" : "DRAFT",
                     mapper.readTree(draft.getDefinition()),
                     draft.getUpdatedAt()
             );
@@ -74,20 +77,27 @@ public class WorkflowController {
         }
     }
 
+    public Map<String,Object> list(int page,String search) {
+        return list(page,search,"","","");
+    }
+
     @GetMapping
     public Map<String, Object> list(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "") String search
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "") String module,
+            @RequestParam(defaultValue = "") String triggerType,
+            @RequestParam(defaultValue = "") String status
     ) {
         long owner = actor();
 
-        if (page < 0 || search.length() > 120) {
+        if (page < 0 || page > 100000 || search.length() > 120 || module.length() > 120 || !Set.of("","MANUAL","SCHEDULED","EVENT").contains(triggerType) || !Set.of("","DRAFT","PUBLISHED").contains(status)) {
             throw bad("Invalid filters");
         }
 
-        var rows = drafts.findByOwnerIdAndNameContainingIgnoreCase(
+        var rows = drafts.searchOwned(
                 owner,
-                search.trim(),
+                search.trim(),module,triggerType,status,
                 PageRequest.of(
                         page,
                         20,
@@ -146,24 +156,21 @@ public class WorkflowController {
         ));
         return Map.of(
                 "tools", tools,
-                "triggerTypes", List.of("MANUAL"),
-                "executionAvailable", false,
+                "triggerTypes", List.of("MANUAL","SCHEDULED","EVENT"),
+                "executionAvailable", true,
+                "schedulingAvailable", true,
+                "eventExecutionAvailable", true,
                 "manualReadOnlyExecutionAvailable", true,
                 "executableToolCodes", java.util.stream.Stream.concat(
                         WorkflowReadPolicy.ALLOWED.stream().map(Enum::name),
                         WorkflowControlPolicy.CODES.stream()
                 ).sorted().toList(),
                 "limitation",
-                "Drafts, immutable read-only publication and manual "
-                        + "catalog/inventory executions are available through "
-                        + "the backend API. Forward-only conditions, end steps, "
-                        + "bounded manual delays and repeated reads are "
-                        + "supported. Write tools, events, scheduling and "
-                        + "approval execution are not supported. Delays run "
-                        + "within the current manual request; they are not "
-                        + "durable scheduled jobs. Only the listed executable "
-                        + "tools can be published and run; unsupported controls "
-                        + "are unavailable."
+                "Manual, scheduled and event-triggered read-only workflows are available. "
+                        + "Automatic runs use revocable authorization for 1–30 days and recheck current permissions. "
+                        + "Schedules and queued event jobs survive restarts. Missed intervals coalesce into one run. "
+                        + "Writes and workflow approval steps are not supported. Interrupted runs are recorded UNKNOWN and are not replayed automatically."
+
         );
     }
 
@@ -221,9 +228,8 @@ public class WorkflowController {
             errors.add("Choose a registered business module");
         }
 
-        if (!definition.path("triggerType").asText().equals("MANUAL")) {
-            errors.add("Only manual draft triggers are currently supported");
-        }
+        try { WorkflowTriggerPolicy.validate(definition); }
+        catch(ResponseStatusException invalid) { errors.add(invalid.getReason()); }
 
         if (definition.path("steps").isEmpty()) {
             errors.add("Add at least one registered tool step");
@@ -258,11 +264,14 @@ public class WorkflowController {
                     );
                     registry.validate(tool, step.path("parameters"));
                 }
+            } catch (com.example.eshop.ai.service.AiFailure invalid) {
+                issues.add(invalid.getMessage());
+            } catch (ResponseStatusException invalid) {
+                issues.add(invalid.getReason() == null ? "Invalid step configuration" : invalid.getReason());
+            } catch (org.springframework.security.access.AccessDeniedException denied) {
+                issues.add("Your current account cannot use this tool");
             } catch (Exception denied) {
-                issues.add(
-                        "Tool unavailable, permission denied or parameters "
-                                + "invalid against the registered schema"
-                );
+                issues.add("Unknown or unavailable workflow tool");
             }
 
             steps.add(Map.of(
@@ -306,6 +315,8 @@ public class WorkflowController {
     private void apply(WorkflowDraft draft, JsonNode definition) {
         draft.setName(definition.path("name").asText().trim());
         draft.setDefinition(definition.toString());
+        draft.setModuleCode(definition.path("module").asText(""));
+        draft.setTriggerType(definition.path("triggerType").asText(""));
         draft.setUpdatedAt(Instant.now());
     }
 
@@ -324,6 +335,10 @@ public class WorkflowController {
 
         if (definition.path("description").asText().length() > 500) {
             throw bad("Description exceeds 500 characters");
+        }
+
+        if (definition.path("module").asText().length() > 120 || definition.path("triggerType").asText().length() > 32) {
+            throw bad("Module or trigger type is too long");
         }
 
         if (!definition.path("steps").isArray()

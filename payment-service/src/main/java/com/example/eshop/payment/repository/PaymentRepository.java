@@ -51,6 +51,19 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
 
+    @Query("""
+            select new com.example.eshop.payment.dto.response.PaymentReportBreakdown(
+                month(e.paymentDate), e.currency, e.paymentMethod, e.status, count(e), sum(e.amount))
+            from Payment e
+            where (e.deleted = false or e.deleted is null)
+              and e.paymentDate >= :start and e.paymentDate < :end
+              and e.status in ('COMPLETED', 'REFUNDED')
+            group by month(e.paymentDate), e.currency, e.paymentMethod, e.status
+            order by month(e.paymentDate), e.currency, e.paymentMethod, e.status
+            """)
+    List<com.example.eshop.payment.dto.response.PaymentReportBreakdown> reportBreakdown(
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
     Optional<Payment> findByTransactionId(String transactionId);
 
 

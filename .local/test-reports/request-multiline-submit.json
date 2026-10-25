@@ -1,0 +1,17 @@
+{
+  "requestId": "5b7d4376-c2e3-444c-9762-f79e4bfbe7af",
+  "checks": [
+    {
+      "action": "Revalidate saved request",
+      "status": "VALIDATED"
+    },
+    {
+      "action": "Submit to configured reviewer",
+      "status": "SUBMITTED"
+    },
+    {
+      "action": "Saved product data preserved",
+      "status": "PASSED"
+    }
+  ]
+}

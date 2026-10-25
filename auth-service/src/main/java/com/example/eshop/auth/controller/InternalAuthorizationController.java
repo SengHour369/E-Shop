@@ -19,6 +19,7 @@ public class InternalAuthorizationController {
 
     private final UserRepository users;
     private final AccountAccessService access;
+    private final com.example.eshop.auth.repository.WorkflowGrantRepository workflowGrants;
 
     @GetMapping({"/internal/authorization/me", "/api/v1/user/access"})
     @Transactional(readOnly = true)
@@ -34,6 +35,9 @@ public class InternalAuthorizationController {
                 .orElseThrow(() -> new AccessDeniedException(
                         "Account unavailable"
                 ));
+        if(authentication.getDetails() instanceof java.util.Map<?,?> claims && claims.get("workflowGrantId") instanceof String id){
+            var grant=workflowGrants.findById(java.util.UUID.fromString(id)).filter(g->g.getOwnerId()==actorId&&!g.isRevoked()&&g.getExpiresAt().isAfter(java.time.Instant.now())&&g.getVersionId().toString().equals(claims.get("workflowVersionId"))).orElseThrow(()->new AccessDeniedException("Workflow authorization expired or revoked"));
+        }
         return access.snapshot(user);
     }
 

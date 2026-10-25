@@ -47,14 +47,8 @@ public class LivePermissionService {
     public PermissionSnapshot current() {
         long actorId = CurrentActor.userId();
 
-        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
-            throw new AccessDeniedException(
-                    "Current account unavailable"
-            );
-        }
-
-        String bearer = attributes.getRequest()
-                .getHeader("Authorization");
+        var attributes = RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes value ? value : null;
+        String bearer = attributes == null ? BackgroundIdentity.bearer() : attributes.getRequest().getHeader("Authorization");
 
         if (bearer == null || !bearer.startsWith("Bearer ")) {
             throw new AccessDeniedException("Authentication required");
@@ -65,8 +59,7 @@ public class LivePermissionService {
                     .uri("/internal/authorization/me")
                     .header("Authorization", bearer)
                     .header(RequestIds.HEADER, RequestIds.current());
-            String parent = attributes.getRequest()
-                    .getHeader("traceparent");
+            String parent = attributes == null ? null : attributes.getRequest().getHeader("traceparent");
 
             if (com.example.eshop.common.request.TraceContextFilter.valid(
                     parent

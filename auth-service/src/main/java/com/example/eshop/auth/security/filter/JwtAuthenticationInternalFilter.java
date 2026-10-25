@@ -45,6 +45,9 @@ public class JwtAuthenticationInternalFilter extends OncePerRequestFilter {
             try {
                 if(jwtService.isValidToken(accessToken)){
                     Claims claims = jwtService.extractClaims(accessToken);
+                    if (claims.containsKey("workflowGrantId") && !com.example.eshop.common.security.WorkflowReadScope.allows(request.getMethod(),request.getRequestURI())) {
+                        auditSecurityHandlers.reject(request,response,403);return;
+                    }
                     var username = claims.getSubject();
 
                     List<String> authorities = claims.get("authorities", List.class);

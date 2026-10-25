@@ -1,0 +1,152 @@
+{
+  "id": "0202d0e4-4a42-4c74-b5b2-21b0a6985c90",
+  "status": "BLOCKED",
+  "startedAt": "2026-10-24T20:17:11.341425Z",
+  "finishedAt": "2026-10-24T20:17:14.521338Z",
+  "steps": [
+    {
+      "key": "gateway",
+      "title": "Gateway health",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 653,
+      "detail": "Real HTTP response validated",
+      "requestId": "live-test-a431f702-2e92-44ce-b12d-b2f85b300dd9"
+    },
+    {
+      "key": "flags",
+      "title": "Live storefront configuration",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 18,
+      "detail": "Saved feature flags received",
+      "requestId": "live-test-41b07173-69c0-4d80-9722-c7c0fb3c77c8"
+    },
+    {
+      "key": "admin-denied",
+      "title": "Anonymous admin access is rejected",
+      "status": "PASSED",
+      "httpStatus": 401,
+      "durationMs": 5,
+      "detail": "Expected unauthenticated access denial",
+      "requestId": "live-test-650558c4-4a15-4046-a757-1496d51bfc8c"
+    },
+    {
+      "key": "identity",
+      "title": "Current account and effective permissions",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 24,
+      "detail": "Current account and live permission snapshot validated",
+      "requestId": "live-test-9b551f23-5186-4425-b743-be0f36e07a85"
+    },
+    {
+      "key": "catalog",
+      "title": "Real products and SKU structure",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 336,
+      "detail": "Returned 3 real products and 15 SKUs; no sample response used",
+      "requestId": "live-test-0e559649-0a44-427a-bf73-1071b07df4e9"
+    },
+    {
+      "key": "guest-browse",
+      "title": "Anonymous browsing obeys configuration",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 278,
+      "detail": "Real HTTP response validated",
+      "requestId": "live-test-31c3acb1-9697-4eaa-9c99-415feae73272"
+    },
+    {
+      "key": "orders",
+      "title": "Order service list",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 151,
+      "detail": "Real paginated service response validated (empty lists are allowed)",
+      "requestId": "live-test-ef26fd0f-cd3c-4a8e-80a6-c50a348f8224"
+    },
+    {
+      "key": "inventory",
+      "title": "Inventory service list",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 86,
+      "detail": "Real paginated service response validated (empty lists are allowed)",
+      "requestId": "live-test-3f89abe2-8a12-4783-8786-ad2e2d0cf632"
+    },
+    {
+      "key": "payments",
+      "title": "Payment service list",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 269,
+      "detail": "Real paginated service response validated (empty lists are allowed)",
+      "requestId": "live-test-7898328f-b080-485e-af2c-48936206c6ce"
+    },
+    {
+      "key": "khqr",
+      "title": "Real KHQR availability",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 22,
+      "detail": "Online method is configured; no transfer performed or verified",
+      "requestId": "live-test-cac9d875-0014-4970-8c42-f74284bb708b"
+    },
+    {
+      "key": "notifications",
+      "title": "Current account notification count",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 620,
+      "detail": "Real HTTP response validated",
+      "requestId": "live-test-45eadcfe-85eb-4895-ac7e-66fca20fd9b8"
+    },
+    {
+      "key": "ai-info",
+      "title": "AI inference/provider information",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 249,
+      "detail": "Real provider/model configuration received; inference accuracy is not tested",
+      "requestId": "live-test-0a924666-d576-4a1b-94e4-497840b16511"
+    },
+    {
+      "key": "ai-history",
+      "title": "Real AI conversation history",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 50,
+      "detail": "Real HTTP response validated",
+      "requestId": "live-test-3ba8572b-9e6d-4a83-9ea8-3f2bde436b43"
+    },
+    {
+      "key": "import-tools",
+      "title": "Authoritative Excel import fields",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 64,
+      "detail": "Live tool registry and backend product fields validated",
+      "requestId": "live-test-861e8a26-2ec9-416d-ad68-f44b780f1ceb"
+    },
+    {
+      "key": "my-requests",
+      "title": "Current maker approval requests",
+      "status": "PASSED",
+      "httpStatus": 200,
+      "durationMs": 104,
+      "detail": "Owner-scoped approval request contract validated; submission and independent review are not exercised",
+      "requestId": "live-test-c1c89fba-3ac3-43de-94c5-42759f80d0f1"
+    },
+    {
+      "key": "workflows",
+      "title": "Workflow engine capabilities (AUT-01\u201311)",
+      "status": "BLOCKED",
+      "httpStatus": 200,
+      "durationMs": 41,
+      "detail": "Drafts, immutable read-only publication and manual catalog/inventory executions are available through the backend API. Forward-only conditions, end steps, bounded manual delays and repeated reads are supported. Write tools, events, scheduling and approval execution are not supported. Delays run within the current manual request; they are not durable scheduled jobs. Only the listed executable tools can be published and run; unsupported controls are unavailable.",
+      "requestId": "live-test-be82c6f3-bf45-4e22-989f-1e47575ac9a1"
+    }
+  ]
+}

@@ -31,9 +31,11 @@ try:
     else:
         raise RuntimeError('Disposable PostgreSQL did not become ready')
     for _ in range(2):
-        for migration in ['20261020_workflow_drafts.sql', '20261020_workflow_manual_execution.sql']:
+        for migration in ['20261020_workflow_drafts.sql', '20261020_workflow_manual_execution.sql', '20261025_workflow_list_filters.sql', '20261025_workflow_triggers.sql']:
             sql((root / 'ai-service/src/main/resources/db/upgrade' / migration).read_text())
-    print('1. PASSED: both migrations applied twice on real PostgreSQL 18')
+    for _ in range(2):
+        sql((root / 'auth-service/src/main/resources/db/upgrade/20261025_workflow_authorization.sql').read_text())
+    print('1. PASSED: workflow and authorization migrations applied twice on real PostgreSQL 18')
     sql("""
 INSERT INTO ai_workflow_drafts(id,owner_id,name,definition,updated_at)
 VALUES('00000000-0000-4000-8000-000000000001',1,'Real schema check','{}',now());
@@ -72,5 +74,14 @@ END $$;
     print('3. PASSED: published update and delete rejected')
     print('4. PASSED: duplicate execution ID and step position rejected')
     print('5. PASSED: missing published-version reference rejected')
+    sql("""UPDATE ai_workflow_drafts SET definition='{"module":"catalog-service","triggerType":"MANUAL"}',module_code=NULL,trigger_type=NULL;""")
+    for _ in range(2):
+        sql((root / 'ai-service/src/main/resources/db/upgrade/20261025_workflow_list_filters.sql').read_text())
+    sql("""DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM ai_workflow_drafts WHERE module_code='catalog-service' AND trigger_type='MANUAL' AND revision=0)
+      THEN RAISE EXCEPTION 'metadata backfill failed or changed the revision'; END IF;
+    END $$;""")
+    print('6. PASSED: list-filter metadata backfilled without changing revision tokens')
+
 finally:
     subprocess.run(['docker', 'rm', '-f', name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

@@ -419,6 +419,7 @@ public class DataInitializer implements CommandLineRunner {
         createApiPermissionForCode("POST", "/api/v1/products/update/status/", "PRODUCT_UPDATE");
         createApiPermissionForCode("GET", "/api/v1/orders/reports/monthly", "REPORT_VIEW");
         createApiPermissionForCode("GET", "/api/v1/payments/reports/monthly", "REPORT_VIEW");
+        createApiPermissionForCode("GET", "/api/v1/payments/reports/breakdown", "REPORT_VIEW");
         createApiPermissionForCode("GET", "/api/v1/orders/reports/weekly", "REPORT_VIEW");
         createApiPermissionForCode("GET", "/api/v1/admin/live-tests/runs", "SYSTEM_TEST_VIEW");
         createApiPermissionForCode("GET", "/api/v1/admin/live-tests/runs/*", "SYSTEM_TEST_VIEW");

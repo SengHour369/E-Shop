@@ -65,6 +65,7 @@ spring:
                     name: orderServiceCB
                     fallbackUri: forward:/fallback/order
             - id: ai-chat-service
+              order: -25
               uri: lb://ai-service
               predicates:
                 - Path=/api/ai/chat,/api/ai/admin/chat,/api/ai/voice/transcriptions

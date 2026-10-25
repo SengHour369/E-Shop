@@ -14,6 +14,12 @@ public class PaymentReportService {
     private final PaymentRepository repository;
 
     @Transactional(readOnly = true)
+    public List<com.example.eshop.payment.dto.response.PaymentReportBreakdown> breakdown(int year) {
+        var start = LocalDate.of(year, 1, 1).atStartOfDay();
+        return repository.reportBreakdown(start, start.plusYears(1));
+    }
+
+    @Transactional(readOnly = true)
     public List<MonthlyReportResponse> monthly(int year) {
         var start = LocalDate.of(year, 1, 1).atStartOfDay();
         return repository.monthlyReport(start, start.plusYears(1));

@@ -41,6 +41,13 @@ public class PaymentAutomation implements CommerceHandler {
     private final com.example.eshop.common.audit.AuditLogService audit;
     private final TransactionTemplate tx;
 
+    @Value("${bakong.app-payment.enabled:false}")
+    private boolean appPaymentEnabled;
+    @Value("${bakong.app-payment.return-origin:}")
+    private String appReturnOrigin = "";
+    @Value("${bakong.app-payment.allowed-link-hosts:}")
+    private String appLinkHosts = "";
+
     @Value("${bakong.account-id}")
     private String recipient;
 
@@ -368,6 +375,29 @@ public class PaymentAutomation implements CommerceHandler {
     }
 
     @Transactional(readOnly=true)
+    public Map<String,Object> customerAppQr(long orderId) {
+        var payment=customerQr(orderId);
+        var record=transactions.findById(((Number)payment.get("paymentId")).longValue()).orElseThrow();
+        try {
+            String qr=record.getQrPayload();
+            String digest=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("MD5")
+                    .digest(qr.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            var decoded=json.valueToTree(kh.gov.nbc.bakong_khqr.BakongKHQR.decode(qr)).path("data");
+            if(!Objects.equals(record.getRecipientAccount(),recipient) || !digest.equals(record.getQrMd5())
+                    || !kh.gov.nbc.bakong_khqr.BakongKHQR.verify(qr).getData().isValid()
+                    || !recipient.equals(decoded.path("bakongAccountID").asText())
+                    || new java.math.BigDecimal(decoded.path("transactionAmount").asText()).compareTo(record.getAmount())!=0
+                    || !"840".equals(decoded.path("transactionCurrency").asText())
+                    || !("ORDER-"+orderId).equals(decoded.path("billNumber").asText())
+                    || khqrType==KhqrType.MERCHANT && !merchantId.equals(decoded.path("merchantId").asText()))
+                throw new IllegalStateException();
+        } catch(Exception ex) {
+            throw new BusinessLogicException("Payment identity requires reconciliation. Do not pay this code.");
+        }
+        return payment;
+    }
+
+    @Transactional(readOnly=true)
     public Map<String,Object> guestQr(long orderId) {
         var order=orders.get(orderId);
         if(order==null||order.userId()!=null) throw new org.springframework.security.access.AccessDeniedException("Guest order required");
@@ -391,6 +421,7 @@ public class PaymentAutomation implements CommerceHandler {
         result.put("paymentId",record.getId());result.put("orderId",orderId);result.put("amount",record.getAmount());
         result.put("currency",record.getCurrency());result.put("status",record.getStatus()==TransactionStatus.SUCCESS&&!verified?"REVIEW_REQUIRED":record.getStatus().name());
         result.put("qr",record.getQrPayload());result.put("expiresAt",record.getExpiresAt());result.put("provider","BAKONG_KHQR");
+        result.put("bakongAppAvailable", appPaymentEnabled && !appReturnOrigin.isBlank() && !appLinkHosts.isBlank());
         result.put("paymentVerified",verified);result.put("transactionReference",record.getTransactionNo());result.put("orderStatus",order.status());
         if(verified){result.put("verifiedAt",record.getVerifiedAt());result.put("paidAmount",record.getAmount());}
         return result;

@@ -18,13 +18,13 @@ public class ImportReviewerController {
     @GetMapping("/internal/authorization/import-reviewers/{id}")
     @Transactional(readOnly = true)
     public boolean eligible(@PathVariable long id) {
-        if (!access.snapshot(
-                users.findById(CurrentActor.userId())
-                        .orElseThrow(() -> new AccessDeniedException(
-                                "Account unavailable"
-                        ))
-        ).permits("IMPORT_UPLOAD")) {
+        var actor = users.findById(CurrentActor.userId())
+                .orElseThrow(() -> new AccessDeniedException("Account unavailable"));
+        if (!access.snapshot(actor).permits("IMPORT_UPLOAD")) {
             throw new AccessDeniedException("Import permission required");
+        }
+        if (id == actor.getId() || !java.util.Objects.equals(actor.getManagerId(), id)) {
+            return false;
         }
 
         return users.findById(id)

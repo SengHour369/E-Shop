@@ -1,0 +1,398 @@
+{
+  "base": "https://localhost:8443",
+  "scope": "Read endpoints only. No action or UI success is inferred.",
+  "checks": [
+    {
+      "name": "Products",
+      "method": "POST",
+      "path": "/api/v1/products/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 78
+    },
+    {
+      "name": "Brands",
+      "method": "POST",
+      "path": "/api/v1/subcategories/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 38
+    },
+    {
+      "name": "Orders",
+      "method": "POST",
+      "path": "/api/v1/orders/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 104
+    },
+    {
+      "name": "Payments",
+      "method": "POST",
+      "path": "/api/v1/payments/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 53
+    },
+    {
+      "name": "Transactions",
+      "method": "POST",
+      "path": "/api/v1/payment-transactions/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 58
+    },
+    {
+      "name": "Refunds",
+      "method": "POST",
+      "path": "/api/v1/refunds/list",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 43
+    },
+    {
+      "name": "User groups",
+      "method": "POST",
+      "path": "/api/v1/user-groups/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 52
+    },
+    {
+      "name": "Functions",
+      "method": "POST",
+      "path": "/api/v1/functions/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 43
+    },
+    {
+      "name": "Group permissions",
+      "method": "POST",
+      "path": "/api/v1/group-permissions/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 41
+    },
+    {
+      "name": "User permissions",
+      "method": "POST",
+      "path": "/api/v1/user-permissions/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 54
+    },
+    {
+      "name": "Customers",
+      "method": "POST",
+      "path": "/api/v1/user/All",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 43
+    },
+    {
+      "name": "Returns",
+      "method": "POST",
+      "path": "/api/v1/returns/returns",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 33
+    },
+    {
+      "name": "Cancellations",
+      "method": "POST",
+      "path": "/api/v1/cancelations/list",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 37
+    },
+    {
+      "name": "Categories",
+      "method": "POST",
+      "path": "/api/v1/categories/get/all?page=0&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 34
+    },
+    {
+      "name": "Inventory",
+      "method": "POST",
+      "path": "/api/v1/inventory/search?page=0&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 40
+    },
+    {
+      "name": "Settings",
+      "method": "GET",
+      "path": "/api/v1/admin/settings",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 37
+    },
+    {
+      "name": "Monitor",
+      "method": "GET",
+      "path": "/api/v1/admin/monitor",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 49
+    },
+    {
+      "name": "Admin session",
+      "method": "GET",
+      "path": "/api/v1/admin/session",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 27
+    },
+    {
+      "name": "Storefront settings",
+      "method": "GET",
+      "path": "/api/v1/admin/storefront/access-settings",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 43
+    },
+    {
+      "name": "Order summary",
+      "method": "GET",
+      "path": "/api/v1/orders/summary",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 38
+    },
+    {
+      "name": "Inventory summary",
+      "method": "GET",
+      "path": "/api/v1/inventory/summary",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 24
+    },
+    {
+      "name": "Return summary",
+      "method": "GET",
+      "path": "/api/v1/returns/summary",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 34
+    },
+    {
+      "name": "Refund summary",
+      "method": "GET",
+      "path": "/api/v1/refunds/summary",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 28
+    },
+    {
+      "name": "Cancellation summary",
+      "method": "GET",
+      "path": "/api/v1/cancelations/summary",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 28
+    },
+    {
+      "name": "Groups",
+      "method": "GET",
+      "path": "/api/v1/groups/get/all?page=0&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 37
+    },
+    {
+      "name": "Attributes",
+      "method": "GET",
+      "path": "/api/v1/attributes",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 30
+    },
+    {
+      "name": "Category icons",
+      "method": "GET",
+      "path": "/api/v1/category-icons/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 29
+    },
+    {
+      "name": "Brand logos",
+      "method": "GET",
+      "path": "/api/v1/brand-logos/get/all",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 25
+    },
+    {
+      "name": "Promotions",
+      "method": "GET",
+      "path": "/api/v1/admin/promotions?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 22
+    },
+    {
+      "name": "Sales report",
+      "method": "GET",
+      "path": "/api/v1/orders/reports/monthly?year=2026",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 31
+    },
+    {
+      "name": "Sales details",
+      "method": "GET",
+      "path": "/api/v1/orders/reports/sales-details?year=2026",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 65
+    },
+    {
+      "name": "Payment report",
+      "method": "GET",
+      "path": "/api/v1/payments/reports/monthly?year=2026",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 38
+    },
+    {
+      "name": "Payment breakdown",
+      "method": "GET",
+      "path": "/api/v1/payments/reports/breakdown?year=2026",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 26
+    },
+    {
+      "name": "User editor options",
+      "method": "GET",
+      "path": "/api/v1/user/editor-options",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 34
+    },
+    {
+      "name": "Audit auth",
+      "method": "GET",
+      "path": "/api/admin/audit-logs/auth?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 65
+    },
+    {
+      "name": "Audit catalog",
+      "method": "GET",
+      "path": "/api/admin/audit-logs/catalog?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 73
+    },
+    {
+      "name": "Audit order",
+      "method": "GET",
+      "path": "/api/admin/audit-logs/order?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 32
+    },
+    {
+      "name": "Audit payment",
+      "method": "GET",
+      "path": "/api/admin/audit-logs/payment?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 100
+    },
+    {
+      "name": "Audit admin",
+      "method": "GET",
+      "path": "/api/admin/audit-logs/admin?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 127
+    },
+    {
+      "name": "Audit ai",
+      "method": "GET",
+      "path": "/api/admin/audit-logs/ai?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 132
+    },
+    {
+      "name": "Audit notification",
+      "method": "GET",
+      "path": "/api/admin/audit-logs/notification?page=1&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 143
+    },
+    {
+      "name": "Automation orders",
+      "method": "GET",
+      "path": "/api/v1/orders/automation/events?page=0&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 30
+    },
+    {
+      "name": "Automation payments",
+      "method": "GET",
+      "path": "/api/v1/payments/automation/events?page=0&size=10",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 44
+    },
+    {
+      "name": "Workflow catalog",
+      "method": "GET",
+      "path": "/api/ai/admin/workflows/catalog",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 81
+    },
+    {
+      "name": "Workflow templates",
+      "method": "GET",
+      "path": "/api/ai/admin/workflows/templates",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 78
+    },
+    {
+      "name": "Workflow executions",
+      "method": "GET",
+      "path": "/api/ai/admin/workflows/executions",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 76
+    },
+    {
+      "name": "Workflow summary",
+      "method": "GET",
+      "path": "/api/ai/admin/workflows/summary",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 65
+    },
+    {
+      "name": "Imports",
+      "method": "GET",
+      "path": "/api/ai/imports",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 98
+    },
+    {
+      "name": "Approval requests",
+      "method": "GET",
+      "path": "/api/ai/imports/requests",
+      "httpStatus": 200,
+      "status": "PASSED",
+      "durationMs": 129
+    }
+  ]
+}

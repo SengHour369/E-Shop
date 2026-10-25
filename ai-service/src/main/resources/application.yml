@@ -2,6 +2,10 @@ server:
   port: 8085
   forward-headers-strategy: none
 spring:
+  task:
+    scheduling:
+      pool:
+        size: 4
   servlet:
     multipart:
       max-file-size: ${AI_IMPORT_MAX_BYTES:5242880}

@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
         url = "${catalog-service.url:http://localhost:8082}"
 )
 public interface CatalogCheckoutClient {
+    @PostMapping("/api/v1/products/reports/sku-categories")
+    java.util.Map<String,String> salesCategories(@RequestHeader("Authorization") String token,@RequestBody java.util.List<Long> ids);
+
     @org.springframework.web.bind.annotation.PostMapping("/internal/commerce/guest/reviews")
     java.util.Map<String,Object> guestReview(@org.springframework.web.bind.annotation.RequestHeader("Authorization") String token,
             @org.springframework.web.bind.annotation.RequestBody com.example.eshop.common.storefront.GuestReviewSubmission request);

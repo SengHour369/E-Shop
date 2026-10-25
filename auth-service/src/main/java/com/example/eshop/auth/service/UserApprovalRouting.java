@@ -27,7 +27,8 @@ public class UserApprovalRouting {
         var actor=users.findById(CurrentActor.userId()).orElseThrow(()->new org.springframework.security.access.AccessDeniedException("Account unavailable"));
         if(!access.snapshot(actor).permits("IMPORT_UPLOAD"))throw new org.springframework.security.access.AccessDeniedException("Import permission required");
         var candidates=candidates().stream().filter(row->!Objects.equals(row.get("id"),actor.getId())).toList();
-        Long selected=actor.getApprovalReviewerId();
+        Long selected=actor.getManagerId();
+        candidates=candidates.stream().filter(row->Objects.equals(row.get("id"),selected)).toList();
         Map<String,Object> result=new LinkedHashMap<>();result.put("reviewers",candidates);
         result.put("defaultReviewerId",candidates.stream().anyMatch(row->Objects.equals(row.get("id"),selected))?selected:null);return result;
     }

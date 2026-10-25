@@ -35,6 +35,22 @@ class MonthlyReportRepositoryTest {
         assertThat(usd.month()).isEqualTo(1);
     }
 
+    @Test
+    void breakdownSeparatesRefundsCurrenciesAndMethods() {
+        save(1,2026,"COMPLETED",false,"USD");
+        save(2,2026,"REFUNDED",false,"USD");
+        save(3,2026,"COMPLETED",false,"KHR");
+        save(4,2026,"FAILED",false,"USD");
+        save(5,2026,"REFUNDED",true,"USD");
+        save(6,2025,"COMPLETED",false,"USD");
+        var card=Payment.builder().userId(1L).status("COMPLETED").deleted(false).paymentMethod("CREDIT_CARD").paymentDate(LocalDateTime.of(2026,1,31,23,59)).amount(new BigDecimal("20.00")).currency("USD").build();
+        repository.saveAndFlush(card);
+        var rows=repository.reportBreakdown(LocalDateTime.of(2026,1,1,0,0),LocalDateTime.of(2027,1,1,0,0));
+        assertThat(rows).hasSize(4);
+        assertThat(rows.stream().filter(row->"REFUNDED".equals(row.status())).findFirst().orElseThrow().amount()).isEqualByComparingTo("10.00");
+        assertThat(rows.stream().filter(row->"CREDIT_CARD".equals(row.method())).findFirst().orElseThrow().amount()).isEqualByComparingTo("20.00");
+    }
+
     private void save(int id, int year, String status, boolean deleted, String currency) {
         var entity = new Payment();
         entity.setUserId(1L);

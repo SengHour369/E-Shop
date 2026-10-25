@@ -40,7 +40,7 @@ class AiAccountAuthorizationTest {
         user.setDeleted(false);
         user.setStatus("INA");
         when(users.findById(7L)).thenReturn(Optional.of(user));
-        var controller = new InternalAuthorizationController(users, new AccountAccessService(functions));
+        var controller = new InternalAuthorizationController(users, new AccountAccessService(functions), org.mockito.Mockito.mock(com.example.eshop.auth.repository.WorkflowGrantRepository.class));
         assertThatThrownBy(() -> controller.current(authentication))
                 .isInstanceOf(AccessDeniedException.class);
         verifyNoInteractions(functions);

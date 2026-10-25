@@ -1,0 +1,13 @@
+{
+  "base": "https://localhost:8443",
+  "success": true,
+  "passedTests": 65,
+  "failedTests": 0,
+  "detailRoutes": 18,
+  "unavailableDetailFixtures": [
+    "promotion",
+    "refund",
+    "return"
+  ],
+  "scope": "Actual Angular components and real HTTPS under jsdom. Does not certify browser cookies, browser certificate trust, financial transactions, or every mutation. Workflow tests create retained drafts, versions and read-only execution records."
+}

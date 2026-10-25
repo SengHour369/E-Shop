@@ -57,7 +57,7 @@ public class GeminiAudioTranscriptionService {
     private static RestClient client() {
         var factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(5000);
-        factory.setReadTimeout(30000);
+        factory.setReadTimeout(40000);
         return RestClient.builder()
                 .requestFactory(factory)
                 .baseUrl("https://generativelanguage.googleapis.com/v1beta")
@@ -168,14 +168,14 @@ public class GeminiAudioTranscriptionService {
                     "Free voice transcription is temporarily unavailable."
             );
         } catch (Exception e) {
-            LOG.warn(
-                    "voice_transcription_transport_failure type={}",
-                    e.getClass().getSimpleName()
-            );
-            throw failure(
-                    503,
-                    "Free voice transcription is temporarily unavailable."
-            );
+            Throwable root = e;
+            for (int depth = 0; depth < 8 && root.getCause() != null; depth++) root = root.getCause();
+            LOG.warn("voice_transcription_transport_failure type={} cause={}",
+                    e.getClass().getSimpleName(), root.getClass().getSimpleName());
+            if (root instanceof java.net.SocketTimeoutException || root instanceof java.net.http.HttpTimeoutException) {
+                throw failure(504, "Voice transcription timed out. Please try a shorter recording.");
+            }
+            throw failure(503, "Free voice transcription is temporarily unavailable. Please try again.");
         }
     }
 

@@ -14,6 +14,14 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentReportController extends BaseController {
     private final PaymentReportService service;
 
+    @GetMapping("/breakdown")
+    public ResponseEntity<ResponseErrorTemplate> breakdown(@RequestParam int year) {
+        if (year < 2000 || year > 2100) {
+            return ResponseEntity.badRequest().body(ResponseErrorTemplate.error("Year must be between 2000 and 2100", "400"));
+        }
+        return ResponseEntity.ok(ResponseErrorTemplate.success("Payment report breakdown", service.breakdown(year)));
+    }
+
     @GetMapping("/monthly")
     public ResponseEntity<ResponseErrorTemplate> monthly(@RequestParam int year) {
         if (year < 2000 || year > 2100) {
